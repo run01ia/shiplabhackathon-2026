@@ -29,6 +29,7 @@
   - 意思決定記録: [discussion/index.md](docs/specs/2026-11-15-okaimonojyouzu/discussion/index.md)
 - チーム・役割分担・スケジュール: [docs/project-overview.md](docs/project-overview.md)
 - フェーズ別の予定: [.claude/todo/phase1.md](.claude/todo/phase1.md) 〜 [phase5.md](.claude/todo/phase5.md)
+- **作業中タスクの進捗ボード: [.claude/todo/progress.md](.claude/todo/progress.md)**
 - docs 全体の目次: [docs/index.md](docs/index.md)
 
 ## 技術スタック
@@ -50,6 +51,14 @@
 - 作ったら、skill 名と用途を一言で報告する。
 - 既存の skill で足りる場合は新規作成せず、既存のものを更新する。
 - Unity 用など、このプロジェクトに関係ない skill は作らない。
+
+## 並列開発 (git worktree)
+- 複数のタスクを同時に進める。タスクごとに worktree とブランチを分ける。
+  - 作成: `git worktree add ../okaimonojyouzu-wt/{branch-name} -b {type}/{task-slug} main`
+  - 完了後: PR をマージしたら `git worktree remove ../okaimonojyouzu-wt/{branch-name}`
+- **親エージェントは、作業開始前に必ず [.claude/todo/progress.md](.claude/todo/progress.md) を読む。** 何が作業中かを確認し、同じタスクの二重着手や同じファイルの衝突を避ける。
+- タスクの開始、PR 作成、完了、中断のたびに、親エージェントが `progress.md` を更新する。サブエージェントには更新させない。
+- 子エージェントは、割り当てられた worktree の中だけで作業する。
 
 ## 予定管理
 `.claude/todo/phaseN.md` にフェーズごとのタスクを書く。完了したら `[x]` にする。

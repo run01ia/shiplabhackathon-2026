@@ -3,7 +3,7 @@
 ゴール: 開発を始められる状態にし、画面と仕様の形を決める。
 優先度: A=絶対 / B=できれば / C=時間があれば
 
-- [ ] **環境構築** (ルのリア) `A`
+- [ ] **環境構築** (ルノリア) `A`
   - [ ] front: React + TypeScript 初期化
   - [ ] back: Hono + Cloudflare Workers 初期化
   - [ ] デプロイ設定 (Vercel / Cloudflare)

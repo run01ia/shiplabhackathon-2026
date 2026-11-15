@@ -31,7 +31,7 @@ description: 機能ごとのブランチから PR を作成する。「PR 作っ
 2. 未コミットがあれば先に `commit` skill でコミットする。
 3. `git push -u origin <branch>` する。
 4. `gh pr create` を実行する。
-5. PR の URL を報告する。
+5. PR の URL を報告し、`.claude/todo/progress.md` の該当行を `PR中` に更新する。
 
 ## 注意
 
