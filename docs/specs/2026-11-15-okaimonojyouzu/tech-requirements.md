@@ -23,7 +23,7 @@
 ## 共通の技術前提
 
 - 言語: TypeScript / フロント: React / バック: Hono (Cloudflare Workers) / フロントのデプロイ: Vercel
-- DB: Supabase または Firebase (未決。[discussion/tech-stack.md](./discussion/tech-stack.md))
+- DB: Supabase (決定。[discussion/tech-stack.md](./discussion/tech-stack.md))
 - 期限は来週の水曜日まで。デモ動画まで用意する。テストコードは書かず、画面または API で正常系を確認する。
 - 具体的な技術選定・アーキテクチャは `impl-plan` の概要設計で決める。
 
@@ -35,7 +35,7 @@
 
 関連discussion: [discussion/tech-stack.md](./discussion/tech-stack.md)
 
-技術的制約・統合条件: 認証方式は DB 選定 (Supabase / Firebase) に合わせる。API は認証済みユーザーのみ許可する。
+技術的制約・統合条件: 認証は Supabase Auth を使う。API は認証済みユーザーのみ許可する。
 
 非機能要件: 期限が短いため、拡張性より動くことを優先する。
 

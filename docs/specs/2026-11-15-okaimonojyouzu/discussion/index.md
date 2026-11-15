@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | [concept-and-scope.md](./concept-and-scope.md) | コンセプト、ペルソナ、スコープ、優先度 | 決定 |
 | [game-design.md](./game-design.md) | ペット育成、ポイント、通貨、着せ替え | 決定 |
-| [tech-stack.md](./tech-stack.md) | 言語、フレームワーク、DB、デプロイ | 検討中 |
+| [tech-stack.md](./tech-stack.md) | 言語、フレームワーク、DB、デプロイ | 決定 |
 | [location-alert.md](./location-alert.md) | 位置情報アラートの方式 | 検討中 |
 
 ステータスの値: `検討中` / `決定` / `却下`

@@ -7,8 +7,9 @@
   - [ ] front: React + TypeScript 初期化
   - [ ] back: Hono + Cloudflare Workers 初期化
   - [ ] デプロイ設定 (Vercel / Cloudflare)
+  - [ ] `wrangler deploy` で Hello World を workers.dev に出し、Supabase に接続できることを確認
 - [ ] **DB 選定・セットアップ** (NKMAK) `A`
-  - [ ] Supabase / Firebase の比較と決定
+  - [x] Supabase に決定 (認証も Supabase Auth)
   - [ ] プロジェクト作成・接続情報の共有方法を決める
   - [ ] back から接続できることを確認
 - [ ] **画面モック作成** (NKMAK) `A`

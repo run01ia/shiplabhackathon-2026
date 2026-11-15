@@ -35,9 +35,9 @@
 ## 技術スタック
 - 言語: TypeScript
 - フロント: React (ライブラリは各自判断)
-- バック: Hono (Cloudflare Workers)
-- DB: Supabase または Firebase (選定中。Issue で管理)
-- デプロイ: Vercel (フロント) / Cloudflare (バック)
+- バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。詳細は `.claude/skills/hono/SKILL.md`。
+- DB: **Supabase** (認証も Supabase Auth を使う)。公式 skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。Workers からは `supabase-js` (HTTP) で接続する。
+- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
 
 ## 開発ルール
 - **機能ごとにブランチを切り、PR を出す。** `main` へ直接 push しない。
