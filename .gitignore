@@ -1,0 +1,22 @@
+# --- pnpm / Node ---
+node_modules/
+.pnpm-debug.log*
+.pnpm-store/
+.npm-log/
+
+# --- Build Outputs & Caches (Monorepo & Frontend/Backend) ---
+dist/
+build/
+.output/
+.react-router/
+.vite/
+
+# --- Environment Files ---
+.env
+.env.local
+.env.*.local
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+.agents
