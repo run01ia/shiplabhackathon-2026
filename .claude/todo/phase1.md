@@ -1,0 +1,30 @@
+# Phase 1: 土台
+
+ゴール: 開発を始められる状態にし、画面と仕様の形を決める。
+優先度: A=絶対 / B=できれば / C=時間があれば
+
+- [ ] **環境構築** (ルノリア) `A`
+  - [ ] front: React + TypeScript 初期化
+  - [ ] back: Hono + Cloudflare Workers 初期化
+  - [ ] デプロイ設定 (Vercel / Cloudflare)
+  - [ ] `wrangler deploy` で Hello World を workers.dev に出し、Supabase に接続できることを確認
+- [ ] **DB 選定・セットアップ** (NKMAK) `A`
+  - [x] Supabase に決定 (認証も Supabase Auth)
+  - [ ] プロジェクト作成・接続情報の共有方法を決める
+  - [ ] back から接続できることを確認
+- [ ] **画面モック作成** (NKMAK) `A`
+  - [ ] 主要画面のワイヤーフレーム (ログイン / リスト / ペット)
+  - [ ] 画面遷移図
+- [ ] **ブランチ運用・PR テンプレート整備** (NKMAK) `A`
+- [ ] **位置情報アラートの技術調査** (ゆうと) `A`
+  - [ ] Web / PWA での位置情報の制約
+  - [ ] 店舗判定方法の候補
+  - [ ] フロント完結かバック必要かの判断
+- [ ] **DB テーブル設計** (NKMAK) `A`
+  - [ ] users / lists / list_items
+  - [ ] currency / currency_logs
+  - [ ] items / user_items (着せ替え)
+- [ ] **スコア・ポイントの仕様確定** (ゲーム担当) `A`
+  - [ ] プラス要素とマイナス要素の点数表
+  - [ ] 買い物上手スコアの計算式
+- [ ] **MVP のデモシナリオ決定** `B`
