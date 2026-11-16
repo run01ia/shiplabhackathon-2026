@@ -13,7 +13,7 @@ code{font-family:monospace}
 svg text{font:13px sans-serif;fill:#2b2118}
 </style></head><body>
 <h1>DB スキーマ (Issue #7)</h1>
-<p>Supabase (Postgres)。マイグレーション: <code>supabase/migrations/20261116000000_init.sql</code>。金額は整数 (円)。履歴テーブルは持たない。</p>
+<p>Supabase (Postgres)。マイグレーション: <code>supabase/migrations/20261116000000_init.sql</code>。金額は整数 (円)。履歴は <code>supabase/migrations/20261116100000_history.sql</code> で追加 (Issue #18)。</p>
 
 <h2>関係図</h2>
 <svg viewBox="0 0 900 300" width="100%" style="background:#fffaf0;border:3px solid #2b2118">
@@ -56,11 +56,18 @@ svg text{font:13px sans-serif;fill:#2b2118}
 <details><summary>list_items (REQ-002, 004)</summary><table>
 <tr><th>列</th><th>型</th><th>意味</th></tr>
 <tr><td>list_id</td><td>uuid FK (cascade)</td><td>所属リスト</td></tr>
-<tr><td>name / price</td><td>text / int</td><td>品名 / 金額 (円)</td></tr>
+<tr><td>name / price</td><td>text / int null</td><td>品名 / 金額 (円)。price は null 可 (購入時に入れる。入れる場合は 0 以上)</td></tr>
 <tr><td>is_checked</td><td>bool</td><td>購入済み</td></tr>
 <tr><td>is_extra</td><td>bool</td><td>リスト外購入</td></tr>
 <tr><td>is_unnecessary</td><td>bool</td><td>不要購入</td></tr>
-</table></details>
+</table>完了後のリストの品目は、本人でも price と is_unnecessary しか更新できない (トリガーで他の列を拒否。REQ-014 の手動修正)。</details>
+<details><summary>point_logs (REQ-006, 014)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>user_id</td><td>uuid FK (cascade)</td><td>所有者。索引 (user_id, created_at desc)</td></tr>
+<tr><td>delta</td><td>int</td><td>ポイント増減</td></tr>
+<tr><td>reason</td><td>text</td><td>理由</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td>日時</td></tr>
+</table>本人の select のみ。追加は API (service_role) のみ。</details>
 <details><summary>items / user_items (REQ-008)</summary><table>
 <tr><th>列</th><th>型</th><th>意味</th></tr>
 <tr><td>items.key / name / price</td><td>text / text / int</td><td>マスタ: ぼうし30, リボン40, おうかん200, めがね60</td></tr>
@@ -79,6 +86,7 @@ svg text{font:13px sans-serif;fill:#2b2118}
 <li>全テーブルで RLS 有効。自分の行 (<code>auth.uid()</code>) のみ操作可。user_metadata は使わない。</li>
 <li>anon の権限は全て剥奪。authenticated には列単位の GRANT で最小限のみ付与。</li>
 <li>coins / score / level / exp / 日次判定日 / list.status / spent_amount / user_items の insert は API (service_role) のみ。</li>
+<li>point_logs は本人の select のみ。insert / update / delete はクライアント不可。</li>
 <li>items は認証済みユーザーの select のみ。</li>
 </ul>
 
