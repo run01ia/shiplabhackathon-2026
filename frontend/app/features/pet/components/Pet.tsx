@@ -11,7 +11,7 @@ const S = "#2b2118";
 
 export function Pet({ mood = "happy", accessories = [], size = 200, bob }: Props) {
   return (
-    <div className={`pet ${bob ? "bob" : ""}`} style={{ width: size, height: size }}>
+    <div className={`mx-auto block [&_svg]:block [&_svg]:size-full ${bob ? "animate-bob" : ""}`} style={{ width: size, height: size }}>
       <svg viewBox="0 0 200 200" role="img" aria-label="ペット">
         <ellipse cx="100" cy="172" rx="52" ry="28" fill="#f6b26b" stroke={S} strokeWidth="5" />
         <ellipse cx="72" cy="188" rx="16" ry="9" fill="#fff4dc" stroke={S} strokeWidth="4" />

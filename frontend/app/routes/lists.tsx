@@ -1,7 +1,9 @@
+import { Screen, ScreenTitle } from "~/components/Screen";
+
 export default function Lists() {
   return (
-    <section className="screen">
-      <h2 className="title">買い物リスト</h2>
-    </section>
+    <Screen>
+      <ScreenTitle>買い物リスト</ScreenTitle>
+    </Screen>
   );
 }
