@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completionRate, isWithinBudget, judgeShopping } from './score'
+import { completionRate, isWithinBudget, judgeShopping, limitToDaily } from './score'
 
 const planned = (isChecked: boolean) => ({ isChecked, isExtra: false, isUnnecessary: false })
 
@@ -42,5 +42,20 @@ describe('judgeShopping', () => {
     expect(j.unnecessaryCount).toBe(2)
     expect(j.asPlanned).toBe(false)
     expect(j.total).toBe(-20 - 30)
+  })
+})
+
+describe('limitToDaily', () => {
+  const extra = { isChecked: true, isExtra: true, isUnnecessary: true }
+  const j = judgeShopping({ budget: 1000, spent: 500, items: [planned(true), extra] })
+
+  it('今日はじめての買い物はそのまま', () => {
+    expect(limitToDaily(j, true)).toEqual(j)
+  })
+
+  it('2 回目以降はマイナスだけ残す', () => {
+    const limited = limitToDaily(j, false)
+    expect(limited.breakdown.every((l) => l.points < 0)).toBe(true)
+    expect(limited.total).toBe(-15)
   })
 })

@@ -30,6 +30,9 @@ export const lists = (d: Deps) => {
       // uuid の検査は /lists/current より後に登録する (先に置くと "current" を :id として 404 にしてしまう)
       .use('/lists/:id', uuidParams)
       .use('/lists/:id/*', uuidParams)
+      // /lists/:id/* からは :itemId が見えないので、品目のパスにも掛ける
+      .use('/lists/:id/items/:itemId', uuidParams)
+      .use('/lists/:id/items/:itemId/*', uuidParams)
       .use('/history/items/:itemId', uuidParams)
       .patch('/lists/:id', zValidator('json', updateListSchema), async (c) =>
         c.json(await u.updateBudget(c.var.user.id, c.req.param('id'), c.req.valid('json').budget)),
