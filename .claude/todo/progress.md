@@ -10,6 +10,8 @@
 
 | タスク | 担当 | ブランチ | worktree | 状態 | 更新日 | メモ |
 | --- | --- | --- | --- | --- | --- | --- |
+| ローカル環境の構築確認 | NKMAK | feat/local-env | (本体) | 作業中 | 2026-11-16 | dev から作成。pnpm install と起動確認 |
+| DB テーブル設計 (#7) | NKMAK (Claude) | feat/db-schema | ../okaimonojyouzu-wt/feat-db-schema | レビュー待ち | 2026-11-16 | コミット済み (e0a6ffe, c73d028)。未 push |
 
 ## Phase 1 のタスク
 
