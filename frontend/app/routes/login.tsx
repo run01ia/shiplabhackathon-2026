@@ -2,7 +2,14 @@ import { redirect, useActionData, useNavigation } from 'react-router'
 import { Screen, ScreenTitle } from '~/components/Screen'
 import { LoginForm, signIn, signUp } from '~/features/auth'
 import { Pet } from '~/features/pet'
+import { redirectIfLoggedIn } from '~/lib/session'
 import type { Route } from './+types/login'
+
+// ログイン済みなら /home へ
+export async function clientLoader() {
+  await redirectIfLoggedIn()
+  return null
+}
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const form = await request.formData()

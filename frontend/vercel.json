@@ -8,5 +8,6 @@
       "chore/*": false,
       "docs/*": false
     }
-  }
+  },
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }

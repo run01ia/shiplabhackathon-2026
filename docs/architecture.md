@@ -40,14 +40,14 @@ feature ごとにまとめる。ルートは薄く、ロジックは feature に
 frontend/app/
 ├─ root.tsx
 ├─ routes.ts              # ルート定義 (画面 ↔ ファイル)
-├─ routes/                # ルートモジュール = 画面。loader / action / 組み立てだけ
+├─ routes/                # ルートモジュール = 画面。clientLoader / clientAction / 組み立てだけ
 ├─ features/              # 機能ごと (auth, list, shopping, pet, history, store)
 │   └─ list/
 │       ├─ index.ts       # 公開 API。外から import してよいのはここだけ
 │       ├─ components/    # 見た目だけ (props を受けて描画)
 │       ├─ hooks/         # 状態・副作用 (useXxx)
 │       ├─ logic/         # 純粋関数 (合計金額、予算超過の判定など)。React 非依存
-│       ├─ api.ts         # hc を呼ぶ薄い関数 (loader / action から使う)
+│       ├─ api.ts         # hc を呼ぶ薄い関数 (clientLoader / clientAction から使う)
 │       └─ types.ts
 ├─ components/            # 機能に依存しない共通 UI
 ├─ lib/                   # api.ts (hc クライアント), supabase.ts (publishable キーのみ), utils.ts
@@ -68,7 +68,7 @@ frontend/app/
 - スタイルは **Tailwind v4**。色・影・角丸は `styles/app.css` の `@theme` で定義済み (`bg-sun`、`border-ink`、`shadow-pop`、`rounded-card` など。縁取りは `border-3`)。グローバル CSS は `@theme` と `@layer base` だけにし、クラス名ベースの CSS は書かない。
 - 共通部品 (`components/` の Button / Card / ProgressBar / BottomSheet / Toast / Coin / TabBar / Screen) は見た目を持つ。**機能の画面は共通部品を使い、レイアウト (余白・並び・幅) だけ Tailwind のユーティリティで書く。** 色や縁取りを画面側で直接書かない (足りなければ共通部品か `@theme` に足す)。
 - 画面は `docs/mock/index.html` に合わせる。スマホ幅 390px、タップ領域 44px 以上 (`CLAUDE.md` 参照)。
-- データ取得と更新は React Router の **loader / action** (仮決め。TanStack Query は入れない)。**loader / action は `features/*/api.ts` を呼んで返すだけ**にし、判定や整形は `logic/` に置く。
+- データ取得と更新は React Router の **clientLoader / clientAction** (frontend は SPA モード `ssr: false`。セッションがブラウザの supabase-js にあるため。仮決め。TanStack Query は入れない)。**clientLoader / clientAction は `features/*/api.ts` を呼んで返すだけ**にし、判定や整形は `logic/` に置く。
 - 型は `any` を使わない。API の型は backend の `AppType` から得る (手で重複して書かない)。
 - フォームの入力検証は zod (backend のスキーマを共有できるなら共有する)。
 - secret / service_role キーは front に置かない。`VITE_` で始まる変数は公開される。
@@ -169,7 +169,7 @@ export const createApp = (d: Deps) => new Hono<Env>().route('/', rewards(d)).rou
 2. **時刻と乱数は注入する**: `Date.now()` `new Date()` `Math.random()` を domain / service で直接呼ばない。`Deps` の `clock: () => Date` `random: () => number` を使う。JST の日付境界は `toJstDate(date)` に 1 か所で集める。
 3. **`createApp(deps)`**: `app` をモジュールのトップレベルで作らない。in-memory の deps (`createMemoryDeps`) を渡せば、DB なしで `app.request('/lists', { headers })` を呼べる。
 4. **モックではなくインメモリ実装**: `repositories/memory/` に interface を満たす `Map` ベースの実装を置く (必要になった repository から作る)。モックライブラリで呼び出しを検証するより、結果の状態を検証する。
-5. **frontend**: コンポーネントは props を描画するだけ、データ取得は loader / `api.ts`、判定は `logic/`。frontend のテストは書かない (大事な判定は backend の `domain/` に置く)。
+5. **frontend**: コンポーネントは props を描画するだけ、データ取得は clientLoader / `api.ts`、判定は `logic/`。frontend のテストは書かない (大事な判定は backend の `domain/` に置く)。
 
 ## 依存の向きを機械で守る (任意・今は導入しない)
 
@@ -201,3 +201,4 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 - 2026-11-16: ライブラリの選定方針を追記 (意欲的に検討するが、導入を目的にしない。構成の変更も可)。
 - 2026-11-16: テスト方針を「書かない」から「`domain/` の純粋関数にだけ最低限を書く (Vitest)」に変更 (スコアや日付の境界は、画面の確認では壊れても気づきにくいため)。
 - 2026-11-16: フロントのスタイル規則を追加。デザイン変数を Tailwind の `@theme` に移し、共通コンポーネントを Tailwind ユーティリティで書き直した (グローバル CSS の重複を無くし、画面はレイアウトだけを書くため)。
+- 2026-11-16: frontend を SPA モード (`ssr: false`) にし、loader / action を clientLoader / clientAction に統一した (セッションがブラウザにあり、SSR 用の目印 cookie が不要になるため)。

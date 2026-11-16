@@ -1,7 +1,6 @@
 import type { Config } from '@react-router/dev/config'
 
 export default {
-  // Config options...
-  // Server-side render by default, to enable SPA mode set this to `false`
-  ssr: true,
+  // SPA モード。セッションはブラウザの supabase-js にあるため、データ取得は clientLoader / clientAction に統一する
+  ssr: false,
 } satisfies Config
