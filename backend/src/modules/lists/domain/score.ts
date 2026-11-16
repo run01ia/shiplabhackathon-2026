@@ -51,6 +51,16 @@ export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
   const rate = completionRate(r.items)
   const hasExtra = r.items.some((i) => i.isExtra)
   const asPlanned = rate === 1 && !hasExtra
+  const base = {
+    withinBudget,
+    remaining: r.budget - r.spent,
+    unnecessaryCount,
+    completionRate: rate,
+    asPlanned,
+  }
+
+  // 何も買っていない買い物はポイントなし (作成 → 終了の繰り返しでコインを稼げないように)
+  if (!r.items.some((i) => i.isChecked)) return { ...base, breakdown: [], total: 0 }
 
   const breakdown: ScoreLine[] = [
     withinBudget
@@ -68,11 +78,7 @@ export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
   }
 
   return {
-    withinBudget,
-    remaining: r.budget - r.spent,
-    unnecessaryCount,
-    completionRate: rate,
-    asPlanned,
+    ...base,
     breakdown,
     total: breakdown.reduce((sum, l) => sum + l.points, 0),
   }

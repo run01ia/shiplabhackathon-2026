@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import type { Deps } from '../../deps'
 import type { Env } from '../../shared/env'
 import { auth } from '../../shared/middleware/auth'
+import { uuidParams } from '../../shared/middleware/uuid-params'
 import {
   addExtraItemSchema,
   addItemSchema,
@@ -21,6 +22,9 @@ export const lists = (d: Deps) => {
   return new Hono<Env>()
     .use('/lists/*', auth(d))
     .use('/history/*', auth(d))
+    .use('/lists/:id', uuidParams)
+    .use('/lists/:id/*', uuidParams)
+    .use('/history/items/:itemId', uuidParams)
     .post('/lists', zValidator('json', createListSchema), async (c) =>
       c.json(await u.createList(c.var.user.id, c.req.valid('json').budget), 201),
     )

@@ -29,6 +29,11 @@ describe('judgeShopping', () => {
     expect(j.total).toBe(30 + 10 + 5)
   })
 
+  it('何も買っていなければポイントなし', () => {
+    expect(judgeShopping({ budget: 0, spent: 0, items: [] }).total).toBe(0)
+    expect(judgeShopping({ budget: 1000, spent: 0, items: [planned(false)] }).breakdown).toEqual([])
+  })
+
   it('予算超過 + 不要買い 2 件は -20 -30', () => {
     const extra = { isChecked: true, isExtra: true, isUnnecessary: true }
     const j = judgeShopping({ budget: 500, spent: 800, items: [planned(true), extra, extra] })
