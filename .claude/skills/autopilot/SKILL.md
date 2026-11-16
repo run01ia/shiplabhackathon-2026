@@ -68,6 +68,15 @@ git worktree add ../okaimonojyouzu-wt/{branch-name} -b {type}/{task-slug} origin
 - 失敗したら、その Issue を `In progress` に戻すか、新しい Issue を起票して直す。確認の結果は PR / Issue に 1 行で残す。
 - 重い確認 (全画面、実機、位置情報) は、人に頼むか、最後にまとめて 1 回だけ行う。
 
+## 5.6 フェーズ完了時のセキュリティチェック
+`.claude/todo/phaseN.md` の全タスクがマージされたら、次の Phase に進む前に、**別のサブエージェント**に確認させる (`security-review` skill も使える)。観点:
+- **秘密情報**: `git ls-files` と履歴に `.env`、`sb_secret_`、`service_role`、`ANTHROPIC_API_KEY` が無いか。`VITE_` に secret を入れていないか。
+- **DB**: 全テーブルで RLS が有効か。クライアントが書き換えてはいけない列 (コイン、スコア、状態) を拒否できているか。ローカル Supabase で攻撃的な操作を試す。
+- **API**: 全ルートで認証 (JWT 検証) があるか。他人の `user_id` を指定できないか。入力は zod で検証しているか。CORS は必要な Origin だけか。エラーに内部情報が出ていないか。
+- **フロント**: secret を持っていないか。ユーザー入力の描画で XSS (`dangerouslySetInnerHTML` など) がないか。
+- **依存**: `pnpm audit` で high 以上の脆弱性がないか。新しく入れたライブラリは、定番で保守されているか。
+- 結果は 重大度 (高/中/低) 別に Issue にする。**高は直るまで次の Phase に進まない。** 結果は `docs/` ではなく Issue に残し、`progress.md` のブロッカーに書く。
+
 ## 6. 次の波へ
 波が終わったら `origin/dev` を取り込み、2 に戻って次の波を決める。Ready の Issue がなくなったら、要件 (`docs/specs/`) と Phase の todo (`.claude/todo/`) から、足りない作業を起票して続ける。
 
