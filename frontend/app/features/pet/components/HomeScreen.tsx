@@ -11,6 +11,7 @@ import { useCatTap } from '../hooks/useCatTap'
 import { useShopActions } from '../hooks/useShopActions'
 import type { Mood } from '../types'
 import { Character } from './Character'
+import { HeartPop } from './HeartPop'
 import { PetRoom } from './PetRoom'
 import { RewardFx } from './RewardFx'
 import { type SheetTab, ShopSheet } from './ShopSheet'
@@ -52,6 +53,8 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
   const [bubble, setBubble] = useState('今日もよろしくね')
   const [toast, setToast] = useState<string | null>(null)
   const [mood, setMood] = useState<Mood>('happy')
+  // なでた回数。変わるたびに猫が跳ね、ハートが出る
+  const [pets, setPets] = useState(0)
 
   const coins = me.coins - pendingCoins
 
@@ -126,10 +129,11 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
         <PetRoom bubble={bubble}>
           <button
             type="button"
-            className="mx-auto block cursor-pointer border-0 bg-transparent p-0"
+            className="relative mx-auto block cursor-pointer border-0 bg-transparent p-0"
             aria-label={`${me.petName}をなでる`}
             onClick={() => {
               tap()
+              setPets((n) => n + 1)
               feel('joy', 900)
             }}
           >
@@ -139,10 +143,22 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 480, damping: 12 }}
             >
-              <Character accessories={me.equippedItems} mood={mood} size={220} bob reactToTap />
+              <Character
+                accessories={me.equippedItems}
+                mood={mood}
+                size={220}
+                pulse={pets}
+                shadow
+                reactToTap
+              />
             </motion.div>
+            <HeartPop count={pets} />
           </button>
-          <div className="text-center text-sm">{me.petName}</div>
+          <div className="relative text-center">
+            <span className="inline-block rounded-pill border-2 border-ink bg-paper px-3 text-sm">
+              {me.petName}
+            </span>
+          </div>
         </PetRoom>
         <div className="mb-3 flex gap-2.5">
           <Button

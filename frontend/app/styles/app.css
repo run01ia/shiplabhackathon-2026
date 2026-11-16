@@ -29,6 +29,13 @@
       transform: translateY(-6px);
     }
   }
+  /* ペットの部屋の雲 (ゆっくり行って戻る) */
+  --animate-drift: drift 9s ease-in-out infinite alternate;
+  @keyframes drift {
+    to {
+      transform: translateX(14px);
+    }
+  }
 }
 
 @layer base {
