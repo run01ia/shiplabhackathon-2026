@@ -6,11 +6,14 @@ import { Coin } from '~/components/Coin'
 import { ProgressBar } from '~/components/ProgressBar'
 import { Screen } from '~/components/Screen'
 import { Toast } from '~/components/Toast'
+import { BIG_EVERY } from '../animations'
 import type { LoginReward, Me, ShopItem, ShopResult } from '../api'
 import { useCatTap } from '../hooks/useCatTap'
+import { useDoze } from '../hooks/useDoze'
 import { useShopActions } from '../hooks/useShopActions'
 import type { Mood } from '../types'
 import { Character } from './Character'
+import { HeartPop } from './HeartPop'
 import { PetRoom } from './PetRoom'
 import { RewardFx } from './RewardFx'
 import { type SheetTab, ShopSheet } from './ShopSheet'
@@ -37,6 +40,10 @@ const confetti = async (y: number) => {
   })
 }
 
+/** なでたときのひとこと (順番に出す)。BIG_EVERY 回目は大喜び */
+const PET_LINES = ['えへへ', 'もっとなでて', 'ごろごろ…', 'くすぐったい！']
+const DOZE_MS = 20_000
+
 /** ホーム: レベル・コイン、ペット、ログイン報酬の演出、ショップ / きがえ */
 export function HomeScreen({ me, items, reward, footer }: Props) {
   const { tap } = useCatTap()
@@ -52,8 +59,22 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
   const [bubble, setBubble] = useState('今日もよろしくね')
   const [toast, setToast] = useState<string | null>(null)
   const [mood, setMood] = useState<Mood>('happy')
+  // なでた回数。変わるたびに猫が跳ね、ハートが出る
+  const [pets, setPets] = useState(0)
 
   const coins = me.coins - pendingCoins
+  // しばらく触らないと居眠りする。なでる・ボタンを押すと起きる
+  const asleep = useDoze(DOZE_MS)
+  const shownMood: Mood = mood === 'happy' && asleep ? 'sleep' : mood
+
+  const pet = () => {
+    tap()
+    const n = pets + 1
+    const big = n % BIG_EVERY === 0
+    setPets(n)
+    setBubble(asleep ? 'ふにゃ…おはよ！' : big ? 'だいすき！' : PET_LINES[n % PET_LINES.length])
+    feel('joy', big ? 1400 : 900)
+  }
 
   useEffect(() => {
     if (rewards.length > 0) confetti(0.45)
@@ -123,15 +144,12 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
             <Coin amount={coins} />
           </div>
         </div>
-        <PetRoom bubble={bubble}>
+        <PetRoom bubble={shownMood === 'sleep' ? 'すやすや…' : bubble}>
           <button
             type="button"
-            className="mx-auto block cursor-pointer border-0 bg-transparent p-0"
+            className="relative mx-auto block cursor-pointer border-0 bg-transparent p-0"
             aria-label={`${me.petName}をなでる`}
-            onClick={() => {
-              tap()
-              feel('joy', 900)
-            }}
+            onClick={pet}
           >
             <motion.div
               key={me.equippedItems.join(',')}
@@ -139,10 +157,22 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 480, damping: 12 }}
             >
-              <Character accessories={me.equippedItems} mood={mood} size={220} bob reactToTap />
+              <Character
+                accessories={me.equippedItems}
+                mood={shownMood}
+                size={220}
+                pulse={pets}
+                shadow
+                reactToTap
+              />
             </motion.div>
+            <HeartPop count={pets} />
           </button>
-          <div className="text-center text-sm">{me.petName}</div>
+          <div className="relative text-center">
+            <span className="inline-block rounded-pill border-2 border-ink bg-paper px-3 text-sm">
+              {me.petName}
+            </span>
+          </div>
         </PetRoom>
         <div className="mb-3 flex gap-2.5">
           <Button
@@ -189,11 +219,15 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
           onCoin={(amount) => {
             setPendingCoins((p) => Math.max(0, p - amount))
             pulseCoin()
+            // コインが届くたびに、猫が「ぺち」と数える
+            tap()
           }}
           onDone={() => {
             setRewards([])
             setPendingCoins(0)
             setBubble('おかえり！ えらい！')
+            // 全部届いたら大技 (宙返り) で喜ぶ
+            setPets((n) => n + BIG_EVERY - (n % BIG_EVERY))
             feel('joy')
           }}
         />

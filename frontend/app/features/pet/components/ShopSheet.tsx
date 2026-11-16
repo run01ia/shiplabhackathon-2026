@@ -64,7 +64,7 @@ export function ShopSheet({
           ))}
         </div>
         <PetRoom compact>
-          <Character accessories={equipped} mood={mood} size={128} reactToTap />
+          <Character accessories={equipped} mood={mood} size={128} shadow reactToTap />
         </PetRoom>
         <div className="grid grid-cols-2 gap-3">
           {shown.map((item) =>

@@ -2,14 +2,34 @@ import type { CharacterDefinition } from '../types'
 
 const S = '#2b2118'
 const FUR = '#f6b26b'
+const STRIPE = '#e0903f'
 const BELLY = '#fff4dc'
 const PINK = '#ffb3a7'
-const TAIL = 'M146 180q40 2 34-34'
+const NOSE = '#f2836b'
+const TAIL = 'M146 182q42 0 35-38'
+const round = { strokeLinecap: 'round', strokeLinejoin: 'round' } as const
 
 const paw = (cx: number) => (
   <>
-    <ellipse cx={cx} cy="187" rx="17" ry="10" fill={BELLY} stroke={S} strokeWidth="4" />
-    <path d={`M${cx - 6} 190v5M${cx + 6} 190v5`} stroke={S} strokeWidth="3" strokeLinecap="round" />
+    <ellipse cx={cx} cy="188" rx="17" ry="11" fill={BELLY} stroke={S} strokeWidth="4" />
+    <path d={`M${cx - 6} 191v5M${cx + 6} 191v5`} stroke={S} strokeWidth="3" strokeLinecap="round" />
+  </>
+)
+
+// 丸みのある耳 (外側と、内側のピンク)
+const ear = (outer: string, inner: string) => (
+  <>
+    <path d={outer} fill={FUR} stroke={S} strokeWidth="5" {...round} />
+    <path d={inner} fill={PINK} />
+  </>
+)
+
+// 大きな黒目と、ハイライト 2 つ (生きて見える)
+const eye = (cx: number, ry = 10) => (
+  <>
+    <ellipse cx={cx} cy="106" rx="8.5" ry={ry} fill={S} />
+    <circle cx={cx + 3} cy="102" r="3.2" fill="#fff" />
+    <circle cx={cx - 2.5} cy="110.5" r="1.5" fill="#fff" />
   </>
 )
 
@@ -21,52 +41,45 @@ export const cat: CharacterDefinition = {
   parts: {
     tail: (
       <>
-        <path d={TAIL} fill="none" stroke={S} strokeWidth="19" strokeLinecap="round" />
-        <path d={TAIL} fill="none" stroke={FUR} strokeWidth="10" strokeLinecap="round" />
+        <path d={TAIL} fill="none" stroke={S} strokeWidth="20" strokeLinecap="round" />
+        <path d={TAIL} fill="none" stroke={FUR} strokeWidth="11" strokeLinecap="round" />
+        <path d="M181 152q1-4 0-8" fill="none" stroke={BELLY} strokeWidth="11" {...round} />
       </>
     ),
     body: (
       <>
-        <ellipse cx="100" cy="172" rx="52" ry="28" fill={FUR} stroke={S} strokeWidth="5" />
-        <ellipse cx="100" cy="182" rx="26" ry="15" fill={BELLY} />
+        <path
+          d="M100 146c34 0 55 14 55 32c0 14-22 22-55 22s-55-8-55-22c0-18 21-32 55-32z"
+          fill={FUR}
+          stroke={S}
+          strokeWidth="5"
+        />
+        <ellipse cx="100" cy="185" rx="27" ry="14" fill={BELLY} />
       </>
+    ),
+    earLeft: ear(
+      'M41 86C33 60 33 40 39 27c16 4 34 16 48 32z',
+      'M49 68c-3-11-3-20-1-27c8 3 16 8 23 15z',
+    ),
+    earRight: ear(
+      'M159 86c8-26 8-46 2-59c-16 4-34 16-48 32z',
+      'M151 68c3-11 3-20 1-27c-8 3-16 8-23 15z',
     ),
     head: (
       <>
+        {/* 下ぶくれの輪郭 (ほっぺが少し張る) */}
         <path
-          d="M44 78L38 26l48 32z"
+          d="M100 52c41 0 72 25 72 62c0 37-31 58-72 58s-72-21-72-58c0-37 31-62 72-62z"
           fill={FUR}
           stroke={S}
           strokeWidth="5"
-          strokeLinejoin="round"
         />
+        <path d="M90 58v9M100 56v12M110 58v9" stroke={STRIPE} strokeWidth="5" {...round} />
+        <ellipse cx="58" cy="130" rx="12" ry="8" fill={PINK} />
+        <ellipse cx="142" cy="130" rx="12" ry="8" fill={PINK} />
+        <path d="M95.5 119.5h9l-4.5 5z" fill={NOSE} stroke={S} strokeWidth="2.5" {...round} />
         <path
-          d="M156 78l6-52-48 32z"
-          fill={FUR}
-          stroke={S}
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
-        <path d="M50 66l-3-26 22 15z" fill={PINK} />
-        <path d="M150 66l3-26-22 15z" fill={PINK} />
-        <ellipse cx="100" cy="112" rx="72" ry="60" fill={FUR} stroke={S} strokeWidth="5" />
-        <path
-          d="M92 56v14M100 54v16M108 56v14"
-          stroke="#c97f2e"
-          strokeWidth="5"
-          strokeLinecap="round"
-        />
-        <ellipse cx="62" cy="128" rx="13" ry="9" fill={PINK} />
-        <ellipse cx="138" cy="128" rx="13" ry="9" fill={PINK} />
-        <path
-          d="M95 120h10l-5 6z"
-          fill="#e2573d"
-          stroke={S}
-          strokeWidth="3"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M36 118l-22-4M36 128l-22 6M164 118l22-4M164 128l22 6"
+          d="M34 116l-18-3M34 126l-18 5M166 116l18-3M166 126l18 5"
           stroke={S}
           strokeWidth="3"
           strokeLinecap="round"
@@ -79,61 +92,72 @@ export const cat: CharacterDefinition = {
       happy: {
         eyes: (
           <>
-            <circle cx="76" cy="106" r="8" fill={S} />
-            <circle cx="124" cy="106" r="8" fill={S} />
-            <circle cx="79" cy="103" r="3" fill="#fff" />
-            <circle cx="127" cy="103" r="3" fill="#fff" />
+            {eye(76)}
+            {eye(124)}
           </>
         ),
         mouth: (
           <path
-            d="M88 130q6 8 12 0q6 8 12 0"
+            d="M89 128q5.5 7 11 0q5.5 7 11 0"
             fill="none"
             stroke={S}
-            strokeWidth="4"
-            strokeLinecap="round"
+            strokeWidth="3.5"
+            {...round}
           />
         ),
       },
       joy: {
         eyes: (
           <path
-            d="M66 109q10-12 20 0M114 109q10-12 20 0"
+            d="M65 111q11-17 22 0M113 111q11-17 22 0"
             fill="none"
             stroke={S}
-            strokeWidth="5"
+            strokeWidth="5.5"
+            strokeLinecap="round"
+          />
+        ),
+        mouth: (
+          <>
+            <path d="M89 127q11 17 22 0z" fill="#e2573d" stroke={S} strokeWidth="3.5" {...round} />
+            <path d="M95 135q5-4 10 0q-5 5-10 0z" fill={PINK} />
+          </>
+        ),
+      },
+      sleep: {
+        eyes: (
+          <path
+            d="M66 106q10 8 20 0M114 106q10 8 20 0"
+            fill="none"
+            stroke={S}
+            strokeWidth="4.5"
             strokeLinecap="round"
           />
         ),
         mouth: (
           <path
-            d="M89 129q11 15 22 0z"
-            fill="#e2573d"
+            d="M95 129q5 5 10 0"
+            fill="none"
             stroke={S}
-            strokeWidth="4"
-            strokeLinejoin="round"
+            strokeWidth="3.5"
+            strokeLinecap="round"
           />
         ),
       },
       sad: {
         eyes: (
           <>
-            <path
-              d="M66 104q10 8 20 0M114 104q10 8 20 0"
-              fill="none"
-              stroke={S}
-              strokeWidth="5"
-              strokeLinecap="round"
-            />
-            <path d="M146 112q6 10 0 16q-6-6 0-16z" fill="#7cc7e8" stroke={S} strokeWidth="2" />
+            {eye(76, 9)}
+            {eye(124, 9)}
+            <path d="M64 96l17-6M136 96l-17-6" stroke={S} strokeWidth="4" strokeLinecap="round" />
+            <path d="M140 118q6 10 0 16q-6-6 0-16z" fill="#7cc7e8" stroke={S} strokeWidth="2" />
           </>
         ),
         mouth: (
           <path
-            d="M88 138q12-10 24 0"
+            d="M91 135q9-8 18 0"
             fill="none"
             stroke={S}
-            strokeWidth="4"
+            strokeWidth="3.5"
             strokeLinecap="round"
           />
         ),
@@ -141,10 +165,13 @@ export const cat: CharacterDefinition = {
     },
   },
   pivots: {
-    tail: { x: 146, y: 180 },
+    tail: { x: 146, y: 182 },
     eyes: { x: 100, y: 106 },
-    pawLeft: { x: 72, y: 187 },
-    pawRight: { x: 128, y: 187 },
+    pawLeft: { x: 72, y: 188 },
+    pawRight: { x: 128, y: 188 },
+    head: { x: 100, y: 170 },
+    earLeft: { x: 62, y: 74 },
+    earRight: { x: 138, y: 74 },
   },
   slots: {
     head: { x: 100, y: 62 },
