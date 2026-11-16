@@ -2,6 +2,7 @@
 
 | パス | 説明 |
 | --- | --- |
+| [decisions.md](./decisions.md) | 意思決定記録 (なぜその選択をしたか) |
 | [architecture.md](./architecture.md) | React + Hono の構成、層、ブランチとデプロイ |
 | [project-overview.md](./project-overview.md) | チーム、役割分担、スケジュール、初期タスク |
 | [specs/](./specs/index.md) | 要件定義 (REQ-ID 管理) |

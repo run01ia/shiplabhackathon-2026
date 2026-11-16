@@ -27,6 +27,7 @@
 - ゲーム内通貨で着せ替えアイテムを購入する。
 
 ## 詳細ドキュメント (AI はまずここを読む)
+- **意思決定記録 (なぜその選択をしたか): [docs/decisions.md](docs/decisions.md)**。重大な決定 (技術選定、仕様の変更、方針の転換) をしたら、**1 行で追記する** (理由と見送った案。覆したら行を消さずに状態を変える)。
 
 - 要件定義 (REQ-001〜013): [docs/specs/2026-11-15-okaimonojyouzu/index.md](docs/specs/2026-11-15-okaimonojyouzu/index.md)
   - 仕様要件: [spec-requirements.md](docs/specs/2026-11-15-okaimonojyouzu/spec-requirements.md)
