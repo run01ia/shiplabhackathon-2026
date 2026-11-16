@@ -30,6 +30,7 @@
 - チーム・役割分担・スケジュール: [docs/project-overview.md](docs/project-overview.md)
 - フェーズ別の予定: [.claude/todo/phase1.md](.claude/todo/phase1.md) 〜 [phase5.md](.claude/todo/phase5.md)
 - **作業中タスクの進捗ボード: [.claude/todo/progress.md](.claude/todo/progress.md)**
+- **アーキテクチャ (React + Hono の構成、層、ブランチとデプロイ): [docs/architecture.md](docs/architecture.md)**
 - docs 全体の目次: [docs/index.md](docs/index.md)
 
 ## 画面・デザインの前提 (スマホアプリ)
@@ -47,7 +48,7 @@
 - フロント: React (ライブラリは各自判断)
 - バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。詳細は `.claude/skills/hono/SKILL.md`。
 - DB: **Supabase** (認証も Supabase Auth を使う)。公式 skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。Workers からは `supabase-js` (HTTP) で接続する。
-- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
+- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。**`staging` と `main` だけデプロイ** (`dev` と feature はしない)。ブランチ運用は [docs/architecture.md](docs/architecture.md)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
 
 ## 開発ルール
 - **機能ごとにブランチを切り、PR を出す。** `main` へ直接 push しない。
@@ -66,6 +67,16 @@
 - 基本は**聞かずに進める**。小さな判断は既定値で決め、discussion や PR に記録する。
 - 確認するのは次の場合だけ: **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワーク・アーキテクチャの変更)、取り消しにくい外部への操作。
 - 迷ったら、推奨案を 1 つ示して進め、結果を簡潔に報告する。
+
+## 自動ワークフロー (autopilot)
+- 「Issue 起票 → 並行性の判断 → 要件・設計 → 並行実装 → PR → **自動マージ** → 進捗更新」を、人の確認なしで回す。手順は `.claude/skills/autopilot/SKILL.md`。
+- **`dev` 向けの PR は、動作確認が通っていれば自動マージする** (ユーザーの指示)。`main` へのマージは自動にしない。
+- どの Issue を並行にするかは、Issue の内容 (触るファイル範囲、依存) から**自分で判断**する。他の人が担当している Issue には着手しない。
+- 自動マージが権限の確認で拒否されたら、言い換えて繰り返さず、ユーザーに許可の方法を聞く。
+
+## コンテキストの圧縮
+- コンテキスト使用率が **70%** に達したら自動で圧縮される。`.claude/settings.json` の `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70` による設定 (hooks では圧縮を起動できないため、環境変数を使う)。
+- 圧縮されても作業が続けられるよう、**進捗は Issue / Project / `.claude/todo/progress.md` に書き出しておく**。サブエージェントを走らせている間も、状態をそこに残す。
 
 ## Issue 駆動開発
 - **すべての作業は GitHub Issue から始める。** Issue がなければ先に起票する。Project: https://github.com/users/run01ia/projects/1
