@@ -23,18 +23,23 @@
 | `dev` への自動マージ | 権限の確認で拒否された | 2026-11-16 ユーザーが「どんどん進めて」と指示 |
 
 ## 作業中・PR 中
-なし (Wave 1 は完了。次は Wave 2。2026-11-16)
+なし (Wave 2a の API は完了。2026-11-16)
 
 ## 次にやること (再開メモ)
-**Wave 2: 機能ごとに縦割り (front + back)。まだ Issue を起票していない。** 手順は `.claude/skills/autopilot/SKILL.md` (起票は `new-issue.sh`)。
-1. 認証 (REQ-001): Supabase Auth、back の JWT 検証は土台にある。front の login 画面
-2. 買い物リスト (REQ-002/003): lists / list_items の API と画面
-3. 買い物中・結果判定 (REQ-004/005): リスト外の確認、購入金額の入力、判定 (`domain/` の score に配点を入れる。配点は #8 待ち)
-4. ホーム・報酬・ショップ着せ替えポップアップ (REQ-006/007/008): `profiles` の更新は API 経由
-5. 履歴 (REQ-014): `point_logs`、購入金額の手動修正
-- 先に `zod` と `@hono/zod-validator` を入れる (入力検証のルートが入る Issue で)。
-- **Phase 2 の完了時に、セキュリティチェックを挟む** (autopilot 5.6)。
-- 並行の指針: front と back は API の契約を先に決めれば並行できる。`routes.ts` と `app.ts` への登録は競合しやすいので、マージ順に注意する。
+**Wave 2b: 機能ごとに frontend を実際に動くようにつなぐ。** API は `dev` にあり、本物のローカル Supabase で統合確認済み (`docs/api/lists.md`、`docs/api/wallet.md`)。手順は `.claude/skills/autopilot/SKILL.md`。
+1. ログイン (REQ-001): Supabase Auth の画面。`lib/supabase.ts`、`lib/api.ts` (hc、`AppType` を backend から) の接続も、ここで通す
+2. 買い物リスト (REQ-002/003): `lists` 画面
+3. 買い物中・結果判定 (REQ-004/005): `shopping` 画面、リスト外の確認、結果・判定
+4. ホーム・報酬・ショップ着せ替えポップアップ (REQ-006/007/008): ログイン時の報酬演出
+5. 履歴 (REQ-014): ポイント / 買い物、購入金額の修正
+- 並行の指針: front は画面ごとに分けられる。`routes.ts`、`api.ts`、共通コンポーネントへの追加は競合しやすいので、マージ順に注意する。**先に、ログインと API 接続 (1) を 1 本入れてから、残りを並行**にする。
+- **Phase 2 の完了時に、セキュリティチェックを挟む** (autopilot の「フェーズ完了時」)。
+- 小さな改善候補: zod の入力エラーの応答形式を整える (今は zod の生の JSON)。ESLint の import 制限 (禁止 import の機械化)。
+
+## ブロッカー・他の人の担当 (AI は着手しない)
+- アラートの検知 (REQ-009/010/011、スーパー登録 `/stores` を含む): **ゆうと** (#6)
+- 環境構築・Workers 化 (#2): **ルノリア**
+- スコア・ポイントの点数 (#8): ゲーム担当 (今はモックの値で仮置き。`domain/score.ts` の定数 1 か所)
 
 ## 完了 (2026-11-15〜16)
 | タスク | PR |
@@ -50,3 +55,8 @@
 | Wave 1: frontend の土台 (#19) | #25 |
 | Wave 1: backend の土台 (#20) | #26 |
 | autopilot、スモーク確認、セキュリティチェックのルール | #21、#24、#27 |
+| Wave 2a: Tailwind のデザイン変数と共通コンポーネント (#31) | #35 |
+| Wave 2a: 買い物リスト・買い物中・結果判定・履歴の API (#32) | #36 |
+| Wave 2a: 通貨・報酬・ショップ・ポイント履歴の API (#33) | #37 |
+| ワークフロー整備 (Fable 5.2: テスト方針、Issue の閉じ方、他人の担当) | #38 |
+| zod、Vitest の導入 | #30、#34 |
