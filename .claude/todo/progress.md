@@ -22,15 +22,18 @@
 | --- | --- | --- |
 | `dev` への自動マージ | 権限の確認で拒否された | 2026-11-16 ユーザーが「どんどん進めて」と指示 |
 
-## 作業中・PR 中 (2026-11-16 に、トークン上限のため中断)
-- **#51 backend の feature モジュール + use-case 層への再構成** (Fable 5.2、ブランチ `refactor/backend-usecases`)。サブエージェントが実装中。**PR ができても未マージ**。controller は Hono 流 (routes.ts が兼ねる、必要なら `createFactory().createHandlers`)。再開したら、PR を確認し、`biome check` と tsc とテストを通し、**本物の Supabase で統合確認** (リスト作成 → 買い物 → 終了 → 報酬 → 購入、応答が再構成前と同じか) してからマージする。
-- 完了: #49 SPA モード化 (PR #50、ブラウザで確認済み)。Motion と canvas-confetti は導入済み。
+## 作業中・PR 中 (2026-11-16 夜、ユーザーの指示で区切りで中断)
+- Phase 2 はほぼ完了。マージ済み: #41〜#44 の画面 (PR #63、#64、#66、#69)、domain の機能別フォルダ (#71)、開発ガイド docs/guide/ (#72)、セキュリティ修正 (#73)。
+- 本物の Supabase で API を通しで確認済み (作成 → 買い物 → 終了 (同時 2 回は 409) → 履歴 → ショップ)。**画面での通し確認はまだ** (ログイン → リスト → 買い物 → 結果 → ホームの演出 → きがえ → 履歴)。
 
 ## 次にやること (再開メモ)
-1. #51 の PR を確認してマージする (上記)。
-2. **Wave 2b を並行で始める** (#51 のマージ後。frontend のみで #51 と競合しないが、API の型が変わらないことを確認してから): #41 リスト、#42 買い物中、#44 履歴、#43 ホーム・演出・着せ替え (Motion と canvas-confetti を使う。ペットの SVG をパーツ分けし、まばたき・しっぽ振りを CSS で)。書き方は `clientLoader` / `clientAction`、`lib/api.ts` の `unwrap`。サブエージェントのプロンプトは `.claude/skills/autopilot/subagent-prompt.md`。
-3. 気づいた小さな問題: `pnpm exec biome check .` が `README.md` と `pnpm-workspace.yaml` で整形エラーになる (既存。サブエージェントが指摘)。直すか `biome.json` の対象から外す。`/shopping` ルートがログインのガード対象外かもしれない (確認)。
-4. Phase 2 の完了時に、セキュリティチェックを挟む。
+1. 画面での通し確認 (幅 390px、DOM のテキスト中心)。通ったら phase2.md を [x] にして Phase 2 完了。
+2. セキュリティチェックの残り (中 #2: 品目 0 件で作成 → 終了を繰り返すとコインが無限に入る。配点は #8 の範囲なので、「購入済み 0 件はポイントなし」か「1 日 1 回」かを決める。低: `:id` の uuid 検証、CORS を環境変数に、本番で memory 起動を禁止、「買い物に行かなかった日」の判定時刻)。
+3. `lib/api.ts` の `unwrap` で 400 の型を外し、features/{list,shopping,history,pet}/api.ts の回避をまとめる。`// TODO(cat): tap()` を `tap()` に置き換える。
+4. #6 (位置情報、ゆうと) のレールを Issue のコメントで用意する (触るファイル、API の形、手順)。実装はしない。
+5. #58〜62 の Issue 本文に「どのファイルに何を書くか」の表を足す (文案: サブエージェントが scratchpad に作成。要ユーザー確認)。
+6. 今日の報告ページ (チーム向け、技術の話なし) を最新にして公開。下書きは scratchpad/report/index.html。技術の工夫ページは公開済み (https://claude.ai/artifact/9vfwxmuvW7SjJqMufFuY65)。
+7. docs/guide の食い違い: `docs/guide/tech-stack.md` の `backend/src/domain/` のパスが古い。seed.sql がない。architecture.md の features/store と app/hooks は存在しない。
 
 ## ブロッカー・他の人の担当 (AI は着手しない)
 - アラートの検知 (REQ-009/010/011、スーパー登録 `/stores` を含む): **ゆうと** (#6)
