@@ -159,7 +159,7 @@ Authorization: Bearer <アクセストークン>
 - `completionRate`: リスト外を除く品目のうち、購入済みの割合 (0〜1)。
 - `asPlanned`: リストの品目をすべて買い、リスト外の購入がないとき `true`。
 - `breakdown` の 1 行ごとに、ポイントの履歴 (`point_logs`) に 1 行残ります。
-- 配点は `backend/src/domain/score.ts` の `POINTS` (仮の値): 予算内 +30、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。
+- 配点は `backend/src/modules/lists/domain/score.ts` の `POINTS` (仮の値): 予算内 +30、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。何も買っていない買い物はポイントなし (D28)。
 
 ### `GET /shop/items`
 

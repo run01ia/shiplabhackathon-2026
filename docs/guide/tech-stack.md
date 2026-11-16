@@ -34,7 +34,7 @@
 | `@hono/node-server` + tsx | ローカルで API を起動する (`pnpm --filter backend dev`) | Node.js で Hono をそのまま動かせる | https://hono.dev/docs/getting-started/nodejs |
 | zod + `@hono/zod-validator` | リクエストの入力検証 (`schemas.ts`) | 検証と型が 1 つの定義で済む | https://zod.dev/ / https://hono.dev/docs/guides/validation |
 | supabase-js | DB の読み書き (secret キー) と、トークンの検証 | Workers から HTTP で使える | https://supabase.com/docs/reference/javascript |
-| Vitest | `backend/src/domain/` の純粋関数のテスト | 設定なしで TypeScript を動かせる。テストは最低限だけ (D12) | https://vitest.dev/ |
+| Vitest | `modules/*/domain/` と `shared/domain/` の純粋関数のテスト | 設定なしで TypeScript を動かせる。テストは最低限だけ (D12) | https://vitest.dev/ |
 
 ## DB とホスティング
 
@@ -64,7 +64,7 @@
 | SSR + 目印 cookie の回避策 | SSR (サーバー側で画面を作ってから返す方式) のまま、ログイン済みかを cookie で伝えてサーバー側でデータを取る方法 | ログインのセッション (トークン) はブラウザの supabase-js (localStorage) にある。サーバー側の loader はそのトークンを持てず、API を認証付きで呼べない。そのため cookie を使う回避策が要り、仕組みが複雑になる (D18) | SPA モード (`ssr: false`)。データ取得は、ブラウザで動く `clientLoader` / `clientAction` |
 | TanStack Query | データ取得とキャッシュのライブラリ | データの取得・更新は React Router の `clientLoader` / `clientAction` で足りる。仕組みを 2 つにしない | `clientLoader` / `clientAction` + `features/*/api.ts` |
 | react-hook-form | フォームの状態管理のライブラリ | 入れないと決めた (discussion)。フォームは React Router の `<Form>` / `fetcher` と `logic/` の検証関数で書いている | `<Form>`、`features/*/logic/` |
-| 日付ライブラリ (day.js など) | 日付の計算・整形 | 入れないと決めた (discussion)。日本時間の日付の判定は 1 か所の関数にまとめている | `backend/src/domain/date.ts` の `toJstDate()` |
+| 日付ライブラリ (day.js など) | 日付の計算・整形 | 入れないと決めた (discussion)。日本時間の日付の判定は 1 か所の関数にまとめている | `backend/src/shared/domain/date.ts` の `toJstDate()` |
 | vite-plugin-pwa | PWA (ホーム画面に追加できる Web アプリ) を作るプラグイン | 入れないと決めた (discussion)。PWA は manifest とアイコンだけで対応する | manifest + アイコン |
 | MUI | Google の Material Design の部品集 | Material の見た目が前提で、ゲーム風の見た目にするには上書きが多くなる (D19) | Tailwind v4 の `@theme` + `components/` の共通部品 |
 | 素の CSS | クラス名ごとに CSS を書く方法 | 並行開発で CSS がぶつかりやすい (D19) | Tailwind v4 |

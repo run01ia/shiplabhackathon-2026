@@ -41,7 +41,7 @@ frontend/app/
 ├─ root.tsx
 ├─ routes.ts              # ルート定義 (画面 ↔ ファイル)
 ├─ routes/                # ルートモジュール = 画面。clientLoader / clientAction / 組み立てだけ
-├─ features/              # 機能ごと (auth, list, shopping, pet, history, store)
+├─ features/              # 機能ごと (auth, list, shopping, pet, history。stores は #6 で追加予定)
 │   └─ list/
 │       ├─ index.ts       # 公開 API。外から import してよいのはここだけ
 │       ├─ components/    # 見た目だけ (props を受けて描画)
@@ -51,7 +51,7 @@ frontend/app/
 │       └─ types.ts
 ├─ components/            # 機能に依存しない共通 UI
 ├─ lib/                   # api.ts (hc クライアント), supabase.ts (publishable キーのみ), utils.ts
-├─ hooks/                 # 共通フック
+├─ hooks/                 # 共通フック (必要になったら作る。今はない)
 └─ styles/
 ```
 
