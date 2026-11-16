@@ -64,6 +64,23 @@
 - ブランチは **`dev` から**切る。PR は **`dev` 向け**で、本文に `Closes #N` を入れる。
 - Project のステータスは Ready → In progress → In review → Done。優先度は A=P0、B=P1、C=P2。
 
+## 進捗の更新 (忘れない)
+**進捗の正は GitHub の Issue と Project。** 作業の節目で、必ず次を更新する。`.claude/todo/progress.md` はローカルの補助表で、Project と食い違わないようにする。
+- **着手時**: Project のステータスを `In progress` にし、Issue に担当者を付ける。
+- **作業中**: Issue 本文のチェックリストを `[x]` にする。方針が変わったら Issue にコメントする。
+- **PR 作成時**: ステータスを `In review` にする。PR 本文に `Closes #N` を入れる。
+- **マージ後**: Issue が閉じて `Done` になったことを確認する (ならなければ手で `Done`)。`progress.md` の完了表にも移す。
+- 新しく分かった作業は、その場で Issue を起票して Project に入れる。
+
+ステータス更新のコマンド (Project: `run01ia/projects/1`):
+```
+IID=$(gh project item-list 1 --owner run01ia --format json --jq '.items[]|select(.content.number==N)|.id')
+gh project item-edit --id $IID --project-id PVT_kwHODGX05s4Brr7P --field-id PVTSSF_lAHODGX05s4Brr7Pzhp9d_0 --single-select-option-id <ID>
+# Status の ID: Backlog=f75ad846 Ready=61e4505c In progress=47fc9ee4 In review=df73e18b Done=98236657
+# Priority(フィールド PVTSSF_lAHODGX05s4Brr7Pzhp9eBw): P0=79628723 P1=0a877460 P2=da944a9c
+# Size(フィールド PVTSSF_lAHODGX05s4Brr7Pzhp9eB0): XS=6c6483d2 S=f784b110 M=7515a9f1
+```
+
 ## 並列開発 (git worktree)
 - 複数のタスクを同時に進める。タスクごとに worktree とブランチを分ける。
   - 作成: `git worktree add ../okaimonojyouzu-wt/{branch-name} -b {type}/{task-slug} origin/dev`
