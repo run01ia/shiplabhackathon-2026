@@ -9,9 +9,10 @@ import type { Env } from './shared/env'
 import { onError } from './shared/middleware/error'
 
 // モジュールを足したら、ここに `.route('/', xxx(d))` を 1 行足す (認証は各モジュールの routes.ts で掛ける)
-export const createApp = (d: Deps) =>
+// corsOrigins: 画面の URL の許可リスト (staging / 本番は環境変数 CORS_ORIGINS から渡す。`*` にはしない)
+export const createApp = (d: Deps, corsOrigins: string[] = ['http://localhost:5173']) =>
   new Hono<Env>()
-    .use(cors({ origin: ['http://localhost:5173'] }))
+    .use(cors({ origin: corsOrigins }))
     .onError(onError)
     .get('/health', (c) => c.json({ ok: true }))
     .route('/', profile(d))
