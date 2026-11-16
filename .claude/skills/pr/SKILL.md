@@ -21,21 +21,21 @@ description: 機能ごとのブランチから PR を作成する。「PR 作っ
 ## 動作確認
 ```
 
-- 動作確認は「画面で何をしたか」または「API を何で叩いたか」を 1 行で書く。テストコードは書かない方針。
-- **Issue 駆動なので `Closes #N` を必ず入れる。** Issue がなければ先に起票する。
+- 動作確認は「画面で何をしたか」または「API を何で叩いたか」を 1 行で書く。`backend/src/domain/` を変えたときは、`pnpm --filter backend test` の結果も書く。
+- **Issue 駆動なので `Closes #N` を必ず入れる。** Issue がなければ先に起票する。(`dev` へのマージでは Issue は自動で閉じない。マージ後に親が `set-status.sh N Done` で閉じる。)
 - スクショやログは、画面変更のときだけ。
 
 ## 手順
 
-1. `git status` と `git log origin/dev..HEAD --oneline` で、PR に含まれる変更を確認する。
+1. `git status` と `git diff origin/dev --stat` で、PR に含まれる変更を確認する (範囲外のファイル、`.env`、鍵がないこと)。
 2. 未コミットがあれば先に `commit` skill でコミットする。
 3. `git push -u origin <branch>` する。
 4. `gh pr create` を実行する。
-5. PR の URL を報告し、`.claude/todo/progress.md` の該当行を `PR中`、Project を `In review` に更新する。
-6. **`dev` 向けで、動作確認が通っていれば `gh pr merge <N> --merge` で自動マージする** (詳細は `autopilot` skill)。マージ後に Project が `Done` になったことを確認する。
+5. PR の URL を報告する。**サブエージェントはここまで** (マージ、`progress.md`、Project には触らない)。
+6. 親エージェントは、Project を `In review` にし (`.claude/skills/autopilot/set-status.sh N "In review"`)、`autopilot` skill の「5. PR と自動マージ」の確認をしてから、`dev` 向けの PR をマージする。
 
 ## 注意
 
-- push と PR 作成は外部に公開される操作。ユーザーが「PR 作って」と頼んだ場合のみ実行する。
+- push と PR 作成は外部に公開される操作。ユーザーが頼んだとき、`autopilot` の実行中、または親エージェントのプロンプトで許可されたときに実行する。
 - 送り先 (`origin`) が意図したリポジトリか、実行前に `git remote -v` で確認する。
 - コミットメッセージと PR 本文の末尾の署名行は、システムの指示に従う。

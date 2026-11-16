@@ -29,8 +29,8 @@
   - 意思決定記録: [discussion/index.md](docs/specs/2026-11-15-okaimonojyouzu/discussion/index.md)
 - チーム・役割分担・スケジュール: [docs/project-overview.md](docs/project-overview.md)
 - フェーズ別の予定: [.claude/todo/phase1.md](.claude/todo/phase1.md) 〜 [phase5.md](.claude/todo/phase5.md)
-- **作業中タスクの進捗ボード: [.claude/todo/progress.md](.claude/todo/progress.md)**
-- **アーキテクチャ (React + Hono の構成、層、ブランチとデプロイ): [docs/architecture.md](docs/architecture.md)**
+- **ブロッカーと再開メモ: [.claude/todo/progress.md](.claude/todo/progress.md)** (進捗の正は GitHub の Issue と Project)
+- **アーキテクチャ (React + Hono の構成、層、テスト方針、ブランチとデプロイ): [docs/architecture.md](docs/architecture.md)**
 - docs 全体の目次: [docs/index.md](docs/index.md)
 
 ## 画面・デザインの前提 (スマホアプリ)
@@ -43,95 +43,40 @@
 - 画面モックも同じサイズ (幅 390px) で作る。PC ブラウザで見るときはスマホ幅の枠で表示する。
 - 位置情報と通知はブラウザの許可が要る。許可が拒否された場合の表示も用意する。
 
-## 困ったときのアドバイザー (Fable 5.2)
-- `.claude/settings.json` の `advisorModel` に **`claude-fable-5-2`** を設定している。
-- **本当に困ったときだけ**、アドバイザーに相談する。目安: 同じ方法で 2〜3 回失敗した、原因が分からない、設計やセキュリティで判断がつかない、大きな技術選定で迷っている。
-- 小さな判断や、調べれば分かることには使わない (高性能なモデルなのでコストが高い)。相談する前に、状況・試したこと・知りたいことを 3〜5 行にまとめる。
-- アドバイザーの助言は参考。最終判断と、コストやセキュリティの確認 (「確認の基準」) は、これまでどおり行う。
-
-## ライブラリの選定方針
-- ライブラリは**意欲的に検討する**。車輪の再発明を避け、定番や公式のものを使ってよい。
-- ただし、**導入すること自体を目的にしない。** 入れる前に「何の問題を解くか」「自前で書くより軽いか」「期限内に使いこなせるか」を確認し、理由を Issue / PR / discussion に 1〜2 行で残す。
-- 新しいライブラリや概念を入れて、既存の構成に合わなくなったときは、[アーキテクチャ](docs/architecture.md)も**変更してよい** (同じ PR で `docs/architecture.md` を更新し、変更履歴に理由を書く)。責務の分離とテストのしやすさは崩さない。
-- コストが発生するもの (有料 API など) や、DB・フレームワークを変える大きな選定は、人に確認する。
-
 ## 技術スタック
 - 言語: TypeScript
 - フロント: React (ライブラリは各自判断)
-- バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。詳細は `.claude/skills/hono/SKILL.md`。
-- DB: **Supabase** (認証も Supabase Auth を使う)。公式 skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。Workers からは `supabase-js` (HTTP) で接続する。
-- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。**`staging` と `main` だけデプロイ** (`dev` と feature はしない)。ブランチ運用は [docs/architecture.md](docs/architecture.md)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
+- バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く (`.claude/skills/hono/SKILL.md`)。
+- DB: **Supabase** (認証も Supabase Auth)。Workers からは `supabase-js` (HTTP) で接続する。skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。
+- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
 
-## 開発ルール
-- **機能ごとにブランチを切り、PR を出す。** `main` へ直接 push しない。
-- ブランチ名: `feat/xxx`, `fix/xxx`, `chore/xxx`, `docs/xxx`
+## 開発ルール (要点。手順は skill に置く)
+
+### 確認の基準 (自律的に進める)
+- 基本は**聞かずに進める**。小さな判断は既定値で決め、Issue / PR / discussion に 1 行で記録する。迷ったら、推奨案を 1 つ選んで進める。
+- 人に聞くのは次だけ: **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワークの変更)、**取り消しにくい外部操作** (`staging` / `main` へのマージ、本番データの変更)。
+- 操作が権限の確認で拒否されたら、言い換えて繰り返さない。何をしたかったかと理由を伝え、許可の方法を聞く。
+
+### Issue 駆動とブランチ
+- **すべての作業は GitHub Issue から始める。** なければ先に起票する (`.claude/skills/autopilot/new-issue.sh`)。Issue 化するのは現在のフェーズ分だけ。
+- Issue の本文には、関連パス (REQ-ID、discussion、`docs/impl-plan/`、使う skill)、触るファイル範囲、依存、完了の定義を書く。
+- ブランチは `feat/* → dev → staging → main`。`origin/dev` から `feat/xxx` `fix/xxx` `chore/xxx` `docs/xxx` を切り、PR は `dev` 向け。`staging` と `main` だけデプロイする ([docs/architecture.md](docs/architecture.md))。
+- コミットは `commit` skill、PR は `pr` skill。**`git add -A` と `git add .` は使わず、`git add <パス>` で指定する。**
 - 日本語でコミュニケーションする。
-- GitHub Issue は**現在のフェーズ分だけ**立てる。先のフェーズは `.claude/todo/` に書いておき、着手直前に Issue 化する。
 
-## Skill の自動生成
-- 今後も同じような手順を繰り返しそうな作業は、人に言われなくても `.claude/skills/{name}/SKILL.md` として skill 化する。
-- 目安: 同じ手順を 2 回以上やった、または今後も繰り返す見込みがある作業 (例: Issue の一括作成、PR 作成、画面追加の定型手順)。
-- 作ったら、skill 名と用途を一言で報告する。
-- 既存の skill で足りる場合は新規作成せず、既存のものを更新する。
-- Unity 用など、このプロジェクトに関係ない skill は作らない。
+### 自動ワークフロー (autopilot)
+「起票 → 並行性の判断 → 設計 → 並行実装 → PR → 自動マージ → 進捗更新 → スモーク確認」を、人の確認なしで回す。**手順とチェックリストは [.claude/skills/autopilot/SKILL.md](.claude/skills/autopilot/SKILL.md)**、サブエージェントへの指示は [subagent-prompt.md](.claude/skills/autopilot/subagent-prompt.md)。
+- 並行性は、Issue の内容 (触るファイル範囲、依存) から**親エージェントが判断**する。1 Issue = 1 サブエージェント = 1 worktree。
+- **他の人の担当は取らない** (例: #2 環境構築 = ルノリア、#6 位置情報とアラートの検知 REQ-009/010/011・スーパー登録 `/stores` = ゆうと、#8 スコア・ポイントの仕様 = ゲーム担当)。
+- `dev` 向けの PR は、動作確認が通っていれば**親が自動マージ**する。サブエージェントはマージしない。`staging` と `main` は自動にしない。`dev` へのマージでは `Closes #N` が効かないので、マージ後に親が Issue を閉じて Project を Done にする。
+- 人のコードレビューと DB レビューは行わない (期限が短いため)。代わりに、親がマージ前に、差分の範囲・秘密情報・禁止 import・動作確認の結果を見る。
+- 波の区切りに、主要な流れ 1 本だけを画面と API で確認する (DOM のテキスト中心、スクリーンショットは 1〜2 枚)。
+- **フェーズが終わるたびに、セキュリティチェックを挟む。** 高 (鍵の漏れ、RLS の穴、認可の欠落) は、直るまで次のフェーズに進まない。
 
-## 確認の基準 (自律的に進める)
-- 基本は**聞かずに進める**。小さな判断は既定値で決め、discussion や PR に記録する。
-- 確認するのは次の場合だけ: **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワーク・アーキテクチャの変更)、取り消しにくい外部への操作。
-- 迷ったら、推奨案を 1 つ示して進め、結果を簡潔に報告する。
-
-## 自動ワークフロー (autopilot)
-- 「Issue 起票 → 並行性の判断 → 要件・設計 → 並行実装 → PR → **自動マージ** → 進捗更新」を、人の確認なしで回す。手順は `.claude/skills/autopilot/SKILL.md`。
-- **`dev` 向けの PR は、動作確認が通っていれば自動マージする** (ユーザーの指示)。`main` へのマージは自動にしない。
-- どの Issue を並行にするかは、Issue の内容 (触るファイル範囲、依存) から**自分で判断**する。他の人が担当している Issue には着手しない。
-- 自動マージが権限の確認で拒否されたら、言い換えて繰り返さず、ユーザーに許可の方法を聞く。
-
-## コンテキストの圧縮
-- コンテキスト使用率が **70%** に達したら自動で圧縮される。`.claude/settings.json` の `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70` による設定 (hooks では圧縮を起動できないため、環境変数を使う)。
-- 圧縮されても作業が続けられるよう、**進捗は Issue / Project / `.claude/todo/progress.md` に書き出しておく**。サブエージェントを走らせている間も、状態をそこに残す。
-
-## Issue 駆動開発
-- **すべての作業は GitHub Issue から始める。** Issue がなければ先に起票する。Project: https://github.com/users/run01ia/projects/1
-- Issue の本文には、AI がすぐ着手できるよう**関連パスを書く**: 該当 REQ-ID (`docs/specs/.../spec-requirements.md`)、関連 discussion (`docs/specs/.../discussion/*.md`)、設計があれば `docs/impl-plan/...` (summary / detailed-design / task)、使う skill、完了の定義。
-- 起票するとき、参考になりそうな `docs/` や `.claude/` のパスがあれば、必ず Issue にリンクする。
-- ブランチは **`dev` から**切る。PR は **`dev` 向け**で、本文に `Closes #N` を入れる。
-- Project のステータスは Ready → In progress → In review → Done。優先度は A=P0、B=P1、C=P2。
-
-## 進捗の更新 (忘れない)
-**進捗の正は GitHub の Issue と Project。** 作業の節目で、必ず次を更新する。`.claude/todo/progress.md` はローカルの補助表で、Project と食い違わないようにする。
-- **着手時**: Project のステータスを `In progress` にし、Issue に担当者を付ける。
-- **作業中**: Issue 本文のチェックリストを `[x]` にする。方針が変わったら Issue にコメントする。
-- **PR 作成時**: ステータスを `In review` にする。PR 本文に `Closes #N` を入れる。
-- **マージ後**: Issue が閉じて `Done` になったことを確認する (ならなければ手で `Done`)。`progress.md` の完了表にも移す。
-- 新しく分かった作業は、その場で Issue を起票して Project に入れる。
-
-**画面での正常系の確認**: 波の区切りに、主要な流れ 1 本だけを画面と API で軽く確認する (DOM のテキスト確認を中心に、スクリーンショットは 1〜2 枚、小さい倍率で)。トークンを大量に使わない。手順は `.claude/skills/autopilot/SKILL.md` の 5.5。
-**ブロッカーの管理**: 着手できない・止まっている理由 (他の人の作業待ち、人の判断待ち、権限、調査未着手) は、`.claude/todo/progress.md` の「ブロッカー」表に必ず書く。解決したら「解決済み」へ移す。
-**開発ルールの追記**: 開発の進め方で新しく決まったことや、繰り返し使えるルールは、聞かれなくても**自分で `CLAUDE.md` に追記する** (長い手順は `.claude/skills/` や `docs/` に書き、ここにはリンクを置く)。
-
-ステータス更新のコマンド (Project: `run01ia/projects/1`):
-```
-IID=$(gh project item-list 1 --owner run01ia --format json --jq '.items[]|select(.content.number==N)|.id')
-gh project item-edit --id $IID --project-id PVT_kwHODGX05s4Brr7P --field-id PVTSSF_lAHODGX05s4Brr7Pzhp9d_0 --single-select-option-id <ID>
-# Status の ID: Backlog=f75ad846 Ready=61e4505c In progress=47fc9ee4 In review=df73e18b Done=98236657
-# Priority(フィールド PVTSSF_lAHODGX05s4Brr7Pzhp9eBw): P0=79628723 P1=0a877460 P2=da944a9c
-# Size(フィールド PVTSSF_lAHODGX05s4Brr7Pzhp9eB0): XS=6c6483d2 S=f784b110 M=7515a9f1
-```
-
-## 並列開発 (git worktree)
-- 複数のタスクを同時に進める。タスクごとに worktree とブランチを分ける。
-  - 作成: `git worktree add ../okaimonojyouzu-wt/{branch-name} -b {type}/{task-slug} origin/dev`
-  - 完了後: PR をマージしたら `git worktree remove ../okaimonojyouzu-wt/{branch-name}`
-- **親エージェントは、作業開始前に必ず [.claude/todo/progress.md](.claude/todo/progress.md) を読む。** 何が作業中かを確認し、同じタスクの二重着手や同じファイルの衝突を避ける。
-- タスクの開始、PR 作成、完了、中断のたびに、親エージェントが `progress.md` を更新する。サブエージェントには更新させない。
-- 子エージェントは、割り当てられた worktree の中だけで作業する。
-
-## フェーズの完了ごとにセキュリティチェック
-- **各 Phase (`.claude/todo/phaseN.md`) が終わるたびに、セキュリティチェックを挟む。** 手順は `.claude/skills/autopilot/SKILL.md` の 5.6。
-- 見つけた問題は Issue にして直す。高 (鍵の漏れ、RLS の穴、認可の欠落) は、直るまで次の Phase に進まない。
-
-## 予定管理
-`.claude/todo/phaseN.md` にフェーズごとのタスクを書く。完了したら `[x]` にする。**フェーズ = `.claude/todo/` のファイル。新しいタスクが見つかったら、自分でそこに追加してよい** (必要なら Issue も起票する。聞かなくてよい)。
+### 進捗とブロッカー
+- **進捗の正は GitHub の Issue と [Project](https://github.com/users/run01ia/projects/1)。** ステータスは Ready → In progress → In review → Done。優先度は A=P0、B=P1、C=P2。更新は `.claude/skills/autopilot/set-status.sh <Issue番号> <ステータス>`。
+- [.claude/todo/progress.md](.claude/todo/progress.md) は、**ブロッカーと再開メモ**の補助。親エージェントは作業前に読み、着手・PR・マージ・中断のたびに更新する (サブエージェントには更新させない)。**止まっている理由は、必ず「ブロッカー」表に書く。**
+- フェーズ = `.claude/todo/phaseN.md`。完了したら `[x]` にする。新しいタスクは、聞かずにそこへ追加してよい (必要なら Issue も起票する)。
 
 | Phase | ゴール |
 |---|---|
@@ -141,9 +86,25 @@ gh project item-edit --id $IID --project-id PVT_kwHODGX05s4Brr7P --field-id PVTS
 | 4 | アラート・着せ替え |
 | 5 | 仕上げ (デモ動画、発表、C 項目) |
 
+### テスト (最低限だけ書く)
+- 書くのは**コアなドメイン (`backend/src/domain/` の純粋関数: スコア計算、報酬判定、JST の日付) だけ**。Vitest で、正常系とビジネス上大事な境界 (予算ちょうど、日付の境界) を 1 関数あたり数ケースまで。
+- 画面、DB、API の網羅的なテストと、重箱の隅を突くテストは書かない。それ以外は、画面または API で正常系を確認する。詳細は [docs/architecture.md](docs/architecture.md) の「テスト方針」。
+
+### ライブラリとアーキテクチャ
+- ライブラリは**意欲的に検討する**が、**導入を目的にしない。** 「何の問題を解くか」「自前で書くより軽いか」「期限内に使いこなせるか」を確認し、理由を Issue / PR に 1〜2 行で残す。
+- [アーキテクチャ](docs/architecture.md)は目安。合わなくなったら変えてよい (同じ PR で `docs/architecture.md` を直し、変更履歴に理由を書く)。責務の分離とテストのしやすさは崩さない。
+- 依存の追加は、並行作業の前に親が 1 本の PR で入れる (`package.json` と `pnpm-lock.yaml` の競合を避ける)。
+
+### アドバイザーとコンテキスト
+- **本当に困ったときだけ**、アドバイザー (Fable 5.2。`.claude/settings.json` の `advisorModel`) に相談する。目安: 同じ方法で 2〜3 回失敗した、原因が分からない、設計やセキュリティで判断がつかない。相談の前に、状況・試したこと・知りたいことを 3〜5 行にまとめる。助言は参考で、最終判断は自分で行う。
+- コンテキストは使用率 **70%** で自動圧縮される (`.claude/settings.json` の `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`)。圧縮されても続けられるよう、状態は Issue / Project / `progress.md` に書き出しておく。
+
+### ルールと skill を自分で育てる
+- 開発の進め方で新しく決まったことは、聞かれなくても**自分でこのファイルに追記する**。ここには要点とリンクだけを書き、手順は `.claude/skills/` か `docs/` に置く。
+- 同じ手順を 2 回以上やった、または今後も繰り返す作業は、`.claude/skills/{name}/SKILL.md` にする (既存の skill で足りるなら、それを更新する)。作ったら、名前と用途を一言で報告する。このプロジェクトに関係ない skill は作らない。
+
 ## 今後のスケジュール
 - 気になることは Discord で連絡する。
 - 次の MTG: 来週水曜 19:00 (難しければ 22:00)。
 - 期限: 来週の水曜日まで。
 - 最終目標: デモ動画まで用意する。
-- DB レビュー、コードレビューは行わない (期限が短いため)。PR は機能単位で出し、各自の判断でマージする。

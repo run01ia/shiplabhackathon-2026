@@ -5,82 +5,120 @@ description: Issue の起票から、並行性の判断、要件確認、設計�
 
 # autopilot
 
-Issue 駆動で、**起票 → 並行性の判断 → 要件・設計 → 並行実装 → PR → 自動マージ → 進捗更新**を自律的に回す。人に確認するのは、セキュリティ・コスト・技術的に大きな決断だけ (`CLAUDE.md` の「確認の基準」)。
+Issue 駆動で、**起票 → 並行性の判断 → 設計 → 並行実装 → PR → 自動マージ → 進捗更新 → スモーク確認**を親エージェントが回す。人に聞くのは「8. 止まる条件」だけ。それ以外は既定値で進め、Issue / PR に 1 行で記録する。
+
+## 親のチェックリスト
+
+- **起動前**: ① `progress.md` と Project を読む ② `git fetch origin` ③ 波を決める (触るファイルと依存が重ならないこと) ④ 依存の追加と共通の型・登録は、親が先に 1 本の PR で `dev` に入れる ⑤ Status=`In progress`、`progress.md` に波を書く ⑥ [subagent-prompt.md](subagent-prompt.md) を埋めて、1 メッセージで同時に起動する。
+- **マージ前 (PR ごと)**: ① 差分が Issue の範囲内か ② 秘密情報がないか ③ 層をまたぐ禁止 import がないか ④ 動作確認の結果が報告にあるか (`domain/` を変えたならテストが通っているか)。1 つでも欠けたらマージしない。
+- **波の終わり**: ① 依存元 → 依存先の順でマージ ② **Issue を閉じて Project を Done にする** (`set-status.sh N Done "PR #M でマージ"`。`dev` へのマージでは `Closes #N` が効かず、自動では閉じない) ③ worktree を片付ける ④ `progress.md` を更新 (完了、ブロッカー、再開メモ) ⑤ スモーク確認を 1 本 ⑥ DB を変えた波なら、親が `supabase start` で統合確認を 1 回。
+- **フェーズ完了時**: ① `phaseN.md` を `[x]` に ② レビュー用サブエージェントでセキュリティチェック ③ 「高」は直るまで次へ進まない ④ 次のフェーズを Issue 化する。
 
 ## 0. 前提
-- 親エージェントは作業前に `.claude/todo/progress.md` と Project (https://github.com/users/run01ia/projects/1) を読む。
-- 進捗の更新コマンドと ID は `CLAUDE.md` の「進捗の更新」を使う。
-- ブランチは `origin/dev` から切り、PR のベースは `dev`。**`main` は自動マージしない。**
+
+- 進捗の正は Issue と Project (https://github.com/users/run01ia/projects/1)。`.claude/todo/progress.md` は、ブロッカーと再開メモの補助。**着手・PR・マージ・中断のたびに親が更新する** (コンテキストが圧縮されても再開できるようにする)。サブエージェントには更新させない。
+- ブランチは `origin/dev` から切り、PR のベースは `dev`。`staging` と `main` へのマージは、デプロイを伴うので自動にしない。
+- **他の人の担当は取らない。** 担当者が付いた Issue と、その範囲のコードには着手しない。現在の例: #2 環境構築 = ルノリア、#6 位置情報 = ゆうと (アラートの検知 REQ-009/010/011 と、スーパー登録 `/stores` を含む)、#8 スコア・ポイントの仕様 = ゲーム担当。待ちになる作業は、`progress.md` のブロッカーに書く。
 
 ## 1. 起票
-作業が Issue になっていなければ、先に起票する (`gh issue create`)。本文に必ず書く:
+
+Issue がなければ先に作る。本文をファイルに書き、次を実行する (Project への追加、Status / Priority / Size の設定まで行う)。
+
+```
+.claude/skills/autopilot/new-issue.sh "タイトル" 本文ファイル P0|P1|P2 XS|S|M|L Ready [assignee] ["Phase N: 名前"]
+```
+
+本文に書くこと (サブエージェントが Issue だけで着手できるようにする):
 - 目的と完了の定義 (画面または API で確認する正常系)
-- **関連パス**: 該当 REQ-ID (`docs/specs/.../spec-requirements.md`)、discussion、`docs/impl-plan/`、使う skill、触るディレクトリ
-- **依存**: `依存: #N` (なければ「なし」)
-- **触るファイル範囲**: `frontend/` `backend/` `supabase/` `docs/` のどれか
-Project に入れ、Status=Ready、Priority (A=P0 B=P1 C=P2)、Size を付ける。
+- 関連パス: REQ-ID、discussion、`docs/impl-plan/`、使う skill
+- 触るファイル範囲 (ディレクトリ単位) と、`依存: #N` (なければ「なし」)
 
-## 2. 並行性の判断 (自分で決める)
-Ready の Issue (他の人が担当していないもの) を集め、次の規則で「波」に分ける。
-- **同じ波に入れてよい**: 触るファイル範囲が重ならず、互いの出力に依存しない。front と back は、API の契約 (パス・リクエスト・レスポンスの型) が固定済みなら並行にできる。
-- **波を分ける**: DB のマイグレーションに依存する、共通の型・設定を先に作る必要がある、同じファイルを変える、`依存: #N` が未完了。
-- **直列にする**: マイグレーションの追加は 1 本ずつ (番号の衝突を避ける)。
-- 担当者が他の人の Issue (例: #2 ルノリア) には着手しない。
-- 1 つの波の並行数は、衝突しない範囲で上限なし。ただし 1 Issue = 1 サブエージェント = 1 worktree。
+Issue 化するのは現在のフェーズ分だけ。先の分は `.claude/todo/phaseN.md` に書く。
 
-## 3. 要件・設計 (Issue の大きさで選ぶ)
-- **小さい Issue** (1 画面、1 API、数ファイル): 要件は REQ-ID を参照するだけ。設計は Issue のコメントに 5〜10 行 (変更ファイル、API の型、処理の流れ) を書いて実装へ進む。
-- **大きい Issue** (複数 REQ、複数ファイルにまたがる): `design-flow` skill で `docs/impl-plan/` を作り、設計完了レポート (アーティファクト) を出してから実装する。
-- 要件が足りなければ `new-spec` で REQ を追記し、discussion に仮決めを記録する。
+## 2. 並行性の判断 (親が決める)
+
+Ready の Issue を、触るファイル範囲と依存から「波」に分ける。1 Issue = 1 サブエージェント = 1 worktree。並行数に上限はない。
+
+- **同じ波**: 触るファイルが重ならず、互いの出力に依存しない。front と back は、API の契約 (パス・リクエスト・レスポンスの型) が固定済みなら並行にできる。
+- **波を分ける**: `依存: #N` が未完了、マイグレーションや共通の型を前提にする、同じファイルを変える。
+- **直列**: マイグレーションの追加は 1 本ずつ (番号の衝突を避ける)。
+- **競合しやすいファイル**: `backend/src/app.ts` と `deps.ts` への登録、`frontend/app/routes.ts`、`package.json`、`pnpm-lock.yaml`。依存の追加は、親が波の前に 1 本の PR で入れる。登録の行は、どのサブエージェントがどこに足すかをプロンプトで指定する。
+
+## 3. 設計 (Issue の大きさで選ぶ)
+
+- **小さい** (1 画面、1 API、数ファイル): Issue のコメントに 5〜10 行 (変更ファイル、API の型、処理の流れ) を書いて実装へ進む。
+- **大きい** (複数の REQ にまたがる): `design-flow` skill で `docs/impl-plan/` を作ってから実装する。
+- 要件が足りなければ `new-spec` で REQ を追記し、仮決めを discussion に記録する。
 
 ## 4. 実装 (サブエージェントに委任)
-波ごとに、**1 メッセージで同時に** `Agent` を起動する (`run_in_background: true`)。事前に worktree を作る:
+
+波ごとに、1 メッセージで同時に `Agent` を起動する。プロンプトは [subagent-prompt.md](subagent-prompt.md) の雛形を埋めて、自己完結させる (サブエージェントは、この会話の内容を知らない)。
+
+- **worktree**: `Agent` の `isolation: "worktree"` を使う (`.claude/worktrees/` に自動で作られる。`.gitignore` 済み)。サブエージェントが最初に `origin/dev` から作業ブランチを切る。
+- **隔離は場所を保証しない**: `isolation: "remote"` でも、この Mac のローカル worktree で動くことがある。ネットワークが切れると push と PR ができない。その場合は、サブエージェントはコミットまでで報告し、親が後で push する。
+- **DB**: `supabase start` は、複数の worktree で同時に動かせない (ポートとコンテナ名が競合する)。サブエージェントは memory 実装で確認する (`SUPABASE_*` が未設定なら backend は memory で起動する。トークンは `test-<userId>`)。
+- **依存の追加**: サブエージェントには追加させない。必要になったら報告させ、親が入れる。
+- サブエージェントが失敗、または報告が不十分なときは、`SendMessage` で 1 回だけ追加の指示を出す。それでもだめなら、Issue を Ready に戻し、`progress.md` のブロッカーに書いて次へ進む。
+
+## 5. PR と自動マージ (親が行う)
+
+サブエージェントは push と PR 作成まで行い、**マージはしない**。親が PR ごとに次を確認する (worktree の中で実行する)。
+
 ```
-git fetch origin
-git worktree add ../okaimonojyouzu-wt/{branch-name} -b {type}/{task-slug} origin/dev
+gh pr diff N --name-only                                   # 範囲外のファイル、.env がないか
+gh pr diff N | grep -nE '^\+.*(sb_secret_|service_role|eyJ[A-Za-z0-9_-]{20}|API_KEY=.)'   # 秘密情報 (ヒットしたら中身を見る)
+grep -rnE "from ['\"](hono|@supabase)" backend/src/services backend/src/domain              # 禁止 import
+grep -rnE "from ['\"].*(repositories/|@supabase)" backend/src/routes
 ```
-サブエージェントへのプロンプトに含める (自己完結させる):
-1. 作業場所 (worktree の絶対パス)。**その中だけで作業**し、本体や他の worktree は触らない。
-2. Issue 番号と本文、関連パス (読むべきファイル)。
-3. 使う skill (`hono` `supabase` `workers-best-practices` など)。実装前に読むこと。
-4. 画面前提 (`CLAUDE.md` の「画面・デザインの前提」)、**テストコードは書かない**。
-5. 動作確認: 画面または API (`npx -y @hono/cli request`、ブラウザ) で正常系を確認し、結果を報告する。
-6. コミット規約 (`commit` skill)。`git add -A` は使わない。末尾に `Co-Authored-By` 行。
-7. **push しない** (親が行う)。`progress.md` と Project は更新しない (親が更新する)。
-8. 最終報告は簡潔に: 変更ファイル、動作確認の結果、コミットハッシュ、未解決の点。
 
-## 5. PR と自動マージ (親エージェントが行う)
-サブエージェントの完了後、親が:
-1. worktree で `git diff origin/dev --stat` を確認し、範囲外の変更や秘密情報 (`.env`、キー) が混ざっていないか見る。
-2. `git push -u origin <branch>`。`pr` skill で `dev` 向けに PR を作る (`Closes #N`)。Status=`In review`。
-3. **動作確認に失敗している、または秘密情報が混ざっていれば、マージしない。** 直して再確認する。
-4. 問題なければ `gh pr merge <N> --merge` で**自動マージ**する。競合したら、worktree で `origin/dev` を取り込んで解消し、再 push してからマージする。
-5. マージ後: Issue が閉じて Status=`Done` になったことを確認 (ならなければ手で更新)。worktree を `git worktree remove` で片付け、`progress.md` の完了表に移す。
+- 禁止 import の全体は [docs/architecture.md](../../../docs/architecture.md)。`domain/` を変えた PR は `pnpm --filter backend test` が通っていること。
+- 問題なければ `gh pr merge N --merge`。順序は**依存元 (DB、共通の型) → 依存先**。競合したら、その worktree で `origin/dev` を取り込んで直し、動作確認をやり直してからマージする。
+- **マージ後は、親が必ず Issue を閉じて Project を Done にする。** 既定ブランチが `main` なので、`dev` 向けの PR の `Closes #N` では Issue が閉じず、Project も Done にならない (実際に #17〜#20、#31 が OPEN のまま残った)。`.claude/skills/autopilot/set-status.sh N Done "PR #M でマージ"` が両方を行う (中身は `gh issue close N -c "..."` と Status の更新)。波の終わりに `gh issue list --state open` で閉じ忘れがないかを見る。
+- そのあと `git worktree remove <パス>` で片付け、`progress.md` を更新する。
+- 動作確認に失敗、または秘密情報が混ざっていたら、マージしない。同じサブエージェントに `SendMessage` で直させる。
+- 認証、RLS、マイグレーション、課金に関わる PR は、マージ前にレビュー用サブエージェント (雛形あり) に見せてよい。それ以外は、上の確認だけでマージする (速度優先)。
 
-マージの順序: 依存元 (DB、共通の型) → 依存先。同じ波の中で衝突したら、後のものを `origin/dev` に合わせ直す。
+ステータスの更新: `.claude/skills/autopilot/set-status.sh <Issue番号> "In progress"|"In review"|Done|Ready|Backlog`
 
-## 5.5 画面スモーク確認 (波の区切りで軽く)
-波のマージごと (または画面・APIが動くようになったとき) に、**正常系が画面で動くか**を最小限の手数で確認する。トークンを使いすぎないこと。
-- 対象は**主要な流れ 1 本だけ** (例: ログイン → リスト作成 → 買い物中 → 結果)。全画面を毎回見ない。
-- 手段の優先順: ① `npx -y @hono/cli request` で API の正常系 → ② ブラウザの `javascript_tool` で DOM のテキスト・要素の有無を確認 → ③ スクリーンショットは**最後に 1〜2 枚だけ** (`scale: 0.4` 以下、`zoom` で一部だけ)。
-- ブラウザ操作は `browser_batch` で 1 回にまとめる。**スクリーンショットを何枚も撮らない。** 失敗したときだけ、原因の周辺を 1 枚足す。
-- 起動は `pnpm dev` (front 5173、back 3000)。確認後は必ずサーバーを止め、タブを閉じる。
-- 失敗したら、その Issue を `In progress` に戻すか、新しい Issue を起票して直す。確認の結果は PR / Issue に 1 行で残す。
-- 重い確認 (全画面、実機、位置情報) は、人に頼むか、最後にまとめて 1 回だけ行う。
+## 6. 画面スモーク確認 (波の区切り)
 
-## 5.6 フェーズ完了時のセキュリティチェック
-`.claude/todo/phaseN.md` の全タスクがマージされたら、次の Phase に進む前に、**別のサブエージェント**に確認させる (`security-review` skill も使える)。観点:
-- **秘密情報**: `git ls-files` と履歴に `.env`、`sb_secret_`、`service_role`、`ANTHROPIC_API_KEY` が無いか。`VITE_` に secret を入れていないか。
-- **DB**: 全テーブルで RLS が有効か。クライアントが書き換えてはいけない列 (コイン、スコア、状態) を拒否できているか。ローカル Supabase で攻撃的な操作を試す。
-- **API**: 全ルートで認証 (JWT 検証) があるか。他人の `user_id` を指定できないか。入力は zod で検証しているか。CORS は必要な Origin だけか。エラーに内部情報が出ていないか。
-- **フロント**: secret を持っていないか。ユーザー入力の描画で XSS (`dangerouslySetInnerHTML` など) がないか。
-- **依存**: `pnpm audit` で high 以上の脆弱性がないか。新しく入れたライブラリは、定番で保守されているか。
-- 結果は 重大度 (高/中/低) 別に Issue にする。**高は直るまで次の Phase に進まない。** 結果は `docs/` ではなく Issue に残し、`progress.md` のブロッカーに書く。
+波のマージ後に、**主要な流れ 1 本だけ**を確認する (例: ログイン → リスト作成 → 買い物中 → 結果)。全画面は見ない。
 
-## 6. 次の波へ
-波が終わったら `origin/dev` を取り込み、2 に戻って次の波を決める。Ready の Issue がなくなったら、要件 (`docs/specs/`) と Phase の todo (`.claude/todo/`) から、足りない作業を起票して続ける。
+- 手段の優先順: ① `npx -y @hono/cli request` で API ② ブラウザの `javascript_tool` で DOM のテキストと要素の有無 ③ スクリーンショットは最後に 1〜2 枚 (`scale: 0.4` 以下)。失敗したときだけ、原因の周辺を 1 枚足す。
+- ブラウザ操作は `browser_batch` で 1 回にまとめる。起動は `pnpm dev` (front 5173、back 3000)。終わったらサーバーを止め、タブを閉じる。
+- **DB の統合確認**は、マイグレーションか `repositories/supabase/` を変えた波だけ、親が `supabase start` で 1 回行う。
+- 結果は Issue か PR に 1 行で残す。失敗したら、新しい Issue を起票して直す。
+- 重い確認 (全画面、実機、位置情報) は人に頼むか、フェーズの最後に 1 回だけ行う。
 
-## 7. 止まる条件 (人に聞く)
-- 鍵・認可・個人情報に関わる変更、コストが発生する選択、DB・フレームワーク・アーキテクチャを変える大きな決断。
-- 自動マージなどの操作が、権限の確認で拒否されたとき。**同じ操作を言い換えて繰り返さず**、何をしたかったかと理由を伝え、許可の方法を聞く。
+## 7. フェーズ完了時のセキュリティチェック
+
+`.claude/todo/phaseN.md` のタスクがすべてマージされたら、次のフェーズへ進む前に、レビュー用サブエージェント (読み取りのみ) に確認させる。観点:
+
+- **秘密情報**: `git ls-files` と履歴に `.env`、`sb_secret_`、`service_role`、`eyJ`、`ANTHROPIC_API_KEY` がないか。`VITE_` に secret を入れていないか。
+- **DB**: 全テーブルで RLS が有効か。クライアントが書き換えてはいけない列 (コイン、スコア、状態) を拒否できているか。
+- **API**: 全ルートに認証があるか。他人の `user_id` を指定できないか。入力を zod で検証しているか。CORS は必要な Origin だけか。エラーに内部情報が出ていないか。
+- **フロント**: secret を持っていないか。`dangerouslySetInnerHTML` などの XSS がないか。
+- **依存**: `pnpm audit` で high 以上がないか。
+
+結果は重大度 (高 / 中 / 低) 別に Issue にする。**高は直るまで次のフェーズに進まない** (`progress.md` のブロッカーに書く)。RLS を実際に攻撃して試す確認は、親が `supabase start` で行う。
+
+その後、`staging` への PR を親が作る (`dev → staging`)。マージはデプロイを伴うので、人に確認する。
+
+## 8. 止まる条件 (人に聞く)
+
+- **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワークの変更)、**取り消しにくい外部操作** (`staging` / `main` へのマージ、本番データの変更、force push)。
+- 操作が権限の確認で拒否されたとき。**言い換えて繰り返さない。** 何をしたかったかと理由を伝え、許可の方法を聞く。
 - 要件どうしが矛盾し、どちらを取るかで画面や DB が大きく変わるとき。
+
+聞いている間も、関係のない Issue は進める。待ちの内容は `progress.md` のブロッカーに書く。
+
+## 9. 次の波へ
+
+`git fetch origin` して 2 に戻る。Ready がなくなったら、`docs/specs/` と `.claude/todo/phaseN.md` から足りない作業を起票して続ける。新しく分かった作業は、その場で `phaseN.md` に足して起票してよい。
+
+## 落とし穴 (実際に起きたこと)
+
+- `git add -A .claude` で、worktree が埋め込みリポジトリとして誤コミットされかけた。**`git add <パス>` で対象を指定する。**
+- macOS の bash は 3.2。`declare -A` などの bash 4 の機能をスクリプトで使わない。
+- worktree で隔離されたエージェントは、`cd ... && git ...` のような複合コマンドを拒否される。git は 1 コマンドずつ実行する。
+- `gh project item-list` の既定は 30 件まで。`--limit 200` を付ける (`set-status.sh` は対応済み)。
