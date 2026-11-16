@@ -54,6 +54,8 @@
 - 言語: TypeScript
 - フロント: React (ライブラリは各自判断)。実装前に `.claude/skills/react-best-practices/` (Vercel 製の React の性能ルール) を使う
 - バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く (`.claude/skills/hono/SKILL.md`)。
+- ゲーム性 (キャラの動き・演出): **Motion** (バネ・出入り・ドラッグ) と **canvas-confetti** (紙吹雪)。着せ替えは、手書き SVG をパーツ (`<g>`) に分けて重ねる (ライブラリなし)。Rive / Lottie / PixiJS / vaul は入れない (素材と学習コストが期限に合わない)。
+- フォーマッタ・リンタ: **Biome**。**コミット前に `pnpm exec biome check --write <触ったパス>`** (全体は `pnpm check`)。エラーは直す。直せない理由があるときだけ `biome-ignore` に理由を書く。
 - DB: **Supabase** (認証も Supabase Auth)。Workers からは `supabase-js` (HTTP) で接続する。skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。
 - デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
 
