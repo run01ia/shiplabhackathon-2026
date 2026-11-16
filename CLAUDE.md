@@ -30,6 +30,7 @@
 - チーム・役割分担・スケジュール: [docs/project-overview.md](docs/project-overview.md)
 - フェーズ別の予定: [.claude/todo/phase1.md](.claude/todo/phase1.md) 〜 [phase5.md](.claude/todo/phase5.md)
 - **作業中タスクの進捗ボード: [.claude/todo/progress.md](.claude/todo/progress.md)**
+- **アーキテクチャ (React + Hono の構成、層、ブランチとデプロイ): [docs/architecture.md](docs/architecture.md)**
 - docs 全体の目次: [docs/index.md](docs/index.md)
 
 ## 画面・デザインの前提 (スマホアプリ)
@@ -47,7 +48,7 @@
 - フロント: React (ライブラリは各自判断)
 - バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。詳細は `.claude/skills/hono/SKILL.md`。
 - DB: **Supabase** (認証も Supabase Auth を使う)。公式 skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。Workers からは `supabase-js` (HTTP) で接続する。
-- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
+- デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。**`staging` と `main` だけデプロイ** (`dev` と feature はしない)。ブランチ運用は [docs/architecture.md](docs/architecture.md)。公式 skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
 
 ## 開発ルール
 - **機能ごとにブランチを切り、PR を出す。** `main` へ直接 push しない。
