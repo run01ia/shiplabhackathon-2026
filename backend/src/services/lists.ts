@@ -89,7 +89,7 @@ export const createListService = (d: Deps) => {
       await shopping(userId, listId)
       await item(listId, itemId)
       await d.lists.updateItem(itemId, { price, isChecked: true })
-      return detail((await owned(userId, listId)))
+      return detail(await owned(userId, listId))
     },
 
     async addExtra(

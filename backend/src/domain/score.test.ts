@@ -12,7 +12,11 @@ describe('isWithinBudget', () => {
 
 describe('completionRate', () => {
   it('リスト外を除いた購入済みの割合', () => {
-    const items = [planned(true), planned(false), { isChecked: true, isExtra: true, isUnnecessary: false }]
+    const items = [
+      planned(true),
+      planned(false),
+      { isChecked: true, isExtra: true, isUnnecessary: false },
+    ]
     expect(completionRate(items)).toBe(0.5)
   })
 })
