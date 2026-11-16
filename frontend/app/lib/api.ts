@@ -1,8 +1,9 @@
 import { hc } from "hono/client";
-import type { Hono } from "hono";
+// type-only: backend の実行時コードは front に取り込まない (型だけ共有する Hono RPC)
+import type { AppType } from "@backend/app";
 
-// TODO: backend の `AppType` が出来たら、ここを backend の型に置き換える (手で重複して書かない)。
-// 今は仮の型。
-type AppType = Hono;
+const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
-export const api = hc<AppType>(import.meta.env.VITE_API_URL ?? "http://localhost:3000");
+/** アクセストークンを Authorization: Bearer で付ける型付きクライアント */
+export const createApi = (accessToken: string) =>
+  hc<AppType>(baseUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
