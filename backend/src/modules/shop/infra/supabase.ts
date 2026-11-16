@@ -1,25 +1,39 @@
 import type { Db } from '../../../shared/supabase'
-import type { BuyResult, ShopRepo } from '../repository'
+import type { BuyResult, DropPolicy, Rarity, ShopItem, ShopRepo } from '../repository'
 
 type BuyFailure = Extract<BuyResult, { ok: false }>['reason']
 const BUY_FAILURES: BuyFailure[] = ['item_not_found', 'already_owned', 'insufficient_coins']
 
-export const createSupabaseShopRepo = (db: Db): ShopRepo => ({
-  async listItems(userId) {
-    const [items, mine] = await Promise.all([
-      db.from('items').select('id, key, name, price').order('price'),
-      db.from('user_items').select('item_id, equipped').eq('user_id', userId),
-    ])
-    if (items.error) throw items.error
-    if (mine.error) throw mine.error
-    const owned = new Map(mine.data.map((r) => [r.item_id as string, r.equipped as boolean]))
-    return items.data.map((i) => ({
-      key: i.key as string,
-      name: i.name as string,
-      price: i.price as number,
-      owned: owned.has(i.id as string),
-      equipped: owned.get(i.id as string) ?? false,
-    }))
+const listItems = async (db: Db, userId: string): Promise<ShopItem[]> => {
+  const [items, mine] = await Promise.all([
+    db.from('items').select('id, key, name, price, rarity').order('price'),
+    db.from('user_items').select('item_id, equipped').eq('user_id', userId),
+  ])
+  if (items.error) throw items.error
+  if (mine.error) throw mine.error
+  const owned = new Map(mine.data.map((r) => [r.item_id as string, r.equipped as boolean]))
+  return items.data.map((i) => ({
+    key: i.key as string,
+    name: i.name as string,
+    price: i.price as number,
+    rarity: i.rarity as Rarity | null,
+    owned: owned.has(i.id as string),
+    equipped: owned.get(i.id as string) ?? false,
+  }))
+}
+
+export const createSupabaseShopRepo = (db: Db, drops: DropPolicy): ShopRepo => ({
+  listItems: (userId) => listItems(db, userId),
+  async rollDrop(userId) {
+    const pick = drops.pick(await listItems(db, userId))
+    // 所持追加 (またはコイン加算) は rpc の 1 トランザクション。同時に同じ帽子が当たったら、コインになる
+    const { data, error } = await db.rpc('grant_drop', {
+      p_user_id: userId,
+      p_item_key: pick?.key ?? null,
+      p_coins: drops.coins,
+    })
+    if (error) throw error
+    return pick && data === 'item' ? pick : { coins: drops.coins }
   },
   async buy(userId, itemKey) {
     // コイン減算と所持追加は rpc (Postgres 関数) の 1 トランザクション

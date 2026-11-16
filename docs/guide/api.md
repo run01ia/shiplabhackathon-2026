@@ -152,11 +152,13 @@ Authorization: Bearer <アクセストークン>
     { "label": "リスト通り", "points": 10 },
     { "label": "不要買いをやめた", "points": 5 }
   ],
-  "total": 45
+  "total": 45,
+  "drop": { "key": "straw", "name": "むぎわらぼうし", "rarity": "common" }
 }
 ```
 
 - 予算ちょうどは「予算内」です。
+- `drop` (おみやげ): 予算内で、1 件以上買ったときだけ入ります。帽子なら `{ key, name, rarity }` (`rarity` は `common` ふつう 70% / `rare` レア 25% / `epic` 激レア 5%)、帽子を出せないときは `{ "coins": 10 }`、条件を満たさなければ `null`。まだ持っていない帽子から選び、そのレア度を全部持っていたら下のレア度へ、下にもなければコインです (規則は `backend/src/modules/shop/domain/drop.ts`)。
 - `completionRate`: リスト外を除く品目のうち、購入済みの割合 (0〜1)。
 - `asPlanned`: リストの品目をすべて買い、リスト外の購入がないとき `true`。
 - `breakdown` の 1 行ごとに、ポイントの履歴 (`point_logs`) に 1 行残ります。
@@ -166,10 +168,12 @@ Authorization: Bearer <アクセストークン>
 
 ```json
 [
-  { "key": "hat", "name": "ぼうし", "price": 30, "owned": false, "equipped": false },
-  { "key": "ribbon", "name": "リボン", "price": 40, "owned": false, "equipped": false }
+  { "key": "hat", "name": "ぼうし", "price": 30, "rarity": null, "owned": false, "equipped": false },
+  { "key": "straw", "name": "むぎわらぼうし", "price": 0, "rarity": "common", "owned": true, "equipped": false }
 ]
 ```
+
+`rarity` が `null` でないアイテムは、おみやげ限定です (買えません。`buy` は `404`)。持っていれば着られます。
 
 ### `POST /shop/items/:key/buy`
 

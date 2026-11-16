@@ -39,4 +39,5 @@ const { tap } = useCatTap()
 5. `characters/index.ts` の `CHARACTERS` に 1 行足し、`<Character definition={CHARACTERS.dog} />` で描く。
 
 アクセサリーを足すときは、`accessories.tsx` に `key` (backend の `items.key` と同じ)、`slot`、絵 (slot の中心が 0,0) を足す。
+おみやげ (予算内クリアのドロップ) 限定の帽子は、`items.rarity` に値を入れる (`straw` `beanie` `chef` `wizard`)。ショップの棚には出ず、持っていれば「きがえ」に出る。箱の演出は `features/shopping/components/Souvenir.tsx`。
 将来は `profiles` にキャラの key、`items` に slot の列を足せば、DB から選べる。
