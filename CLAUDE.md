@@ -120,8 +120,12 @@ gh project item-edit --id $IID --project-id PVT_kwHODGX05s4Brr7P --field-id PVTS
 - タスクの開始、PR 作成、完了、中断のたびに、親エージェントが `progress.md` を更新する。サブエージェントには更新させない。
 - 子エージェントは、割り当てられた worktree の中だけで作業する。
 
+## フェーズの完了ごとにセキュリティチェック
+- **各 Phase (`.claude/todo/phaseN.md`) が終わるたびに、セキュリティチェックを挟む。** 手順は `.claude/skills/autopilot/SKILL.md` の 5.6。
+- 見つけた問題は Issue にして直す。高 (鍵の漏れ、RLS の穴、認可の欠落) は、直るまで次の Phase に進まない。
+
 ## 予定管理
-`.claude/todo/phaseN.md` にフェーズごとのタスクを書く。完了したら `[x]` にする。
+`.claude/todo/phaseN.md` にフェーズごとのタスクを書く。完了したら `[x]` にする。**フェーズ = `.claude/todo/` のファイル。新しいタスクが見つかったら、自分でそこに追加してよい** (必要なら Issue も起票する。聞かなくてよい)。
 
 | Phase | ゴール |
 |---|---|
