@@ -26,6 +26,7 @@
 - 固定済みの契約 (変えない): {{API のパス・リクエスト・レスポンスの型、テーブル名など。なければ「なし」}}
 
 ## 禁止
+- Biome のエラーを残したまま渡すこと (コミット前に `pnpm exec biome check --write <触ったパス>` を実行する)。
 - 範囲外のファイルの変更。`package.json` と `pnpm-lock.yaml` の変更 (ライブラリが必要なら、入れずに報告する)。
 - `supabase start` (他の worktree と競合する)。DB なしで動く memory 実装で確認する。
 - `.env`、鍵、トークンのコミット。`git add -A` と `git add .` (必ず `git add <パス>`)。
