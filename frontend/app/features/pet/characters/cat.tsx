@@ -123,6 +123,26 @@ export const cat: CharacterDefinition = {
           </>
         ),
       },
+      sleep: {
+        eyes: (
+          <path
+            d="M66 106q10 8 20 0M114 106q10 8 20 0"
+            fill="none"
+            stroke={S}
+            strokeWidth="4.5"
+            strokeLinecap="round"
+          />
+        ),
+        mouth: (
+          <path
+            d="M95 129q5 5 10 0"
+            fill="none"
+            stroke={S}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+          />
+        ),
+      },
       sad: {
         eyes: (
           <>

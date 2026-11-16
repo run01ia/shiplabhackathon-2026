@@ -36,6 +36,14 @@
       transform: translateX(14px);
     }
   }
+  /* 夜空の星 (またたく) */
+  --animate-twinkle: twinkle 2.8s ease-in-out infinite;
+  @keyframes twinkle {
+    50% {
+      opacity: 0.25;
+      transform: scale(0.6);
+    }
+  }
 }
 
 @layer base {

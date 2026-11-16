@@ -5,7 +5,8 @@ export type Slot = 'head' | 'face' | 'neck'
 /** 描く順 (下から上) */
 export const SLOTS: readonly Slot[] = ['neck', 'face', 'head']
 
-export type Mood = 'happy' | 'sad' | 'joy'
+/** sleep = 居眠り (しばらく操作がないとき) */
+export type Mood = 'happy' | 'sad' | 'joy' | 'sleep'
 export type Side = 'left' | 'right'
 
 /** アニメーションはこの名前でパーツを指す (キャラに依存しない) */

@@ -6,8 +6,10 @@ import { Coin } from '~/components/Coin'
 import { ProgressBar } from '~/components/ProgressBar'
 import { Screen } from '~/components/Screen'
 import { Toast } from '~/components/Toast'
+import { BIG_EVERY } from '../animations'
 import type { LoginReward, Me, ShopItem, ShopResult } from '../api'
 import { useCatTap } from '../hooks/useCatTap'
+import { useDoze } from '../hooks/useDoze'
 import { useShopActions } from '../hooks/useShopActions'
 import type { Mood } from '../types'
 import { Character } from './Character'
@@ -38,6 +40,10 @@ const confetti = async (y: number) => {
   })
 }
 
+/** なでたときのひとこと (順番に出す)。BIG_EVERY 回目は大喜び */
+const PET_LINES = ['えへへ', 'もっとなでて', 'ごろごろ…', 'くすぐったい！']
+const DOZE_MS = 20_000
+
 /** ホーム: レベル・コイン、ペット、ログイン報酬の演出、ショップ / きがえ */
 export function HomeScreen({ me, items, reward, footer }: Props) {
   const { tap } = useCatTap()
@@ -57,6 +63,18 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
   const [pets, setPets] = useState(0)
 
   const coins = me.coins - pendingCoins
+  // しばらく触らないと居眠りする。なでる・ボタンを押すと起きる
+  const asleep = useDoze(DOZE_MS)
+  const shownMood: Mood = mood === 'happy' && asleep ? 'sleep' : mood
+
+  const pet = () => {
+    tap()
+    const n = pets + 1
+    const big = n % BIG_EVERY === 0
+    setPets(n)
+    setBubble(asleep ? 'ふにゃ…おはよ！' : big ? 'だいすき！' : PET_LINES[n % PET_LINES.length])
+    feel('joy', big ? 1400 : 900)
+  }
 
   useEffect(() => {
     if (rewards.length > 0) confetti(0.45)
@@ -126,16 +144,12 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
             <Coin amount={coins} />
           </div>
         </div>
-        <PetRoom bubble={bubble}>
+        <PetRoom bubble={shownMood === 'sleep' ? 'すやすや…' : bubble}>
           <button
             type="button"
             className="relative mx-auto block cursor-pointer border-0 bg-transparent p-0"
             aria-label={`${me.petName}をなでる`}
-            onClick={() => {
-              tap()
-              setPets((n) => n + 1)
-              feel('joy', 900)
-            }}
+            onClick={pet}
           >
             <motion.div
               key={me.equippedItems.join(',')}
@@ -145,7 +159,7 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
             >
               <Character
                 accessories={me.equippedItems}
-                mood={mood}
+                mood={shownMood}
                 size={220}
                 pulse={pets}
                 shadow
@@ -205,11 +219,15 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
           onCoin={(amount) => {
             setPendingCoins((p) => Math.max(0, p - amount))
             pulseCoin()
+            // コインが届くたびに、猫が「ぺち」と数える
+            tap()
           }}
           onDone={() => {
             setRewards([])
             setPendingCoins(0)
             setBubble('おかえり！ えらい！')
+            // 全部届いたら大技 (宙返り) で喜ぶ
+            setPets((n) => n + BIG_EVERY - (n % BIG_EVERY))
             feel('joy')
           }}
         />
