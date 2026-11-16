@@ -10,7 +10,7 @@ description: 機能ごとのブランチから PR を作成する。「PR 作っ
 ## ルール
 
 - 1 PR = 1 機能。`main` へ直接 push しない。
-- PR のベースは基本 `main` (`gh pr create --base main`)。聞き返さずにそのまま作ってよい。
+- PR のベースは基本 **`dev`** (`gh pr create --base dev`)。聞き返さずにそのまま作ってよい。`dev` から `main` へのマージは別途。
 - ブランチ名: `feat/xxx`, `fix/xxx`, `chore/xxx`, `docs/xxx`
 - タイトル: `{type}: {概要}` (`commit` skill の type と同じ。日本語、70 字以内)
 - 本文は次の 3 項目だけ。各 1〜3 行、箇条書き可。
@@ -22,12 +22,12 @@ description: 機能ごとのブランチから PR を作成する。「PR 作っ
 ```
 
 - 動作確認は「画面で何をしたか」または「API を何で叩いたか」を 1 行で書く。テストコードは書かない方針。
-- 関連 Issue があれば `Closes #N` を 1 行足す。
+- **Issue 駆動なので `Closes #N` を必ず入れる。** Issue がなければ先に起票する。
 - スクショやログは、画面変更のときだけ。
 
 ## 手順
 
-1. `git status` と `git log main..HEAD --oneline` で、PR に含まれる変更を確認する。
+1. `git status` と `git log origin/dev..HEAD --oneline` で、PR に含まれる変更を確認する。
 2. 未コミットがあれば先に `commit` skill でコミットする。
 3. `git push -u origin <branch>` する。
 4. `gh pr create` を実行する。
