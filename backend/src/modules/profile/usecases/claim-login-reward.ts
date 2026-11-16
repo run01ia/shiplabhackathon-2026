@@ -1,6 +1,7 @@
-import { decideLoginRewards, toJstDate } from '../../../domain'
+import { toJstDate } from '../../../shared/domain/date'
 import { AppError } from '../../../shared/errors'
 import type { WalletRepo } from '../../wallet/repository'
+import { decideLoginRewards } from '../domain/reward'
 import type { ProfileRepo } from '../repository'
 
 type Deps = {

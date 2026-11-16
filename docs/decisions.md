@@ -29,3 +29,4 @@
 | D23 | 11-16 | キャラはデータで定義し、猫以外に拡張できる設計にする | 将来、猫以外のキャラに派生したい | 猫専用の作り | 有効 |
 | D24 | 11-16 | レシートは OCR ではなく画像を読める AI で判定 (Haiku、C 優先度) | 読み取りと分類が 1 回で済み、不要なお菓子などを判定できる。コストは少額 | OCR サービス | 有効 (未着手) |
 | D25 | 11-16 | backend を feature モジュール (lists、wallet、shop、profile) + use-case 層 (1 操作 = 1 ファイル) にし、禁止 import を Biome で機械的に守る | 1 ファイルに機能が詰まり、use-case の単位がなく、スパゲティ化しかけた | 技術の種類で切ったフォルダ (routes / services / repositories) | 有効 |
+| D27 | 11-16 | backend の domain を機能ごとに分ける (`modules/<機能>/domain/`、共通は `shared/domain/`) | 業務の規則がその機能の中にあると、直す場所に迷わない | 平らな `domain/` のまま | 有効 |

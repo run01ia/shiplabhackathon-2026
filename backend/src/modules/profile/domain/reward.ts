@@ -1,4 +1,4 @@
-import { toJstDate } from './date'
+import { toJstDate } from '../../../shared/domain/date'
 
 export const LOGIN_BONUS_COINS = 20
 export const NO_SHOPPING_BONUS_COINS = 30
