@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>お買い物上手 画面モック</title>
+<style>
+:root{--ink:#2b2118;--cream:#fff4dc;--paper:#fffdf6;--red:#f2542d;--mint:#3dbe8b;--sun:#ffc93c;--pink:#ffb3a7;--gray:#d9ccb4;--sh:0 4px 0 var(--ink)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;color:var(--ink);background:#e9dfc8;font-size:16px;font-weight:700}
+button,input{font:inherit;color:inherit}
+.stage{display:flex;gap:32px;justify-content:center;align-items:flex-start;padding:24px}
+.side{width:230px;position:sticky;top:24px;display:none}
+.side h1{font-size:18px;margin-bottom:4px}.side p{font-size:12px;font-weight:400;margin-bottom:12px;line-height:1.5}
+.side h2{font-size:12px;margin:14px 0 6px;color:#7a6a50}
+.side button{display:block;width:100%;text-align:left;padding:7px 10px;margin-bottom:4px;border:2px solid var(--ink);border-radius:10px;background:var(--paper);cursor:pointer;font-size:13px}
+.side button.on{background:var(--sun)}
+.phone{position:relative;width:390px;height:844px;background:var(--cream);border:3px solid var(--ink);border-radius:38px;overflow:hidden;box-shadow:0 8px 0 var(--ink)}
+@media(max-width:600px){.stage{padding:0}.phone{width:100vw;height:100dvh;border:0;border-radius:0;box-shadow:none}}
+@media(min-width:900px){.side{display:block}}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;padding:calc(env(safe-area-inset-top) + 20px) 18px 96px;overflow-y:auto}
+.screen.on{display:flex}
+.screen.notab{padding-bottom:24px}
+h2.t{font-size:22px;margin-bottom:12px}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:var(--sh);padding:14px;margin-bottom:14px}
+.btn{display:block;width:100%;min-height:52px;padding:12px;border:3px solid var(--ink);border-radius:16px;background:var(--red);color:#fff;font-size:17px;box-shadow:var(--sh);cursor:pointer;margin-bottom:12px;text-align:center}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+.btn.sub{background:var(--paper);color:var(--ink)}.btn.mint{background:var(--mint)}.btn.sun{background:var(--sun);color:var(--ink)}
+.btn.sm{min-height:44px;font-size:14px;padding:8px}
+input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink);border-radius:14px;background:#fff;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}.sp{justify-content:space-between}
+.coin{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:3px solid var(--ink);border-radius:20px;padding:4px 12px 4px 6px}
+.coin i{width:22px;height:22px;border-radius:50%;background:var(--sun);border:3px solid var(--ink);display:inline-block}
+.bar{height:20px;border:3px solid var(--ink);border-radius:12px;background:#fff;overflow:hidden}.bar b{display:block;height:100%;background:var(--mint)}
+.small{font-size:12px;font-weight:400;color:#6d5d45}
+.pet{display:block;margin:0 auto}.pet svg{width:100%;height:100%;display:block}
+.a,.sadm,.sleep{display:none}
+.pet.cap .a-cap,.pet.bow .a-bow,.pet.crown .a-crown,.pet.glass .a-glass{display:block}
+.pet.sad .happym{display:none}.pet.sad .sadm{display:block}
+.room{background:linear-gradient(#bfe6f2 0 62%,#e8c48b 62%);border:3px solid var(--ink);border-radius:22px;box-shadow:var(--sh);padding:14px 0 6px;margin-bottom:14px;position:relative}
+.bubble{position:absolute;top:12px;right:12px;background:#fff;border:3px solid var(--ink);border-radius:14px;padding:6px 10px;font-size:13px}
+.item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:2px dashed var(--gray)}.item:last-child{border:0}
+.chk{width:32px;height:32px;border:3px solid var(--ink);border-radius:10px;background:#fff;flex:none;cursor:pointer}
+.item.done .chk{background:var(--mint)}.item.done .nm{text-decoration:line-through;color:#9a8a70}
+.nm{flex:1}.yen{font-variant-numeric:tabular-nums}
+.tabs{position:absolute;left:0;right:0;bottom:0;display:none;background:var(--paper);border-top:3px solid var(--ink);padding:8px 12px calc(env(safe-area-inset-bottom) + 8px);justify-content:space-around;z-index:5}
+.tabs.on{display:flex}
+.tabs button{flex:1;min-height:52px;border:0;background:none;font-size:12px;cursor:pointer;opacity:.5}
+.tabs button.on{opacity:1}.tabs svg{display:block;margin:0 auto 2px;width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:2.5;stroke-linejoin:round}
+.sheet{position:absolute;inset:0;background:rgba(43,33,24,.45);display:none;align-items:flex-end;z-index:9}.sheet.on{display:flex}
+.sheet>div{width:100%;background:var(--cream);border:3px solid var(--ink);border-bottom:0;border-radius:26px 26px 0 0;padding:20px 18px 28px}
+.pts .r{display:flex;justify-content:space-between;padding:6px 0;border-bottom:2px dashed var(--gray)}.pts .r:last-child{border:0}
+.plus{color:#1f8d62}.minus{color:#d23a17}
+.seg{display:flex;border:3px solid var(--ink);border-radius:14px;overflow:hidden;margin-bottom:14px;background:#fff}.seg button{flex:1;min-height:44px;border:0;background:none;cursor:pointer}.seg button.on{background:var(--sun)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gi{background:var(--paper);border:3px solid var(--ink);border-radius:16px;box-shadow:var(--sh);padding:10px;text-align:center}.gi .ic{height:64px;display:grid;place-items:center;font-size:34px}
+.toast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:20px;z-index:20;display:none;font-size:14px;white-space:nowrap}
+.map{height:150px;border:3px solid var(--ink);border-radius:16px;background:repeating-linear-gradient(0deg,#e7f1d6 0 24px,#dbe9c3 24px 25px),#e7f1d6;position:relative;margin-bottom:12px}
+.map i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;border:3px solid var(--red);background:rgba(242,84,45,.2)}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:30;overflow:hidden}
+.rw{position:absolute;left:0;right:0;margin:0 auto;width:fit-content;top:34%;background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:var(--sh);padding:14px 22px;text-align:center;white-space:nowrap;animation:pop .45s}
+.rw small{display:block;font-size:14px;font-weight:700;margin-bottom:2px}.rw b{font-size:34px;color:#1f8d62}
+.fc{position:absolute;width:24px;height:24px;border-radius:50%;background:var(--sun);border:3px solid var(--ink)}
+.pop{animation:pop .5s}@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.bob{animation:bob 2.4s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-6px)}}
+</style>
+</head>
+<body>
+<div class="stage">
+<aside class="side">
+  <h1>お買い物上手</h1>
+  <p>画面モックです。動きはざっくり、見た目と流れの確認用。幅 390px のスマホ画面で表示しています。</p>
+  <h2>A 絶対</h2>
+  <button data-go="login">1 ログイン</button><button data-go="home">2 ホーム (ペット)</button><button data-go="list">3 買い物リスト</button><button data-go="shop">4 買い物中</button><button data-go="ask">5 リスト外の確認</button><button data-go="fin">6 買い物終了</button><button data-go="res">7 結果・判定</button>
+  <button data-fx="1" style="background:var(--sun)">▶ 起動ボーナス演出をもう一度</button>
+  <h2>B できれば</h2>
+  <button data-go="store">8 スーパー登録</button><button data-go="shopitem">9 ショップ</button><button data-go="dress">10 きがえ</button>
+</aside>
+
+<div class="phone" id="phone">
+
+<!-- 1 login -->
+<section class="screen notab" id="login" style="justify-content:center">
+  <div class="pet cap bob" style="width:170px;height:170px"></div>
+  <h2 class="t" style="text-align:center;font-size:28px;margin-top:8px">お買い物上手</h2>
+  <p class="small" style="text-align:center;margin-bottom:22px">買い物をがんばって、もちおを育てよう</p>
+  <input class="f" placeholder="メールアドレス"><input class="f" type="password" placeholder="パスワード">
+  <button class="btn" data-go="home">ログイン</button>
+  <button class="btn sub" data-go="home">はじめて？ 新規登録</button>
+</section>
+
+<!-- 2 home -->
+<section class="screen" id="home" data-tab="home">
+  <div class="row sp" style="margin-bottom:12px">
+    <div><div class="small">買い物上手</div><b style="font-size:20px">Lv.3</b></div>
+    <div style="flex:1;margin:0 12px"><div class="bar"><b style="width:62%;background:var(--sun)"></b></div></div>
+    <div class="coin"><i></i><span id="coinN">120</span></div>
+  </div>
+  <div class="room"><div class="bubble" id="bubble">今日もよろしくね</div><div class="pet cap bob" id="homePet" style="width:230px;height:230px"></div></div>
+  <button class="btn" data-go="list">買い物リストを作る</button>
+</section>
+
+<!-- 3 list -->
+<section class="screen" id="list" data-tab="list">
+  <h2 class="t">買い物リスト</h2>
+  <div class="card"><div class="small">今日の予算</div><div class="row sp"><b style="font-size:30px">¥ 2,000</b><span class="small">タップで変更</span></div>
+    <div class="bar" style="margin-top:8px"><b style="width:78%"></b></div><div class="small" style="margin-top:6px">予定の合計 ¥1,560 / 残り ¥440</div></div>
+  <div class="card">
+    <div class="item"><div class="nm">牛乳</div><div class="yen">¥230</div></div>
+    <div class="item"><div class="nm">たまご</div><div class="yen">¥260</div></div>
+    <div class="item"><div class="nm">キャベツ</div><div class="yen">¥180</div></div>
+    <div class="item"><div class="nm">鶏むね肉</div><div class="yen">¥420</div></div>
+    <div class="item"><div class="nm">食パン</div><div class="yen">¥470</div></div>
+  </div>
+  <div class="row"><input class="f" style="margin:0" placeholder="品目を追加"><input class="f" style="margin:0;width:100px" placeholder="¥"></div>
+  <p class="small" style="margin:12px 0">スーパーの近くでアプリを開くと、自動で「買い物中」画面に切り替わります。</p>
+  <button class="btn" data-go="shop">買い物スタート</button>
+</section>
+
+<!-- 4 shopping -->
+<section class="screen notab" id="shop">
+  <div class="row sp" style="margin-bottom:10px"><b>買い物中</b><button class="btn sub sm" style="width:auto;margin:0;padding:8px 14px" data-go="home">もどる</button></div>
+  <div class="card"><div class="row"><div class="pet" id="shopPet" style="width:70px;height:70px"></div>
+    <div style="flex:1"><div class="small">のこり予算</div><b style="font-size:30px" id="remain">¥2,000</b></div></div>
+    <div class="bar" style="margin-top:8px"><b id="gauge" style="width:100%"></b></div></div>
+  <div class="card" id="checks">
+    <div class="item" data-p="230"><div class="chk"></div><div class="nm">牛乳</div><div class="yen">¥230</div></div>
+    <div class="item" data-p="260"><div class="chk"></div><div class="nm">たまご</div><div class="yen">¥260</div></div>
+    <div class="item" data-p="180"><div class="chk"></div><div class="nm">キャベツ</div><div class="yen">¥180</div></div>
+    <div class="item" data-p="420"><div class="chk"></div><div class="nm">鶏むね肉</div><div class="yen">¥420</div></div>
+    <div class="item" data-p="470"><div class="chk"></div><div class="nm">食パン</div><div class="yen">¥470</div></div>
+  </div>
+  <button class="btn sub" data-go="ask">リストにないものが気になる…</button>
+  <button class="btn mint" data-go="fin">買い物おわり</button>
+</section>
+
+<!-- 6 finish -->
+<section class="screen notab" id="fin">
+  <h2 class="t">おつかれさま！</h2>
+  <div class="card"><div class="small">レジでいくら使った？</div><input class="f" style="font-size:28px;margin:6px 0 0" value="¥ 1,980"></div>
+  <div class="card"><div class="small">リスト外で買ったもの</div><div class="item"><div class="nm">チョコ菓子</div><div class="yen">¥320</div></div><div class="small">リスト外で買ったので、不要買いとしてカウント</div></div>
+  <button class="btn" data-go="res">判定する</button>
+</section>
+
+<!-- 7 result -->
+<section class="screen notab" id="res">
+  <div class="seg" id="resSeg"><button class="on" data-r="ok">予算内</button><button data-r="ng">予算オーバー</button></div>
+  <div class="card" style="text-align:center"><div class="pet cap" id="resPet" style="width:150px;height:150px"></div><h2 class="t" id="resT" style="margin:6px 0 0">予算内でクリア！</h2><div class="small" id="resS">のこり ¥20 でおさまった</div></div>
+  <div class="card pts" id="resPts"></div>
+  <button class="btn sun" data-go="home">ホームにもどる</button>
+</section>
+
+<!-- 8 store -->
+<section class="screen" id="store" data-tab="list">
+  <h2 class="t">よく行くスーパー</h2>
+  <div class="map"><i></i></div>
+  <button class="btn" id="reg">今いる場所を登録</button>
+  <div class="card"><div class="item"><div class="nm">スーパーマルエイ 駅前店</div><span class="small">200m 以内</span></div></div>
+  <p class="small" style="margin-bottom:12px">登録したお店の近くでアプリを開くと、自動で「買い物中」画面になります。位置情報はアプリを開いたときだけ使います。</p>
+  <button class="btn sub" data-go="shop">お店の近くで開いたときのデモ</button>
+</section>
+
+<!-- 9 shop items -->
+<section class="screen" id="shopitem" data-tab="shopi">
+  <div class="row sp"><h2 class="t" style="margin:0">ショップ</h2><div class="coin"><i></i><span class="coinN2">120</span></div></div>
+  <div class="seg" style="margin-top:12px"><button class="on">ショップ</button><button data-go="dress">きがえ</button></div>
+  <div class="grid" id="shelf"></div>
+</section>
+
+<!-- 10 dress -->
+<section class="screen" id="dress" data-tab="shopi">
+  <h2 class="t">きがえ</h2>
+  <div class="seg"><button data-go="shopitem">ショップ</button><button class="on">きがえ</button></div>
+  <div class="room" style="padding-bottom:0"><div class="pet cap bob" id="dressPet" style="width:220px;height:220px"></div></div>
+  <div class="grid" id="closet"></div>
+</section>
+
+<!-- 5 ask sheet -->
+<div class="sheet" id="ask"><div>
+  <h2 class="t">ほんとうに必要？</h2>
+  <input class="f" value="チョコ菓子"><input class="f" value="¥ 320">
+  <button class="btn mint" data-close="ask">やめておく +5</button>
+  <button class="btn sub" data-close="ask">それでも買う −15</button>
+</div></div>
+
+<nav class="tabs" id="tabs">
+  <button data-go="home" data-t="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10H3z"/></svg>ホーム</button>
+  <button data-go="list" data-t="list"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 9h6M9 13h6"/></svg>リスト</button>
+  <button data-go="shopitem" data-t="shopi"><svg viewBox="0 0 24 24"><path d="M4 8h16l-1 13H5zM8 8a4 4 0 018 0"/></svg>ショップ</button>
+</nav>
+<div class="toast" id="toast"></div>
+<div id="fx"></div>
+</div>
+</div>
+
+<script>
+const CAT=`<svg viewBox="0 0 200 200"><ellipse cx="100" cy="172" rx="52" ry="28" fill="#f6b26b" stroke="#2b2118" stroke-width="5"/>
+<ellipse cx="72" cy="188" rx="16" ry="9" fill="#fff4dc" stroke="#2b2118" stroke-width="4"/><ellipse cx="128" cy="188" rx="16" ry="9" fill="#fff4dc" stroke="#2b2118" stroke-width="4"/>
+<path d="M44 78L38 26l48 32z" fill="#f6b26b" stroke="#2b2118" stroke-width="5" stroke-linejoin="round"/><path d="M156 78l6-52-48 32z" fill="#f6b26b" stroke="#2b2118" stroke-width="5" stroke-linejoin="round"/>
+<path d="M50 66l-3-26 22 15z" fill="#ffb3a7"/><path d="M150 66l3-26-22 15z" fill="#ffb3a7"/>
+<ellipse cx="100" cy="112" rx="72" ry="60" fill="#f6b26b" stroke="#2b2118" stroke-width="5"/>
+<path d="M92 56v14M100 54v16M108 56v14" stroke="#c97f2e" stroke-width="5" stroke-linecap="round"/>
+<ellipse cx="62" cy="128" rx="13" ry="9" fill="#ffb3a7"/><ellipse cx="138" cy="128" rx="13" ry="9" fill="#ffb3a7"/>
+<g class="happym"><circle cx="76" cy="106" r="8" fill="#2b2118"/><circle cx="124" cy="106" r="8" fill="#2b2118"/><circle cx="79" cy="103" r="3" fill="#fff"/><circle cx="127" cy="103" r="3" fill="#fff"/>
+<path d="M88 130q6 8 12 0q6 8 12 0" fill="none" stroke="#2b2118" stroke-width="4" stroke-linecap="round"/></g>
+<g class="sadm"><path d="M66 108q10-8 20 0M114 108q10-8 20 0" fill="none" stroke="#2b2118" stroke-width="5" stroke-linecap="round"/><path d="M88 138q12-10 24 0" fill="none" stroke="#2b2118" stroke-width="4" stroke-linecap="round"/><path d="M146 112q6 10 0 16q-6-6 0-16z" fill="#7cc7e8" stroke="#2b2118" stroke-width="2"/></g>
+<path d="M95 120h10l-5 6z" fill="#e2573d" stroke="#2b2118" stroke-width="3" stroke-linejoin="round"/>
+<path d="M36 118l-22-4M36 128l-22 6M164 118l22-4M164 128l22 6" stroke="#2b2118" stroke-width="3" stroke-linecap="round"/>
+<g class="a a-cap"><path d="M52 66q48-52 96 0z" fill="#f2542d" stroke="#2b2118" stroke-width="5" stroke-linejoin="round"/><path d="M120 62q40-6 42 6q-30 4-42-6z" fill="#f2542d" stroke="#2b2118" stroke-width="5" stroke-linejoin="round"/></g>
+<g class="a a-bow"><path d="M150 52l24-14v32z" fill="#ff6fa0" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/><path d="M150 52l-24-14v32z" fill="#ff6fa0" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/><circle cx="150" cy="52" r="8" fill="#ffc93c" stroke="#2b2118" stroke-width="4"/></g>
+<g class="a a-crown"><path d="M70 62l-6-34 22 18 14-24 14 24 22-18-6 34z" fill="#ffc93c" stroke="#2b2118" stroke-width="5" stroke-linejoin="round"/></g>
+<g class="a a-glass"><circle cx="76" cy="106" r="17" fill="rgba(255,255,255,.4)" stroke="#2b2118" stroke-width="5"/><circle cx="124" cy="106" r="17" fill="rgba(255,255,255,.4)" stroke="#2b2118" stroke-width="5"/><path d="M93 106h14" stroke="#2b2118" stroke-width="5"/></g></svg>`;
+document.querySelectorAll('.pet').forEach(p=>p.innerHTML=CAT);
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+let coins=120;
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',1600)}
+function go(id){$$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
+  const sc=$('#'+id);const tab=sc&&sc.dataset.tab;$('#tabs').classList.toggle('on',!!tab);
+  $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $$('.side button').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
+  if(id==='res')renderRes('ok');
+  if(id==='home'&&cur==='login')setTimeout(playRewards,350);cur=id;}
+let cur='';
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.go;if(g==='ask'){$('#ask').classList.add('on')}else go(g)}));
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>{$('#ask').classList.remove('on');toast(b.textContent.includes('やめ')?'えらい！ +5':'−15 ざんねん…')}));
+function setCoin(v){coins=v;$('#coinN').textContent=coins;$$('.coinN2').forEach(e=>e.textContent=coins)}
+function addCoin(n){coins=Math.round(coins+n);$('#coinN').textContent=coins;$$('.coinN2').forEach(e=>e.textContent=coins)}
+$('#reg').onclick=()=>toast('この場所を登録しました');
+const BUD=2000;
+$$('#checks .item').forEach(it=>it.addEventListener('click',()=>{it.classList.toggle('done');
+  let s=0;$$('#checks .item.done').forEach(x=>s+=+x.dataset.p);const r=BUD-s;
+  $('#remain').textContent='¥'+r.toLocaleString();$('#gauge').style.width=(r/BUD*100)+'%';
+  $('#shopPet').classList.toggle('sad',r<0)}));
+const R={ok:{t:'予算内でクリア！',s:'のこり ¥20 でおさまった',sad:false,rows:[['予算内クリア',30],['リスト通りに買えた',10],['不要買いをやめた',5],['合計',45]]},
+ ng:{t:'ちょっと使いすぎ…',s:'予算を ¥320 オーバー',sad:true,rows:[['予算オーバー',-20],['不要買い 1 回',-15],['リスト作成ボーナス',10],['合計',-25]]}};
+function renderRes(k){const d=R[k];$('#resT').textContent=d.t;$('#resS').textContent=d.s;$('#resPet').classList.toggle('sad',d.sad);
+  $$('#resSeg button').forEach(b=>b.classList.toggle('on',b.dataset.r===k));
+  $('#resPts').innerHTML=d.rows.map((r,i)=>`<div class="r" ${i==3?'style="font-size:20px"':''}><span>${r[0]}</span><b class="${r[1]<0?'minus':'plus'} ${i==3?'pop':''}">${r[1]>0?'+':''}${r[1]}</b></div>`).join('')}
+$$('#resSeg button').forEach(b=>b.onclick=()=>renderRes(b.dataset.r));
+const IC=b=>`<svg viewBox="0 0 64 64" width="56" height="56" fill="none" stroke="#2b2118" stroke-width="4" stroke-linejoin="round">${b}</svg>`;
+const ITEMS=[['cap','ぼうし',IC('<path d="M8 40q24-34 48 0z" fill="#f2542d"/><path d="M40 38q20-4 22 4q-14 2-22-4z" fill="#f2542d"/>'),30],
+['bow','リボン',IC('<path d="M32 32l22-14v28zM32 32L10 18v28z" fill="#ff6fa0"/><circle cx="32" cy="32" r="6" fill="#ffc93c"/>'),40],
+['crown','おうかん',IC('<path d="M10 46L6 16l16 12 10-18 10 18 16-12-4 30z" fill="#ffc93c"/>'),200],
+['glass','めがね',IC('<circle cx="19" cy="34" r="12" fill="#fff"/><circle cx="45" cy="34" r="12" fill="#fff"/><path d="M31 34h2"/>'),60]];
+const owned=new Set(['cap']);let worn=new Set(['cap']);
+function wear(){['homePet','dressPet','login','resPet'].forEach(()=>{});
+  $$('.pet').forEach(p=>{if(p.id==='shopPet')return;['cap','bow','crown','glass'].forEach(k=>p.classList.toggle(k,worn.has(k)))})}
+function renderShop(){$('#shelf').innerHTML=ITEMS.map(i=>`<div class="gi"><div class="ic">${i[2]}</div><div>${i[1]}</div><button class="btn sm ${owned.has(i[0])?'sub':'sun'}" style="margin:8px 0 0" data-b="${i[0]}">${owned.has(i[0])?'持っている':'● '+i[3]}</button></div>`).join('');
+  $$('#shelf [data-b]').forEach(b=>b.onclick=()=>{const k=b.dataset.b,p=ITEMS.find(i=>i[0]===k)[3];if(owned.has(k))return;if(coins<p){toast('コインがたりない…');return}addCoin(-p);owned.add(k);toast('ゲット！');renderShop();renderCloset()})}
+function renderCloset(){$('#closet').innerHTML=ITEMS.filter(i=>owned.has(i[0])).map(i=>`<div class="gi"><div class="ic">${i[2]}</div><div>${i[1]}</div><button class="btn sm ${worn.has(i[0])?'mint':'sub'}" style="margin:8px 0 0" data-w="${i[0]}">${worn.has(i[0])?'きている':'きる'}</button></div>`).join('');
+  $$('#closet [data-w]').forEach(b=>b.onclick=()=>{const k=b.dataset.w;worn.has(k)?worn.delete(k):worn.add(k);wear();renderCloset()})}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function reward(label,n){const fx=$('#fx'),ph=$('#phone').getBoundingClientRect();
+  const el=document.createElement('div');el.className='rw';el.innerHTML=`<small>${label}</small><b>+${n}</b>`;fx.appendChild(el);
+  await sleep(900);
+  const t=$('#home .coin').getBoundingClientRect(),c=el.getBoundingClientRect();
+  const tx=t.left+t.width/2-ph.left,ty=t.top+t.height/2-ph.top,sx=c.left+c.width/2-ph.left,sy=c.top+c.height/2-ph.top;
+  el.animate([{opacity:1},{opacity:0}],{duration:700,fill:'forwards'});
+  const k=Math.min(8,Math.max(4,n/4|0));
+  const base=coins;let got=0;
+  const done=[...Array(k)].map((_,i)=>{const d=document.createElement('div');d.className='fc';
+    const ox=(Math.random()-.5)*90,oy=(Math.random()-.5)*40;d.style.left=(sx+ox-12)+'px';d.style.top=(sy+oy-12)+'px';fx.appendChild(d);
+    const a=d.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${tx-sx-ox}px,${ty-sy-oy}px) scale(.5)`,opacity:1,offset:.9},{transform:`translate(${tx-sx-ox}px,${ty-sy-oy}px) scale(.2)`,opacity:0}],{duration:800+i*70,delay:i*60,easing:'cubic-bezier(.5,0,.8,.4)',fill:'forwards'});
+    return a.finished.then(()=>{d.remove();got++;setCoin(base+Math.round(n*got/k));$('#home .coin').animate([{transform:'scale(1.15)'},{transform:'scale(1)'}],{duration:150})})});
+  await Promise.all(done);el.remove()}
+let playing=false;
+async function playRewards(){if(playing)return;playing=true;await reward('ログイン報酬',20);await sleep(250);await reward('買い物に行かなかった',30);$('#bubble').textContent='おかえり！ えらい！';playing=false}
+$('[data-fx]').onclick=()=>{coins=120;addCoin(0);go('home');playRewards()};
+renderShop();renderCloset();wear();go('login');
+</script>
+</body>
+</html>
