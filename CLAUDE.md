@@ -38,6 +38,7 @@
 - **ブロッカーと再開メモ: [.claude/todo/progress.md](.claude/todo/progress.md)** (進捗の正は GitHub の Issue と Project)
 - **アーキテクチャ (React + Hono の構成、層、テスト方針、ブランチとデプロイ): [docs/architecture.md](docs/architecture.md)**
 - docs 全体の目次: [docs/index.md](docs/index.md)
+- 開発ガイド (環境構築、全体図、技術、DB 図、API 仕様。初めての人はここから): [docs/guide/README.md](docs/guide/README.md)
 
 ## 画面・デザインの前提 (スマホアプリ)
 

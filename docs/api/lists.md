@@ -1,3 +1,5 @@
+> 最新は [docs/guide/api.md](../guide/api.md)。
+
 # API: 買い物リスト・買い物中・結果判定・履歴
 
 REQ-002/003/004/005/014。全て `Authorization: Bearer <Supabase JWT>` が必要。他人のリスト・品目は 404。

@@ -1,3 +1,5 @@
+> 最新は [docs/guide/api.md](../guide/api.md)。
+
 # 通貨・報酬・ショップ・ポイント履歴 API (Issue #33)
 
 すべて `Authorization: Bearer <Supabase JWT>` が必要。エラーは `{ "error": "..." }`。
