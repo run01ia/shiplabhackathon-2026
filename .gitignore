@@ -24,3 +24,6 @@ supabase/.temp/
 .DS_Store
 Thumbs.db
 .agents
+
+# --- Claude Code worktrees (サブエージェントの作業場所) ---
+.claude/worktrees/
