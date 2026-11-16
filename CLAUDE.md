@@ -67,6 +67,16 @@
 - 確認するのは次の場合だけ: **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワーク・アーキテクチャの変更)、取り消しにくい外部への操作。
 - 迷ったら、推奨案を 1 つ示して進め、結果を簡潔に報告する。
 
+## 自動ワークフロー (autopilot)
+- 「Issue 起票 → 並行性の判断 → 要件・設計 → 並行実装 → PR → **自動マージ** → 進捗更新」を、人の確認なしで回す。手順は `.claude/skills/autopilot/SKILL.md`。
+- **`dev` 向けの PR は、動作確認が通っていれば自動マージする** (ユーザーの指示)。`main` へのマージは自動にしない。
+- どの Issue を並行にするかは、Issue の内容 (触るファイル範囲、依存) から**自分で判断**する。他の人が担当している Issue には着手しない。
+- 自動マージが権限の確認で拒否されたら、言い換えて繰り返さず、ユーザーに許可の方法を聞く。
+
+## コンテキストの圧縮
+- コンテキスト使用率が **70%** に達したら自動で圧縮される。`.claude/settings.json` の `env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=70` による設定 (hooks では圧縮を起動できないため、環境変数を使う)。
+- 圧縮されても作業が続けられるよう、**進捗は Issue / Project / `.claude/todo/progress.md` に書き出しておく**。サブエージェントを走らせている間も、状態をそこに残す。
+
 ## Issue 駆動開発
 - **すべての作業は GitHub Issue から始める。** Issue がなければ先に起票する。Project: https://github.com/users/run01ia/projects/1
 - Issue の本文には、AI がすぐ着手できるよう**関連パスを書く**: 該当 REQ-ID (`docs/specs/.../spec-requirements.md`)、関連 discussion (`docs/specs/.../discussion/*.md`)、設計があれば `docs/impl-plan/...` (summary / detailed-design / task)、使う skill、完了の定義。
