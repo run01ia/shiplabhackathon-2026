@@ -1,10 +1,11 @@
+import { Screen, ScreenTitle } from "~/components/Screen";
 import { Pet } from "~/features/pet";
 
 export default function Login() {
   return (
-    <section className="screen notab" style={{ justifyContent: "center" }}>
+    <Screen tab={false} className="justify-center">
       <Pet accessories={["cap"]} size={170} bob />
-      <h2 className="title" style={{ textAlign: "center", fontSize: 28 }}>お買い物上手</h2>
-    </section>
+      <ScreenTitle className="text-center text-[28px]">お買い物上手</ScreenTitle>
+    </Screen>
   );
 }

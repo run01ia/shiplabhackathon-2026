@@ -9,5 +9,10 @@ export function Toast({ message, onDone, ms = 1600 }: Props) {
     return () => clearTimeout(t);
   }, [message, ms, onDone]);
   if (!message) return null;
-  return <div className="toast" role="status">{message}</div>;
+  return <div
+      className="absolute top-[70px] left-1/2 z-20 -translate-x-1/2 rounded-pill bg-ink px-4 py-2.5 text-sm whitespace-nowrap text-white"
+      role="status"
+    >
+      {message}
+    </div>;
 }

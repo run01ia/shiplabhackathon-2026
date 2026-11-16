@@ -1,9 +1,9 @@
-// service が投げるエラー。HTTP への変換は middleware/error.ts で行う (service は hono を import しない)
-export type ServiceErrorKind = 'not_found' | 'bad_request'
+// service が投げるエラー。HTTP への変換は middleware/error.ts が行う (service は hono を知らない)
+export type AppErrorKind = 'not_found' | 'conflict' | 'bad_request'
 
-export class ServiceError extends Error {
+export class AppError extends Error {
   constructor(
-    readonly kind: ServiceErrorKind,
+    public kind: AppErrorKind,
     message: string,
   ) {
     super(message)

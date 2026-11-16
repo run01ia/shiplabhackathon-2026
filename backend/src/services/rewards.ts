@@ -1,5 +1,5 @@
 import { decideLoginRewards, toJstDate } from '../domain'
-import { ServiceError } from './errors'
+import { AppError } from './errors'
 import type { ServiceDeps } from './types'
 
 export const createRewardsService = ({ repos, clock }: ServiceDeps) => ({
@@ -7,7 +7,7 @@ export const createRewardsService = ({ repos, clock }: ServiceDeps) => ({
   async claimLogin(userId: string) {
     const now = clock()
     const profile = await repos.profiles.get(userId)
-    if (!profile) throw new ServiceError('not_found', 'profile not found')
+    if (!profile) throw new AppError('not_found', 'profile not found')
 
     const grants = decideLoginRewards(profile, now)
     // 先に付与日を原子的に取る。同時に呼ばれても片方だけが付与できる
@@ -17,7 +17,7 @@ export const createRewardsService = ({ repos, clock }: ServiceDeps) => ({
 
     let wallet = await repos.wallets.get(userId)
     for (const g of applied) wallet = await repos.wallets.addPoints(userId, g.delta, g.reason)
-    if (!wallet) throw new ServiceError('not_found', 'profile not found')
+    if (!wallet) throw new AppError('not_found', 'profile not found')
     return {
       granted: applied.length > 0,
       rewards: applied,

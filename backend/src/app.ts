@@ -6,6 +6,7 @@ import { historyPoints } from './routes/history-points'
 import { me } from './routes/me'
 import { rewards } from './routes/rewards'
 import { shop } from './routes/shop'
+import { lists } from './routes/lists'
 
 // 認証が要るルートは `.use('/me/*', auth(d))` のあとに routes/ をチェーンしていく
 export const createApp = (d: Deps) =>
@@ -16,5 +17,6 @@ export const createApp = (d: Deps) =>
     .route('/', rewards(d))
     .route('/', shop(d))
     .route('/', historyPoints(d))
+    .route('/', lists(d))
 
 export type AppType = ReturnType<typeof createApp>

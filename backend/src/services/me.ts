@@ -1,4 +1,4 @@
-import { ServiceError } from './errors'
+import { AppError } from './errors'
 import type { ServiceDeps } from './types'
 
 export const createMeService = ({ repos }: ServiceDeps) => ({
@@ -8,7 +8,7 @@ export const createMeService = ({ repos }: ServiceDeps) => ({
       repos.wallets.get(userId),
       repos.shop.listItems(userId),
     ])
-    if (!profile || !wallet) throw new ServiceError('not_found', 'profile not found')
+    if (!profile || !wallet) throw new AppError('not_found', 'profile not found')
     return {
       petName: profile.petName,
       ...wallet,

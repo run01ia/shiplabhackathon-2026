@@ -1,9 +1,18 @@
-import type { List, PointLog, Profile, Repositories, Wallet } from '../types'
+import type {
+  FinishedList,
+  List,
+  ListItem,
+  PointLog,
+  Profile,
+  Repositories,
+  Wallet,
+} from '../types'
 
 // interface を満たす Map ベースの実装。後からテストで使う
 export type MemoryStore = {
   profiles: Map<string, Profile>
   lists: Map<string, List>
+  listItems: Map<string, ListItem>
   wallets: Map<string, Wallet>
   logs: Map<string, PointLog[]>
   /** 着せ替えマスタ (supabase の初期データと同じ) */
@@ -15,6 +24,7 @@ export type MemoryStore = {
 export const createMemoryStore = (): MemoryStore => ({
   profiles: new Map(),
   lists: new Map(),
+  listItems: new Map(),
   wallets: new Map(),
   logs: new Map(),
   items: [
@@ -48,6 +58,9 @@ export const createMemoryRepositories = (
     return m
   }
 
+  const itemsOf = (listId: string) =>
+    [...s.listItems.values()].filter((i) => i.listId === listId)
+
   const wallets: Repositories['wallets'] = {
     get: async (id) => ensure(id).wallet,
     save: async (id, w) => {
@@ -80,10 +93,69 @@ export const createMemoryRepositories = (
         s.profiles.set(id, { ...profile, lastLoginRewardOn: today })
         return true
       },
+      markShoppingJudged: async (id, today) => {
+        const { profile } = ensure(id)
+        s.profiles.set(id, { ...profile, lastShoppingJudgedOn: today })
+      },
     },
     lists: {
       getActive: async (userId) =>
         [...s.lists.values()].find((l) => l.userId === userId && l.status !== 'finished') ?? null,
+      getOwned: async (userId, listId) => {
+        const l = s.lists.get(listId)
+        return l && l.userId === userId ? l : null
+      },
+      create: async (userId, budget, now) => {
+        const list: List = {
+          id: crypto.randomUUID(),
+          userId,
+          budget,
+          status: 'planning',
+          spentAmount: null,
+          createdAt: now.toISOString(),
+          finishedAt: null,
+        }
+        s.lists.set(list.id, list)
+        return list
+      },
+      update: async (listId, patch) => {
+        const cur = s.lists.get(listId)
+        if (!cur) throw new Error('list not found')
+        const next = { ...cur, ...patch }
+        s.lists.set(listId, next)
+        return next
+      },
+      listItems: async (listId) => itemsOf(listId),
+      addItem: async (listId, item) => {
+        const created: ListItem = { id: crypto.randomUUID(), listId, ...item }
+        s.listItems.set(created.id, created)
+        return created
+      },
+      getItem: async (listId, itemId) => {
+        const i = s.listItems.get(itemId)
+        return i && i.listId === listId ? i : null
+      },
+      updateItem: async (itemId, patch) => {
+        const cur = s.listItems.get(itemId)
+        if (!cur) throw new Error('item not found')
+        const next = { ...cur, ...patch }
+        s.listItems.set(itemId, next)
+        return next
+      },
+      deleteItem: async (itemId) => {
+        s.listItems.delete(itemId)
+      },
+      listFinished: async (userId, limit) =>
+        [...s.lists.values()]
+          .filter((l) => l.userId === userId && l.status === 'finished')
+          .sort((a, b) => (b.finishedAt ?? '').localeCompare(a.finishedAt ?? ''))
+          .slice(0, limit)
+          .map((list): FinishedList => ({ list, items: itemsOf(list.id) })),
+      getFinishedItem: async (userId, itemId) => {
+        const i = s.listItems.get(itemId)
+        const l = i ? s.lists.get(i.listId) : undefined
+        return i && l && l.userId === userId && l.status === 'finished' ? i : null
+      },
     },
     wallets,
     shop: {
