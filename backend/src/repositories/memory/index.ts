@@ -36,9 +36,7 @@ export const createMemoryStore = (): MemoryStore => ({
   userItems: new Map(),
 })
 
-export const createMemoryRepositories = (
-  s: MemoryStore = createMemoryStore(),
-): Repositories => {
+export const createMemoryRepositories = (s: MemoryStore = createMemoryStore()): Repositories => {
   // supabase ではサインアップ時のトリガーで作られる行を、初回アクセスで作る
   const ensure = (id: string) => {
     if (!s.profiles.has(id)) {
@@ -53,13 +51,14 @@ export const createMemoryRepositories = (
     return { profile: s.profiles.get(id)!, wallet: s.wallets.get(id)! }
   }
   const owned = (id: string) => {
-    let m = s.userItems.get(id)
-    if (!m) s.userItems.set(id, (m = new Map()))
-    return m
+    const existing = s.userItems.get(id)
+    if (existing) return existing
+    const created = new Map<string, boolean>()
+    s.userItems.set(id, created)
+    return created
   }
 
-  const itemsOf = (listId: string) =>
-    [...s.listItems.values()].filter((i) => i.listId === listId)
+  const itemsOf = (listId: string) => [...s.listItems.values()].filter((i) => i.listId === listId)
 
   const wallets: Repositories['wallets'] = {
     get: async (id) => ensure(id).wallet,
@@ -69,7 +68,11 @@ export const createMemoryRepositories = (
     },
     addPoints: async (id, delta, reason) => {
       const { wallet } = ensure(id)
-      const next = { ...wallet, coins: Math.max(wallet.coins + delta, 0), score: wallet.score + delta }
+      const next = {
+        ...wallet,
+        coins: Math.max(wallet.coins + delta, 0),
+        score: wallet.score + delta,
+      }
       s.wallets.set(id, next)
       const logs = s.logs.get(id) ?? []
       logs.unshift({
