@@ -13,12 +13,5 @@ export const fixHistoryItem = async (
   accessToken: string,
   itemId: string,
   json: { price?: number; isUnnecessary?: boolean },
-) => {
-  const res = await createApi(accessToken).history.items[':itemId'].$patch({
-    param: { itemId },
-    json,
-  })
-  // zValidator の 400 は型の union に出るので先に除く (以降は item の型になる)
-  if (res.status === 400) throw new Error('API error 400: invalid input')
-  return unwrap(res)
-}
+) =>
+  unwrap(await createApi(accessToken).history.items[':itemId'].$patch({ param: { itemId }, json }))

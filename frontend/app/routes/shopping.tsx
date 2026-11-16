@@ -3,6 +3,7 @@ import { Link, useFetcher, useLoaderData } from 'react-router'
 import { Button } from '~/components/Button'
 import { Card } from '~/components/Card'
 import { Screen, ScreenTitle } from '~/components/Screen'
+import { useCatTap } from '~/features/pet'
 import {
   AskSheet,
   addExtraItem,
@@ -59,6 +60,7 @@ export default function Shopping() {
   const [step, setStep] = useState<'shop' | 'fin'>('shop')
   const [target, setTarget] = useState<ListItem | null>(null)
   const [asking, setAsking] = useState(false)
+  const { tap } = useCatTap()
 
   // 終了後は loader が null になるので、判定の結果を先に見る
   const result = finisher.data && 'result' in finisher.data ? finisher.data.result : null
@@ -102,7 +104,7 @@ export default function Shopping() {
 
   const purchase = (price: number) => {
     if (!target) return
-    // TODO(cat): tap()
+    tap()
     fetcher.submit(
       { intent: 'purchase', listId, itemId: target.id, price: String(price) },
       { method: 'post' },
@@ -111,13 +113,13 @@ export default function Shopping() {
   }
 
   const buyExtra = (name: string, price: number) => {
-    // TODO(cat): tap()
+    tap()
     fetcher.submit({ intent: 'extra', listId, name, price: String(price) }, { method: 'post' })
     setAsking(false)
   }
 
   const finish = (spentAmount: number) => {
-    // TODO(cat): tap()
+    tap()
     finisher.submit({ intent: 'finish', listId, price: String(spentAmount) }, { method: 'post' })
   }
 

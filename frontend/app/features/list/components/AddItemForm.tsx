@@ -1,10 +1,12 @@
 import { useFetcher } from 'react-router'
 import { Button } from '~/components/Button'
+import { useCatTap } from '~/features/pet'
 import { fieldClass } from './fieldClass'
 
 /** 品目の追加欄。送信したらすぐ入力を空にして、続けて打てるようにする */
 export function AddItemForm({ listId }: { listId: string }) {
   const fetcher = useFetcher()
+  const { tap } = useCatTap()
   const busy = fetcher.state !== 'idle'
 
   return (
@@ -17,7 +19,7 @@ export function AddItemForm({ listId }: { listId: string }) {
         const form = e.currentTarget
         fetcher.submit(form)
         form.reset()
-        // TODO(cat): tap()
+        tap()
       }}
     >
       <input type="hidden" name="intent" value="add" />

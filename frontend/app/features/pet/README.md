@@ -16,7 +16,7 @@ const { tap } = useCatTap()
 
 - 左右の手は自動で交互になる。`tap` の参照は変わらず、呼んでも画面は再レンダリングされない (state を通さない)。
 - Provider の外 (`/login`、`/shopping`) で呼んでも何も起きない (エラーにならない)。
-- `// TODO(cat): tap()` と書いてある場所を、この呼び出しに置き換える。
+- 呼び出し済み: 品目の追加 (`AddItemForm`)、購入・リスト外の購入・買い物の終了 (`routes/shopping.tsx`)、履歴の保存 (`useFixItem`)。
 
 ## 構成
 

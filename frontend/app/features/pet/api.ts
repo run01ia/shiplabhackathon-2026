@@ -11,18 +11,13 @@ export const claimLoginReward = async (accessToken: string) =>
 export const fetchShopItems = async (accessToken: string) =>
   unwrap(await createApi(accessToken).shop.items.$get())
 
-// buy / equip は検証エラーの型が応答に混ざり unwrap の型が合わないため、成否だけを見る (結果は読み直しで得る)
-const expectOk = (res: { ok: boolean; status: number; statusText: string }) => {
-  if (!res.ok) throw new Error(`API error ${res.status}: ${res.statusText}`)
-}
-
 /** POST /shop/items/:key/buy。コイン不足・所持済みは例外 */
 export const buyItem = async (accessToken: string, key: string) =>
-  expectOk(await createApi(accessToken).shop.items[':key'].buy.$post({ param: { key } }))
+  unwrap(await createApi(accessToken).shop.items[':key'].buy.$post({ param: { key } }))
 
 /** PATCH /shop/items/:key/equip (着る / 外す) */
 export const equipItem = async (accessToken: string, key: string, equipped: boolean) =>
-  expectOk(
+  unwrap(
     await createApi(accessToken).shop.items[':key'].equip.$patch({
       param: { key },
       json: { equipped },
