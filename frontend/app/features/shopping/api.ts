@@ -1,10 +1,5 @@
 import { createApi, unwrap } from '~/lib/api'
 
-/** zValidator の 400 (ok: false) を型から外してから unwrap する (実行時は unwrap が投げる) */
-type Res = { ok: boolean; status: number; statusText: string; json: () => Promise<unknown> }
-type OkJson<R extends Res> = Awaited<ReturnType<Exclude<R, { ok: false }>['json']>>
-const unwrapOk = <R extends Res>(res: R) => unwrap(res) as Promise<OkJson<R>>
-
 /** GET /lists/current。未完了のリストがなければ null */
 export const fetchCurrentList = async (accessToken: string) => {
   const res = await createApi(accessToken).lists.current.$get()
@@ -24,7 +19,7 @@ export const purchaseItem = async (
   itemId: string,
   price: number,
 ) =>
-  unwrapOk(
+  unwrap(
     await createApi(accessToken).lists[':id'].items[':itemId'].purchase.$patch({
       param: { id, itemId },
       json: { price },
@@ -37,13 +32,13 @@ export const addExtraItem = async (
   id: string,
   body: { name: string; price: number; isUnnecessary: boolean },
 ) =>
-  unwrapOk(
+  unwrap(
     await createApi(accessToken).lists[':id']['extra-items'].$post({ param: { id }, json: body }),
   )
 
 /** POST /lists/:id/finish */
 export const finishShopping = async (accessToken: string, id: string, spentAmount?: number) =>
-  unwrapOk(
+  unwrap(
     await createApi(accessToken).lists[':id'].finish.$post({
       param: { id },
       json: { spentAmount },

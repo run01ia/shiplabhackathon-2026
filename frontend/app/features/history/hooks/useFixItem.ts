@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react'
 import { useFetcher } from 'react-router'
+import { useCatTap } from '~/features/pet'
 import type { ItemFix } from '../components/HistoryItemEditor'
 
 /** 「なおす」の編集状態と、route の clientAction への送信。送信中の値を pending で返す */
 export function useFixItem(onSaved: () => void) {
   const fetcher = useFetcher()
+  const { tap } = useCatTap()
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const save = useCallback(
@@ -16,10 +18,10 @@ export function useFixItem(onSaved: () => void) {
       if (fix.price !== undefined) data.price = String(fix.price)
       fetcher.submit(data, { method: 'post' })
       setEditingId(null)
-      // TODO(cat): tap()
+      tap()
       onSaved()
     },
-    [fetcher.submit, onSaved],
+    [fetcher.submit, onSaved, tap],
   )
 
   const fd = fetcher.formData
