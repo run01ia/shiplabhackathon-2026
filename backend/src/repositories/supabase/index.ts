@@ -1,7 +1,14 @@
 import type { Db } from '../../lib/supabase'
-import type { List, ListItem, ListStatus, Repositories } from '../types'
+import type { BuyResult, List, ListItem, ListStatus, Repositories, Wallet } from '../types'
 
 type Row = Record<string, unknown>
+
+const toWallet = (r: Row): Wallet => ({
+  coins: r.coins as number,
+  score: r.score as number,
+  level: r.level as number,
+  exp: r.exp as number,
+})
 
 const LIST_COLS = 'id, user_id, budget, status, spent_amount, created_at, finished_at'
 const ITEM_COLS = 'id, list_id, name, price, is_checked, is_extra, is_unnecessary'
@@ -32,7 +39,7 @@ export const createSupabaseRepositories = (db: Db): Repositories => ({
     async get(userId) {
       const { data, error } = await db
         .from('profiles')
-        .select('id, pet_name, last_login_reward_on')
+        .select('id, pet_name, last_login_reward_on, last_shopping_judged_on')
         .eq('id', userId)
         .maybeSingle()
       if (error) throw error
@@ -41,7 +48,26 @@ export const createSupabaseRepositories = (db: Db): Repositories => ({
         id: data.id as string,
         petName: data.pet_name as string,
         lastLoginRewardOn: data.last_login_reward_on as string | null,
+        lastShoppingJudgedOn: data.last_shopping_judged_on as string | null,
       }
+    },
+    async markShoppingJudged(userId, today) {
+      const { error } = await db
+        .from('profiles')
+        .update({ last_shopping_judged_on: today })
+        .eq('id', userId)
+      if (error) throw error
+    },
+    async claimLoginReward(userId, today) {
+      // 条件付き更新なので、同時に呼ばれても 1 回だけ true になる
+      const { data, error } = await db
+        .from('profiles')
+        .update({ last_login_reward_on: today })
+        .eq('id', userId)
+        .or(`last_login_reward_on.is.null,last_login_reward_on.neq.${today}`)
+        .select('id')
+      if (error) throw error
+      return data.length > 0
     },
   },
   lists: {
@@ -193,24 +219,72 @@ export const createSupabaseRepositories = (db: Db): Repositories => ({
         .eq('id', userId)
       if (error) throw error
     },
-    // 暫定実装 (読む → 更新 → 履歴追加)。#33 (wallet-api) で置き換える
     async addPoints(userId, delta, reason) {
-      const { data, error } = await db
-        .from('profiles')
-        .select('coins, score')
-        .eq('id', userId)
-        .single()
+      const { data, error } = await db.rpc('add_points', {
+        p_user_id: userId,
+        p_delta: delta,
+        p_reason: reason,
+      })
       if (error) throw error
-      const upd = await db
-        .from('profiles')
-        .update({
-          coins: Math.max(0, (data.coins as number) + delta),
-          score: (data.score as number) + delta,
-        })
-        .eq('id', userId)
-      if (upd.error) throw upd.error
-      const log = await db.from('point_logs').insert({ user_id: userId, delta, reason })
-      if (log.error) throw log.error
+      return toWallet(data)
+    },
+    async listLogs(userId, limit) {
+      const { data, error } = await db
+        .from('point_logs')
+        .select('id, delta, reason, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return data.map((r) => ({
+        id: r.id as string,
+        delta: r.delta as number,
+        reason: r.reason as string,
+        createdAt: r.created_at as string,
+      }))
+    },
+  },
+  shop: {
+    async listItems(userId) {
+      const [items, mine] = await Promise.all([
+        db.from('items').select('id, key, name, price').order('price'),
+        db.from('user_items').select('item_id, equipped').eq('user_id', userId),
+      ])
+      if (items.error) throw items.error
+      if (mine.error) throw mine.error
+      const owned = new Map(mine.data.map((r) => [r.item_id as string, r.equipped as boolean]))
+      return items.data.map((i) => ({
+        key: i.key as string,
+        name: i.name as string,
+        price: i.price as number,
+        owned: owned.has(i.id as string),
+        equipped: owned.get(i.id as string) ?? false,
+      }))
+    },
+    async buy(userId, itemKey): Promise<BuyResult> {
+      // コイン減算と所持追加は rpc (Postgres 関数) の 1 トランザクション
+      const { data, error } = await db.rpc('buy_item', { p_user_id: userId, p_item_key: itemKey })
+      if (error) {
+        const reason = ['item_not_found', 'already_owned', 'insufficient_coins'].find((r) =>
+          error.message.includes(r),
+        ) as Extract<BuyResult, { ok: false }>['reason'] | undefined
+        if (reason) return { ok: false, reason }
+        throw error
+      }
+      return { ok: true, wallet: toWallet(data) }
+    },
+    async setEquipped(userId, itemKey, equipped) {
+      const item = await db.from('items').select('id').eq('key', itemKey).maybeSingle()
+      if (item.error) throw item.error
+      if (!item.data) return 'item_not_found'
+      const { data, error } = await db
+        .from('user_items')
+        .update({ equipped })
+        .eq('user_id', userId)
+        .eq('item_id', item.data.id)
+        .select('id')
+      if (error) throw error
+      return data.length > 0 ? 'ok' : 'not_owned'
     },
   },
 })

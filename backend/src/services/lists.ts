@@ -1,8 +1,8 @@
-import { judgeShopping } from '../domain'
-import type { List, ListItem, ListRepo, WalletRepo } from '../repositories/types'
+import { judgeShopping, toJstDate } from '../domain'
+import type { List, ListItem, ListRepo, ProfileRepo, WalletRepo } from '../repositories/types'
 import { AppError } from './errors'
 
-type Deps = { lists: ListRepo; wallets: WalletRepo; clock: () => Date }
+type Deps = { lists: ListRepo; profiles: ProfileRepo; wallets: WalletRepo; clock: () => Date }
 
 const HISTORY_LIMIT = 50
 
@@ -118,6 +118,8 @@ export const createListService = (d: Deps) => {
         spentAmount: spent,
         finishedAt: d.clock().toISOString(),
       })
+      // 買い物の判定日を記録する (ログイン報酬の「買い物に行かなかった日」の判定に使う)
+      await d.profiles.markShoppingJudged(userId, toJstDate(d.clock()))
       for (const line of judgement.breakdown) {
         await d.wallets.addPoints(userId, line.points, line.label)
       }

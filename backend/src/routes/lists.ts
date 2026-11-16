@@ -17,7 +17,12 @@ import { createListService } from '../services/lists'
 
 // ハンドラーは「入力を取り出す → service → 返す」だけ
 export const lists = (d: Deps) => {
-  const s = createListService({ lists: d.repos.lists, wallets: d.repos.wallets, clock: d.clock })
+  const s = createListService({
+    lists: d.repos.lists,
+    profiles: d.repos.profiles,
+    wallets: d.repos.wallets,
+    clock: d.clock,
+  })
   return new Hono<Env>()
     .use('/lists/*', auth(d))
     .use('/history/*', auth(d))
