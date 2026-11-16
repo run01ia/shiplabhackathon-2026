@@ -33,6 +33,8 @@ export interface ListRepo {
   /** 本人のリスト。他人・存在しないなら null */
   getOwned(userId: string, listId: string): Promise<List | null>
   create(userId: string, budget: number, now: Date): Promise<List>
+  /** shopping のときだけ finished にする (同時に 2 回呼ばれても 1 回だけ成功)。shopping でなければ null */
+  finishIfShopping(listId: string, spentAmount: number, finishedAt: string): Promise<List | null>
   update(listId: string, patch: ListPatch): Promise<List>
   listItems(listId: string): Promise<ListItem[]>
   addItem(listId: string, item: NewItem): Promise<ListItem>

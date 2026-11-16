@@ -35,6 +35,17 @@ export const createSupabaseListRepo = (db: Db): ListRepo => ({
     if (error) throw error
     return toList(data)
   },
+  async finishIfShopping(listId, spentAmount, finishedAt) {
+    const { data, error } = await db
+      .from('lists')
+      .update({ status: 'finished', spent_amount: spentAmount, finished_at: finishedAt })
+      .eq('id', listId)
+      .eq('status', 'shopping')
+      .select(LIST_COLS)
+      .maybeSingle()
+    if (error) throw error
+    return data ? toList(data) : null
+  },
   async update(listId, patch) {
     const row: Row = {}
     if (patch.budget !== undefined) row.budget = patch.budget
