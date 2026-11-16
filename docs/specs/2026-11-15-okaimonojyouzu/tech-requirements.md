@@ -19,6 +19,7 @@
   - [REQ-011: コスパ悪商品の抑制リマインド](#req-011-コスパ悪商品の抑制リマインド)
   - [REQ-012: レシートAI判定](#req-012-レシートAI判定)
   - [REQ-013: 家の在庫管理](#req-013-家の在庫管理)
+  - [REQ-014: 履歴と手動修正](#req-014-履歴と手動修正)
 
 ## 共通の技術前提
 
@@ -86,7 +87,7 @@
 
 関連discussion: [discussion/game-design.md](./discussion/game-design.md)
 
-技術的制約・統合条件: 通貨の増減は専用 API に集約する。保持するのは現在の残高のみで、履歴テーブルは持たない (MVP)。点数表と計算式は Phase 1 で確定する。
+技術的制約・統合条件: 通貨の増減は専用 API に集約し、増減のたびに `point_logs` (user_id、増減、理由、日時) へ 1 行追加する。残高は `profiles.coins`。点数表と計算式は Phase 1 で確定する。
 
 非機能要件: 期限が短いため、拡張性より動くことを優先する。
 
@@ -159,4 +160,14 @@
 技術的制約・統合条件: 時間があれば実施する。在庫テーブルを追加する。
 
 非機能要件: 期限が短いため、拡張性より動くことを優先する。
+
+### REQ-014: 履歴と手動修正
+
+対象要件: [spec-requirements.md#req-014](./spec-requirements.md#req-014-履歴と手動修正)
+
+関連discussion: [discussion/concept-and-scope.md](./discussion/concept-and-scope.md)
+
+技術的制約・統合条件: ポイント履歴は `point_logs` テーブル (クライアントは select のみ、追加は API)。買い物履歴は、完了した `lists` と `list_items` をそのまま使う。購入金額の修正は `list_items.price` と `is_unnecessary` の更新 (RLS で本人の行のみ許可、完了後も可)。`list_items.price` は null 可 (購入時に入れるため)。
+
+非機能要件: 履歴は新しい順に最大 50 件を返す。
 
