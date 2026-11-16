@@ -54,6 +54,14 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
 .seg{display:flex;border:3px solid var(--ink);border-radius:14px;overflow:hidden;margin-bottom:14px;background:#fff}.seg button{flex:1;min-height:44px;border:0;background:none;cursor:pointer}.seg button.on{background:var(--sun)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .gi{background:var(--paper);border:3px solid var(--ink);border-radius:16px;box-shadow:var(--sh);padding:10px;text-align:center}.gi .ic{height:64px;display:grid;place-items:center;font-size:34px}
+.pt-r{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:2px dashed var(--gray)}.pt-r:last-child{border:0}
+.pt-r .small{display:block}
+.hi{display:flex;align-items:center;gap:8px;min-height:44px;border-top:2px dashed var(--gray)}
+.hi .nm{flex:1}.hi input.f{width:96px;min-height:44px;margin:0;padding:6px 8px}
+.hi .bad{display:flex;align-items:center;gap:4px;font-size:13px;min-height:44px;cursor:pointer}
+.hi .bad i{width:26px;height:26px;border:3px solid var(--ink);border-radius:8px;background:#fff;display:inline-block}.hi .bad.on i{background:var(--red)}
+.hi .btn{width:auto;margin:0;padding:6px 12px}
+.sheet>div{max-height:88%;overflow-y:auto}
 .toast{position:absolute;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:20px;z-index:20;display:none;font-size:14px;white-space:nowrap}
 .map{height:150px;border:3px solid var(--ink);border-radius:16px;background:repeating-linear-gradient(0deg,#e7f1d6 0 24px,#dbe9c3 24px 25px),#e7f1d6;position:relative;margin-bottom:12px}
 .map i{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;border:3px solid var(--red);background:rgba(242,84,45,.2)}
@@ -74,7 +82,7 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
   <button data-go="login">1 ログイン</button><button data-go="home">2 ホーム (ペット)</button><button data-go="list">3 買い物リスト</button><button data-go="shop">4 買い物中</button><button data-go="ask">5 リスト外の確認</button><button data-go="fin">6 買い物終了</button><button data-go="res">7 結果・判定</button>
   <button data-fx="1" style="background:var(--sun)">▶ 起動ボーナス演出をもう一度</button>
   <h2>B できれば</h2>
-  <button data-go="store">8 スーパー登録</button><button data-go="shopitem">9 ショップ</button><button data-go="dress">10 きがえ</button>
+  <button data-go="store">8 スーパー登録</button><button data-go="hist">9 履歴 (ポイント / 買い物)</button><button data-sheet="shop">10 ショップ (ポップアップ)</button><button data-sheet="dress">11 きがえ (ポップアップ)</button>
 </aside>
 
 <div class="phone" id="phone">
@@ -97,6 +105,7 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
     <div class="coin"><i></i><span id="coinN">120</span></div>
   </div>
   <div class="room"><div class="bubble" id="bubble">今日もよろしくね</div><div class="pet cap bob" id="homePet" style="width:230px;height:230px"></div></div>
+  <div class="row" style="margin-bottom:12px"><button class="btn sub sm" style="margin:0;min-height:52px;font-size:16px;flex:1" data-sheet="shop">ショップ</button><button class="btn sub sm" style="margin:0;min-height:52px;font-size:16px;flex:1" data-sheet="dress">きがえ</button></div>
   <button class="btn" data-go="list">買い物リストを作る</button>
 </section>
 
@@ -104,15 +113,15 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
 <section class="screen" id="list" data-tab="list">
   <h2 class="t">買い物リスト</h2>
   <div class="card"><div class="small">今日の予算</div><div class="row sp"><b style="font-size:30px">¥ 2,000</b><span class="small">タップで変更</span></div>
-    <div class="bar" style="margin-top:8px"><b style="width:78%"></b></div><div class="small" style="margin-top:6px">予定の合計 ¥1,560 / 残り ¥440</div></div>
+    </div>
   <div class="card">
-    <div class="item"><div class="nm">牛乳</div><div class="yen">¥230</div></div>
-    <div class="item"><div class="nm">たまご</div><div class="yen">¥260</div></div>
-    <div class="item"><div class="nm">キャベツ</div><div class="yen">¥180</div></div>
-    <div class="item"><div class="nm">鶏むね肉</div><div class="yen">¥420</div></div>
-    <div class="item"><div class="nm">食パン</div><div class="yen">¥470</div></div>
+    <div class="item"><div class="nm">牛乳</div><button class="btn sub sm" style="width:auto;margin:0;padding:6px 14px">削除</button></div>
+    <div class="item"><div class="nm">たまご</div><button class="btn sub sm" style="width:auto;margin:0;padding:6px 14px">削除</button></div>
+    <div class="item"><div class="nm">キャベツ</div><button class="btn sub sm" style="width:auto;margin:0;padding:6px 14px">削除</button></div>
+    <div class="item"><div class="nm">鶏むね肉</div><button class="btn sub sm" style="width:auto;margin:0;padding:6px 14px">削除</button></div>
+    <div class="item"><div class="nm">食パン</div><button class="btn sub sm" style="width:auto;margin:0;padding:6px 14px">削除</button></div>
   </div>
-  <div class="row"><input class="f" style="margin:0" placeholder="品目を追加"><input class="f" style="margin:0;width:100px" placeholder="¥"></div>
+  <div class="row"><input class="f" style="margin:0" placeholder="品目を追加"><button class="btn sm" style="width:auto;margin:0;padding:8px 16px">追加</button></div>
   <p class="small" style="margin:12px 0">スーパーの近くでアプリを開くと、自動で「買い物中」画面に切り替わります。</p>
   <button class="btn" data-go="shop">買い物スタート</button>
 </section>
@@ -121,14 +130,14 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
 <section class="screen notab" id="shop">
   <div class="row sp" style="margin-bottom:10px"><b>買い物中</b><button class="btn sub sm" style="width:auto;margin:0;padding:8px 14px" data-go="home">もどる</button></div>
   <div class="card"><div class="row"><div class="pet" id="shopPet" style="width:70px;height:70px"></div>
-    <div style="flex:1"><div class="small">のこり予算</div><b style="font-size:30px" id="remain">¥2,000</b></div></div>
+    <div style="flex:1"><div class="small">のこり予算 (入力した金額を引きます)</div><b style="font-size:30px" id="remain">¥2,000</b></div></div>
     <div class="bar" style="margin-top:8px"><b id="gauge" style="width:100%"></b></div></div>
   <div class="card" id="checks">
-    <div class="item" data-p="230"><div class="chk"></div><div class="nm">牛乳</div><div class="yen">¥230</div></div>
-    <div class="item" data-p="260"><div class="chk"></div><div class="nm">たまご</div><div class="yen">¥260</div></div>
-    <div class="item" data-p="180"><div class="chk"></div><div class="nm">キャベツ</div><div class="yen">¥180</div></div>
-    <div class="item" data-p="420"><div class="chk"></div><div class="nm">鶏むね肉</div><div class="yen">¥420</div></div>
-    <div class="item" data-p="470"><div class="chk"></div><div class="nm">食パン</div><div class="yen">¥470</div></div>
+    <div class="item" data-p="230"><div class="chk"></div><div class="nm">牛乳</div><div class="yen">—</div></div>
+    <div class="item" data-p="260"><div class="chk"></div><div class="nm">たまご</div><div class="yen">—</div></div>
+    <div class="item" data-p="180"><div class="chk"></div><div class="nm">キャベツ</div><div class="yen">—</div></div>
+    <div class="item" data-p="420"><div class="chk"></div><div class="nm">鶏むね肉</div><div class="yen">—</div></div>
+    <div class="item" data-p="470"><div class="chk"></div><div class="nm">食パン</div><div class="yen">—</div></div>
   </div>
   <button class="btn sub" data-go="ask">リストにないものが気になる…</button>
   <button class="btn mint" data-go="fin">買い物おわり</button>
@@ -160,20 +169,20 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
   <button class="btn sub" data-go="shop">お店の近くで開いたときのデモ</button>
 </section>
 
-<!-- 9 shop items -->
-<section class="screen" id="shopitem" data-tab="shopi">
-  <div class="row sp"><h2 class="t" style="margin:0">ショップ</h2><div class="coin"><i></i><span class="coinN2">120</span></div></div>
-  <div class="seg" style="margin-top:12px"><button class="on">ショップ</button><button data-go="dress">きがえ</button></div>
-  <div class="grid" id="shelf"></div>
+<!-- 9 history -->
+<section class="screen" id="hist" data-tab="hist">
+  <h2 class="t">履歴</h2>
+  <div class="seg" id="hSeg"><button class="on" data-h="pt">ポイント</button><button data-h="bg">買い物</button></div>
+  <div id="hBody"></div>
 </section>
 
-<!-- 10 dress -->
-<section class="screen" id="dress" data-tab="shopi">
-  <h2 class="t">きがえ</h2>
-  <div class="seg"><button data-go="shopitem">ショップ</button><button class="on">きがえ</button></div>
-  <div class="room" style="padding-bottom:0"><div class="pet cap bob" id="dressPet" style="width:220px;height:220px"></div></div>
-  <div class="grid" id="closet"></div>
-</section>
+<!-- 10 shop/dress sheet -->
+<div class="sheet" id="shopsheet"><div>
+  <div class="row sp" style="margin-bottom:12px"><div class="coin"><i></i><span class="coinN2">120</span></div><button class="btn sub sm" style="width:auto;margin:0;padding:8px 18px" id="shClose">閉じる</button></div>
+  <div class="seg" id="shSeg"><button class="on" data-s="shop">ショップ</button><button data-s="dress">きがえ</button></div>
+  <div id="shopPane"><div class="grid" id="shelf"></div></div>
+  <div id="dressPane" style="display:none"><div class="room" style="padding-bottom:0"><div class="pet cap bob" id="dressPet" style="width:180px;height:180px"></div></div><div class="grid" id="closet"></div></div>
+</div></div>
 
 <!-- 5 ask sheet -->
 <div class="sheet" id="ask"><div>
@@ -186,7 +195,7 @@ input.f{width:100%;min-height:48px;padding:10px 12px;border:3px solid var(--ink)
 <nav class="tabs" id="tabs">
   <button data-go="home" data-t="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10H3z"/></svg>ホーム</button>
   <button data-go="list" data-t="list"><svg viewBox="0 0 24 24"><path d="M5 4h14v17H5zM9 9h6M9 13h6"/></svg>リスト</button>
-  <button data-go="shopitem" data-t="shopi"><svg viewBox="0 0 24 24"><path d="M4 8h16l-1 13H5zM8 8a4 4 0 018 0"/></svg>ショップ</button>
+  <button data-go="hist" data-t="hist"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>履歴</button>
 </nav>
 <div class="toast" id="toast"></div>
 <div id="fx"></div>
@@ -218,18 +227,25 @@ function go(id){$$('.screen').forEach(s=>s.classList.toggle('on',s.id===id));
   const sc=$('#'+id);const tab=sc&&sc.dataset.tab;$('#tabs').classList.toggle('on',!!tab);
   $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   $$('.side button').forEach(b=>b.classList.toggle('on',b.dataset.go===id));
-  if(id==='res')renderRes('ok');
+  if(id==='res')renderRes('ok');if(id==='hist')renderHist();$('#shopsheet').classList.remove('on');
   if(id==='home'&&cur==='login')setTimeout(playRewards,350);cur=id;}
 let cur='';
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>{const g=b.dataset.go;if(g==='ask'){$('#ask').classList.add('on')}else go(g)}));
+function openSheet(t){$('#shopsheet').classList.add('on');shTab(t||'shop')}
+function shTab(t){$$('#shSeg button').forEach(b=>b.classList.toggle('on',b.dataset.s===t));$('#shopPane').style.display=t==='shop'?'':'none';$('#dressPane').style.display=t==='dress'?'':'none'}
+$$('[data-sheet]').forEach(b=>b.addEventListener('click',()=>{if(cur!=='home')go('home');openSheet(b.dataset.sheet)}));
+$$('#shSeg button').forEach(b=>b.onclick=()=>shTab(b.dataset.s));
+$('#shClose').onclick=()=>$('#shopsheet').classList.remove('on');
+$('#shopsheet').addEventListener('click',e=>{if(e.target.id==='shopsheet')$('#shopsheet').classList.remove('on')});
 $$('[data-close]').forEach(b=>b.addEventListener('click',()=>{$('#ask').classList.remove('on');toast(b.textContent.includes('やめ')?'えらい！ +5':'−15 ざんねん…')}));
 function setCoin(v){coins=v;$('#coinN').textContent=coins;$$('.coinN2').forEach(e=>e.textContent=coins)}
 function addCoin(n){coins=Math.round(coins+n);$('#coinN').textContent=coins;$$('.coinN2').forEach(e=>e.textContent=coins)}
 $('#reg').onclick=()=>toast('この場所を登録しました');
 const BUD=2000;
 $$('#checks .item').forEach(it=>it.addEventListener('click',()=>{it.classList.toggle('done');
+  it.querySelector('.yen').textContent=it.classList.contains('done')?'¥'+(+it.dataset.p).toLocaleString():'—';
   let s=0;$$('#checks .item.done').forEach(x=>s+=+x.dataset.p);const r=BUD-s;
-  $('#remain').textContent='¥'+r.toLocaleString();$('#gauge').style.width=(r/BUD*100)+'%';
+  $('#remain').textContent='¥'+r.toLocaleString();$('#gauge').style.width=Math.max(0,r/BUD*100)+'%';
   $('#shopPet').classList.toggle('sad',r<0)}));
 const R={ok:{t:'予算内でクリア！',s:'のこり ¥20 でおさまった',sad:false,rows:[['予算内クリア',30],['リスト通りに買えた',10],['不要買いをやめた',5],['合計',45]]},
  ng:{t:'ちょっと使いすぎ…',s:'予算を ¥320 オーバー',sad:true,rows:[['予算オーバー',-20],['不要買い 1 回',-15],['リスト作成ボーナス',10],['合計',-25]]}};
@@ -266,6 +282,20 @@ async function reward(label,n){const fx=$('#fx'),ph=$('#phone').getBoundingClien
 let playing=false;
 async function playRewards(){if(playing)return;playing=true;await reward('ログイン報酬',20);await sleep(250);await reward('買い物に行かなかった',30);$('#bubble').textContent='おかえり！ えらい！';playing=false}
 $('[data-fx]').onclick=()=>{coins=120;addCoin(0);go('home');playRewards()};
+const PT=[['11/16 09:00','ログイン報酬',20],['11/16 09:00','買い物に行かなかった',30],['11/15 18:40','予算内クリア',30],['11/15 18:40','不要買い (チョコ菓子)',-15],['11/14 09:02','ログイン報酬',20]];
+const BG=[{d:'11/15',b:2000,it:[['牛乳',230,0],['たまご',260,0],['キャベツ',180,0],['鶏むね肉',420,0],['食パン',470,0],['チョコ菓子',320,1]]},{d:'11/12',b:1500,it:[['豆腐',90,0],['納豆',120,0],['お菓子',480,1]]}];
+let hTab='pt',editing=null;
+const sum=g=>g.it.reduce((a,x)=>a+x[1],0);
+function renderHist(){$$('#hSeg button').forEach(b=>b.classList.toggle('on',b.dataset.h===hTab));const el=$('#hBody');
+  if(hTab==='pt'){el.innerHTML='<div class="card" style="padding:4px 14px">'+PT.map(r=>`<div class="pt-r"><div><span class="small">${r[0]}</span>${r[1]}</div><b class="${r[2]<0?'minus':'plus'}">${r[2]>0?'+':''}${r[2]}</b></div>`).join('')+'</div>';return}
+  el.innerHTML=BG.map((g,gi)=>`<div class="card"><div class="row sp"><b>${g.d}</b><span class="small">予算 ¥${g.b.toLocaleString()} / 使った ¥${sum(g).toLocaleString()}</span></div><div style="margin-top:8px">`+g.it.map((x,xi)=>{const ed=editing===gi+'-'+xi;
+    return ed?`<div class="hi"><div class="nm">${x[0]}</div><input class="f" inputmode="numeric" value="${x[1]}" data-v="${gi}-${xi}"><div class="bad ${x[2]?'on':''}" data-u="${gi}-${xi}"><i></i>不要買い</div><button class="btn sm sun" data-ok="1">保存</button></div>`
+    :`<div class="hi"><div class="nm">${x[0]}${x[2]?' <span class="minus small">不要買い</span>':''}</div><div class="yen">¥${x[1].toLocaleString()}</div><button class="btn sm sub" data-e="${gi}-${xi}">なおす</button></div>`}).join('')+'</div></div>').join('');
+  $$('#hBody [data-e]').forEach(b=>b.onclick=()=>{editing=b.dataset.e;renderHist()});
+  $$('#hBody [data-u]').forEach(b=>b.onclick=()=>{const[g,i]=b.dataset.u.split('-');BG[g].it[i][2]^=1;b.classList.toggle('on')});
+  $$('#hBody [data-v]').forEach(b=>b.oninput=()=>{const[g,i]=b.dataset.v.split('-');BG[g].it[i][1]=+b.value.replace(/\D/g,'')||0});
+  $$('#hBody [data-ok]').forEach(b=>b.onclick=()=>{editing=null;renderHist();toast('なおしました')})}
+$$('#hSeg button').forEach(b=>b.onclick=()=>{hTab=b.dataset.h;editing=null;renderHist()});
 renderShop();renderCloset();wear();go('login');
 </script>
 </body>
