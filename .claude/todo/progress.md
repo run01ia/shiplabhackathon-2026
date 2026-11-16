@@ -22,19 +22,15 @@
 | --- | --- | --- |
 | `dev` への自動マージ | 権限の確認で拒否された | 2026-11-16 ユーザーが「どんどん進めて」と指示 |
 
-## 作業中・PR 中
-なし (Wave 2a の API は完了。2026-11-16)
+## 作業中・PR 中 (2026-11-16 に、トークン上限のため中断)
+- **#51 backend の feature モジュール + use-case 層への再構成** (Fable 5.2、ブランチ `refactor/backend-usecases`)。サブエージェントが実装中。**PR ができても未マージ**。controller は Hono 流 (routes.ts が兼ねる、必要なら `createFactory().createHandlers`)。再開したら、PR を確認し、`biome check` と tsc とテストを通し、**本物の Supabase で統合確認** (リスト作成 → 買い物 → 終了 → 報酬 → 購入、応答が再構成前と同じか) してからマージする。
+- 完了: #49 SPA モード化 (PR #50、ブラウザで確認済み)。Motion と canvas-confetti は導入済み。
 
 ## 次にやること (再開メモ)
-**Wave 2b: 機能ごとに frontend を実際に動くようにつなぐ。** API は `dev` にあり、本物のローカル Supabase で統合確認済み (`docs/api/lists.md`、`docs/api/wallet.md`)。手順は `.claude/skills/autopilot/SKILL.md`。
-1. ログイン (REQ-001): Supabase Auth の画面。`lib/supabase.ts`、`lib/api.ts` (hc、`AppType` を backend から) の接続も、ここで通す
-2. 買い物リスト (REQ-002/003): `lists` 画面
-3. 買い物中・結果判定 (REQ-004/005): `shopping` 画面、リスト外の確認、結果・判定
-4. ホーム・報酬・ショップ着せ替えポップアップ (REQ-006/007/008): ログイン時の報酬演出
-5. 履歴 (REQ-014): ポイント / 買い物、購入金額の修正
-- 並行の指針: front は画面ごとに分けられる。`routes.ts`、`api.ts`、共通コンポーネントへの追加は競合しやすいので、マージ順に注意する。**先に、ログインと API 接続 (1) を 1 本入れてから、残りを並行**にする。
-- **Phase 2 の完了時に、セキュリティチェックを挟む** (autopilot の「フェーズ完了時」)。
-- 小さな改善候補: zod の入力エラーの応答形式を整える (今は zod の生の JSON)。ESLint の import 制限 (禁止 import の機械化)。
+1. #51 の PR を確認してマージする (上記)。
+2. **Wave 2b を並行で始める** (#51 のマージ後。frontend のみで #51 と競合しないが、API の型が変わらないことを確認してから): #41 リスト、#42 買い物中、#44 履歴、#43 ホーム・演出・着せ替え (Motion と canvas-confetti を使う。ペットの SVG をパーツ分けし、まばたき・しっぽ振りを CSS で)。書き方は `clientLoader` / `clientAction`、`lib/api.ts` の `unwrap`。サブエージェントのプロンプトは `.claude/skills/autopilot/subagent-prompt.md`。
+3. 気づいた小さな問題: `pnpm exec biome check .` が `README.md` と `pnpm-workspace.yaml` で整形エラーになる (既存。サブエージェントが指摘)。直すか `biome.json` の対象から外す。`/shopping` ルートがログインのガード対象外かもしれない (確認)。
+4. Phase 2 の完了時に、セキュリティチェックを挟む。
 
 ## ブロッカー・他の人の担当 (AI は着手しない)
 - アラートの検知 (REQ-009/010/011、スーパー登録 `/stores` を含む): **ゆうと** (#6)
