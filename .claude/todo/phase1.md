@@ -22,7 +22,7 @@ GitHub: [Project](https://github.com/users/run01ia/projects/1) / Milestone「Pha
   - [ ] スーパー登録方法 (現在地を保存) の確認
 - [ ] **DB テーブル設計** #7 (NKMAK) `A`
   - [ ] users / lists / list_items
-  - [ ] currency (残高のみ。履歴は持たない)
+  - [ ] currency (残高) と point_logs (ポイント履歴)
   - [ ] items / user_items (着せ替え)
 - [ ] **スコア・ポイントの仕様確定** #8 (ゲーム担当) `A`
   - [ ] プラス要素とマイナス要素の点数表
