@@ -56,7 +56,7 @@
   },
   "overrides": [
     {
-      "includes": ["backend/src/domain/**", "!**/*.test.ts"],
+      "includes": ["backend/src/**/domain/**", "!**/*.test.ts"],
       "linter": {
         "rules": {
           "style": {
@@ -65,8 +65,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": ["**", "!./*"],
-                    "message": "domain は純粋関数。同じ domain/ のファイル以外を import しない (docs/architecture.md)"
+                    "group": ["**", "!./*", "!**/shared/domain/*"],
+                    "message": "domain は純粋関数。同じ domain/ と shared/domain/ 以外を import しない (docs/architecture.md)"
                   }
                 ]
               }
@@ -248,16 +248,8 @@
               "options": {
                 "patterns": [
                   {
-                    "group": [
-                      "@supabase/**",
-                      "**/supabase",
-                      "**/modules/**",
-                      "**/domain",
-                      "**/domain/**",
-                      "**/deps",
-                      "**/app"
-                    ],
-                    "message": "shared は modules / domain / deps を import しない。supabase-js は shared/supabase.ts と infra だけ (docs/architecture.md)"
+                    "group": ["@supabase/**", "**/supabase", "**/modules/**", "**/deps", "**/app"],
+                    "message": "shared は modules / deps を import しない。supabase-js は shared/supabase.ts と infra だけ (docs/architecture.md)"
                   }
                 ]
               }

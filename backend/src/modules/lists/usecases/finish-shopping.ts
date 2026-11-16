@@ -1,6 +1,7 @@
-import { judgeShopping, toJstDate } from '../../../domain'
+import { toJstDate } from '../../../shared/domain/date'
 import type { ProfileRepo } from '../../profile/repository'
 import type { WalletRepo } from '../../wallet/repository'
+import { judgeShopping } from '../domain/score'
 import type { ListRepo } from '../repository'
 import { getShoppingList, sumSpent } from './guards'
 

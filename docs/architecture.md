@@ -29,7 +29,7 @@ AI と人が迷わず同じ場所にコードを置けるよう、よく使わ�
 
 ## 設計方針 (責務の分離とテスト容易性)
 
-- **テストは、コアなドメイン (`backend/src/domain/`) にだけ最低限を書く** (下の「テスト方針」)。そのため「ロジックは純粋関数」「外部 (DB・時刻・乱数) は引数で渡す」を守る。
+- **テストは、コアなドメイン (`modules/<機能>/domain/` と `shared/domain/`) にだけ最低限を書く** (下の「テスト方針」)。そのため「ロジックは純粋関数」「外部 (DB・時刻・乱数) は引数で渡す」を守る。
 - 判断基準は 1 つ: **ビジネスロジックを Hono・Supabase・React なしで呼べるか。**
 
 ## フロントエンド (`frontend/`)
@@ -81,7 +81,7 @@ frontend/app/
 1. **routes (= controller)**: HTTP のアダプター。入力を検証し、use-case を呼び、結果を返すだけ。
 2. **use-case**: 1 操作 = 1 ファイルの関数。手順 (取得 → domain で判定 → 保存) を組み立てる。
 3. **repository (interface)**: use-case が DB に頼むことの一覧 (port)。**infra** がその実装 (supabase / memory)。
-4. **domain**: 純粋関数 (スコア、報酬、日付)。何も import しない。
+4. **domain**: 純粋関数。業務の規則はその機能の `modules/<機能>/domain/` (スコア = lists、報酬 = profile)、機能をまたぐもの (JST の日付) は `shared/domain/`。同じ domain と `shared/domain/` 以外を import しない。
 5. 依存は `routes → use-case → repository (interface) ← infra` の一方向。実装を選ぶのは `deps.ts` だけ。
 
 ```
@@ -99,9 +99,10 @@ backend/src/
 │       ├─ usecases/     # 1 操作 = 1 ファイル (create-list.ts, finish-shopping.ts ...)
 │       │   ├─ index.ts  # `createListUsecases(deps)`: 依存を渡して束ねる
 │       │   └─ guards.ts # 複数の use-case が使う取得・状態確認 (use-case 同士は呼び合わない)
+│       ├─ domain/       # この機能の業務の規則 (純粋関数 + *.test.ts)。例: lists/domain/score.ts、profile/domain/reward.ts
 │       └─ infra/        # supabase.ts (本番) と memory.ts (DB なしの確認用)
-├─ domain/               # 純粋関数 (スコア計算、報酬の判定、JST の日付)。I/O なし
 └─ shared/               # errors.ts (AppError)、env.ts (`Bindings`)、supabase.ts (クライアント生成)、middleware/ (auth、error)
+    └─ domain/           # 機能をまたぐ純粋関数 (date.ts: JST の日付)
 ```
 
 モジュールと担当: `lists` (リスト・品目・買い物・履歴)、`wallet` (コイン・スコア・ポイント履歴)、`shop` (着せ替えの購入・着用)、`profile` (`/me`、ログイン報酬)。
@@ -171,7 +172,7 @@ type Deps = {
 }
 ```
 
-- モジュールの向きは `lists → profile → shop → wallet` (右が下位)。**逆向きの import を足さない** (循環を作らない)。逆向きに必要になったら、共通の規則は `domain/` へ、手順は呼ぶ側のモジュールの use-case へ置く。
+- モジュールの向きは `lists → profile → shop → wallet` (右が下位)。**逆向きの import を足さない** (循環を作らない)。逆向きに必要になったら、共通の規則は `shared/domain/` へ、手順は呼ぶ側のモジュールの use-case へ置く。
 - infra も同じ。memory の shop は、コインを wallet の interface (`get` / `save`) 経由で読み書きする。他モジュールの infra は import しない。
 
 ### 禁止する import (Biome が検査する)
@@ -180,24 +181,24 @@ type Deps = {
 
 | 対象 | import してはいけないもの |
 |---|---|
-| `domain/**` (テストを除く) | 同じ `domain/` のファイル以外のすべて |
+| `**/domain/**` (テストを除く) | 同じ `domain/` と `shared/domain/` 以外のすべて |
 | `modules/*/usecases/**` | `hono`、`@hono/*`、`zod`、`@supabase/*`、`infra/`、`routes`、`controller`、`schemas`、`deps`、`app`、`shared/supabase`、`shared/middleware/`、他モジュール (`repository` を除く) |
 | `modules/*/routes.ts`、`controller.ts` | `@supabase/*`、`infra/`、`repository`、`domain`、`shared/supabase`、他モジュールのすべて (use-case と schemas だけを呼ぶ) |
 | `modules/*/repository.ts`、`schemas.ts` | `hono`、`@hono/*`、`@supabase/*`、`infra/`、`usecases`、`routes`、`controller`、`deps`、`app`、他モジュール (`repository` を除く) |
 | `modules/*/infra/**` | `hono`、`@hono/*`、`zod`、`usecases`、`routes`、`controller`、`schemas`、`domain`、`deps`、`app`、他モジュール (`repository` を除く) |
-| `shared/**` | `modules/`、`domain`、`deps`、`app`。`@supabase/*` は `shared/supabase.ts` だけ |
+| `shared/**` | `modules/`、`deps`、`app`。`@supabase/*` は `shared/supabase.ts` だけ |
 | `app.ts` | `@supabase/*`、`infra/`、`shared/supabase` |
 
 - `deps.ts` と `index.ts` (組み立て) には制限がない。infra を import するのはここだけ。
 - routes は `Deps` の**型**を `deps.ts` から import する (`import type`)。値は import しない。
-- use-case 同士は呼び合わない。共通の手順は同じモジュールの `usecases/guards.ts`、共通の規則は `domain/` に置く。
+- use-case 同士は呼び合わない。共通の手順は同じモジュールの `usecases/guards.ts`、規則は同じモジュールの `domain/` に置く。
 
 ### ファイルの大きさ
 
 **1 ファイル 約 120 行まで。** 超えたら、次の順で分ける。
 
 - `routes.ts`: 関連するパスごとに `routes/<名前>.ts` に分け、`routes.ts` で `.route('/', ...)` と束ねる。
-- use-case: 1 操作 = 1 ファイルなので増えない。1 つが長いなら、判定を `domain/` の純粋関数に出す。
+- use-case: 1 操作 = 1 ファイルなので増えない。1 つが長いなら、判定を同じモジュールの `domain/` の純粋関数に出す。
 - `repository.ts`: interface を対象ごと (例: `ListRepo` と `ListItemRepo`) に分ける。
 - `infra/supabase.ts`: 対象のテーブルごとに分け、スプレッドで合わせる (例: `supabase.ts` + `supabase-items.ts` + 行の変換 `supabase-rows.ts`)。
 - モジュール自体が大きい (use-case が 15 個を超える) なら、モジュールを分ける。
@@ -214,14 +215,14 @@ type Deps = {
 
 **最低限だけ書く。** 速度を優先し、壊れると困るところだけを守る。
 
-- **書く**: `backend/src/domain/` の純粋関数 (スコア計算、報酬判定、JST の日付)。Vitest で、テストは対象の隣に `*.test.ts` として置く。実行は `pnpm --filter backend test`。
+- **書く**: `modules/*/domain/` と `shared/domain/` の純粋関数 (スコア計算、報酬判定、JST の日付)。Vitest で、テストは対象の隣に `*.test.ts` として置く。実行は `pnpm --filter backend test`。
 - **量**: 正常系と、ビジネス上大事な境界 (予算ちょうど、日付の境界) を、1 関数あたり数ケースまで。
 - **書かない**: 画面のテスト、DB や API の網羅的なテスト、重箱の隅を突くテスト。これらは、画面または API (`@hono/cli request`、memory 実装) で正常系を確認する。
 - **いつ**: `domain/` の関数を足した、または変えた PR に、テストも入れる。あとからまとめて書かない。
 
 テストしやすさを保つために守ること:
 
-1. **ロジックの置き場所**: スコア計算・報酬判定・購入可否・日次判定は backend の `domain/` (純粋関数)。frontend の判定・整形は `features/*/logic/`。
+1. **ロジックの置き場所**: スコア計算・報酬判定・購入可否・日次判定は backend の各モジュールの `domain/` (純粋関数)。frontend の判定・整形は `features/*/logic/`。
 2. **時刻と乱数は注入する**: `Date.now()` `new Date()` `Math.random()` を domain / use-case で直接呼ばない。`Deps` の `clock: () => Date` `random: () => number` を使う。JST の日付境界は `toJstDate(date)` に 1 か所で集める。
 3. **`createApp(deps)`**: `app` をモジュールのトップレベルで作らない。in-memory の deps (`createMemoryDeps`) を渡せば、DB なしで `app.request('/lists', { headers })` を呼べる。
 4. **モックではなくインメモリ実装**: 各モジュールの `infra/memory.ts` に interface を満たす `Map` ベースの実装を置く (必要になった repository から作る)。モックライブラリで呼び出しを検証するより、結果の状態を検証する。
@@ -260,3 +261,4 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 - 2026-11-16: フロントのスタイル規則を追加。デザイン変数を Tailwind の `@theme` に移し、共通コンポーネントを Tailwind ユーティリティで書き直した (グローバル CSS の重複を無くし、画面はレイアウトだけを書くため)。
 - 2026-11-16: frontend を SPA モード (`ssr: false`) にし、loader / action を clientLoader / clientAction に統一した (セッションがブラウザにあり、SSR 用の目印 cookie が不要になるため)。
 - 2026-11-16: backend を「技術の種類のフォルダ (routes / services / repositories)」から「feature モジュール + use-case 層」に再構成 (#51)。1 ファイルに機能が同居して大きくなり (supabase 実装 290 行)、use-case という単位がなかったため。controller は routes.ts が兼ねる (Hono の型推論を保つ)。禁止 import は Biome で検査する。Issue の案 (lists / wallet / shop) に `profile` モジュールを足した (`/me` とログイン報酬を wallet に置くと、wallet ⇄ shop が循環するため)。
+- 2026-11-16: `domain/` を機能ごとに分けた (スコア → `modules/lists/domain/`、報酬 → `modules/profile/domain/`、JST の日付 → `shared/domain/`)。業務の規則がその機能の中にあるほうが、どこを直せばよいか迷わないため。
