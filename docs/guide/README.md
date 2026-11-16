@@ -24,7 +24,7 @@
 | API を足す | `backend/src/modules/<機能>/routes.ts` (パス)、`schemas.ts` (入力の検証)、`usecases/<操作>.ts` (処理) |
 | 新しい機能のまとまり (モジュール) を足す | `backend/src/modules/<名前>/` を作る → `backend/src/deps.ts` → `backend/src/app.ts` に `.route('/', xxx(d))` → `biome.json` |
 | DB の読み書きを足す | `backend/src/modules/<機能>/repository.ts` (interface) と `infra/supabase.ts`・`infra/memory.ts` (実装) |
-| スコアや報酬の計算を変える | `backend/src/domain/score.ts` (買い物の配点)、`backend/src/domain/reward.ts` (ログイン報酬)。テストは隣の `*.test.ts` |
+| スコアや報酬の計算を変える | `backend/src/modules/lists/domain/score.ts` (買い物の配点)、`backend/src/modules/profile/domain/reward.ts` (ログイン報酬)。テストは隣の `*.test.ts` |
 | テーブルや列を足す | `supabase/migrations/` に新しい SQL を足す ([database.md](./database.md#マイグレーションの追加方法)) |
 | 着せ替えアイテムを足す | 新しい migration で `items` に行を足す + `frontend/app/features/pet/accessories.tsx` に同じ `key` で絵を足す |
 | ペットのキャラを足す | `frontend/app/features/pet/characters/` ([features/pet/README.md](../../frontend/app/features/pet/README.md)) |
