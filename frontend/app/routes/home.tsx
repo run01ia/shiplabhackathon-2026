@@ -12,10 +12,6 @@ export async function clientLoader() {
   return fetchMe(await requireAccessToken())
 }
 
-export function HydrateFallback() {
-  return <Screen />
-}
-
 export async function clientAction() {
   await signOut()
   return redirect('/login')

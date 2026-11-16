@@ -1,14 +1,8 @@
 import { Outlet } from 'react-router'
 import { TabBar } from '~/components/TabBar'
-import { requireAccessToken, requireLoginMark } from '~/lib/session'
-import type { Route } from './+types/tab-layout'
+import { requireAccessToken } from '~/lib/session'
 
-// 未ログインなら /login へ。SSR は目印 cookie、ブラウザは Supabase のセッションで判定する
-export function loader({ request }: Route.LoaderArgs) {
-  requireLoginMark(request)
-  return null
-}
-
+// 未ログインなら /login へ。Supabase のセッションで判定する
 export async function clientLoader() {
   await requireAccessToken()
   return null
