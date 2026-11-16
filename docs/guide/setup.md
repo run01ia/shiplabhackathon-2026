@@ -136,7 +136,7 @@ curl -H 'Authorization: Bearer test-u1' http://localhost:3000/me      # test-<�
 4. `/home` にペットが表示されれば成功です。
 
 テスト用のユーザーは、この画面から登録するのがいちばん簡単です。Studio (http://127.0.0.1:54323) の Authentication からも作れます。
-`supabase/config.toml` は `seed.sql` を読む設定ですが、`supabase/seed.sql` はまだありません (テストユーザーの初期データはありません)。
+`supabase db reset` をすると、`supabase/seed.sql` のデモ用ユーザーが入ります。**メール `demo@example.test` / パスワード `demo-pass-1234`** (ローカル専用のテスト値) でログインすると、過去 2 回の買い物の履歴とポイントがある状態から始まります。ログイン報酬は未受け取りなので、ホームで報酬の演出が出ます。
 
 確認コマンド (任意):
 
