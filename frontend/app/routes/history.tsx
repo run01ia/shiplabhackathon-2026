@@ -1,7 +1,9 @@
+import { Screen, ScreenTitle } from "~/components/Screen";
+
 export default function History() {
   return (
-    <section className="screen">
-      <h2 className="title">履歴</h2>
-    </section>
+    <Screen>
+      <ScreenTitle>履歴</ScreenTitle>
+    </Screen>
   );
 }
