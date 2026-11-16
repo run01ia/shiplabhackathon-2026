@@ -18,7 +18,7 @@
 | D12 | 11-16 | テストはコアなドメイン (`domain/` の純粋関数) だけ、Vitest で最低限 | スコアや日付の境界は、画面で見ても壊れに気づきにくい | 網羅的なテスト、画面のテスト | 有効 |
 | D13 | 11-16 | ブランチは feat → dev → staging → main。staging と main だけデプロイ | Vercel 無料枠の回数制限と、検証以外のデプロイを避ける | dev や feature でもデプロイ | 有効 |
 | D14 | 11-16 | AI は Issue 駆動で自律的に進め、dev への PR は親が自動マージ。人に聞くのはセキュリティ・コスト・大きな技術判断だけ | 期限が短く、確認待ちで止まらないため | 毎回人がレビュー | 有効 |
-| D15 | 11-16 | backend は層構成 (route → use-case → repository、domain は純粋関数、`createApp(deps)`) | 責務を分け、後からテストを足せる。スパゲティを防ぐ | 1 ファイルに詰める構成 | 有効 (#51 で feature モジュール化中) |
+| D15 | 11-16 | backend は層構成 (route → use-case → repository、domain は純粋関数、`createApp(deps)`) | 責務を分け、後からテストを足せる。スパゲティを防ぐ | 1 ファイルに詰める構成 | 有効 (#51 で feature モジュール + use-case 層に再構成済み) |
 | D16 | 11-16 | controller は routes.ts が兼ねる (必要なら `createFactory().createHandlers`) | Hono 公式が Rails 風の controller を非推奨 (型推論と `hc` の型共有が壊れる) | `(c: Context) =>` の関数の切り出し | 有効 |
 | D17 | 11-16 | front と back の型は Hono RPC (`hc`) で共有 | 型を手で重複して書かずに済み、API の食い違いを型エラーで防げる | 手書きの型、OpenAPI | 有効 |
 | D18 | 11-16 | frontend は SPA モード (`ssr: false`、`clientLoader`) | セッションはブラウザ側の supabase-js にあり、サーバーから API を認証付きで呼べない | SSR + 目印 cookie の回避策 | 有効 |
@@ -28,3 +28,5 @@
 | D22 | 11-16 | ボンゴキャット風: 常駐の猫が操作のたびに叩く (A)、帽子のレア度つきドロップ (B) | チームの要望。重くしない範囲で相棒感を出す | 操作でポイントが貯まる (通貨のバランスが崩れる)、Canvas | 有効 |
 | D23 | 11-16 | キャラはデータで定義し、猫以外に拡張できる設計にする | 将来、猫以外のキャラに派生したい | 猫専用の作り | 有効 |
 | D24 | 11-16 | レシートは OCR ではなく画像を読める AI で判定 (Haiku、C 優先度) | 読み取りと分類が 1 回で済み、不要なお菓子などを判定できる。コストは少額 | OCR サービス | 有効 (未着手) |
+| D25 | 11-16 | backend を feature モジュール (lists、wallet、shop、profile) + use-case 層 (1 操作 = 1 ファイル) にし、禁止 import を Biome で機械的に守る | 1 ファイルに機能が詰まり、use-case の単位がなく、スパゲティ化しかけた | 技術の種類で切ったフォルダ (routes / services / repositories) | 有効 |
+| D26 | 11-16 | MVP 外の簡単な機能は「[チーム向け]」Issue にし、AI は着手しない | チームメンバーにも実装に参加してほしい | AI が全部実装する | 有効 |
