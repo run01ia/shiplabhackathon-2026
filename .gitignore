@@ -10,6 +10,8 @@ build/
 .output/
 .react-router/
 .vite/
+.vercel/
+.wrangler/
 
 # --- Environment Files ---
 .env
