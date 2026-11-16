@@ -79,6 +79,11 @@ pnpm exec biome check backend biome.json                    # 禁止 import (noR
 
 ステータスの更新: `.claude/skills/autopilot/set-status.sh <Issue番号> "In progress"|"In review"|Done|Ready|Backlog`
 
+### push と PR を増やしすぎない (ビルドの回数)
+- push のたびに、Cloudflare の Workers Builds (リポジトリ連携) が走る。Vercel は `vercel.json` で staging と main 以外を止めている (`deploymentEnabled` と `ignoreCommand`)。
+- 進捗ボードや docs だけの小さな更新は、単独の PR にしない。次の実装の PR に同乗させるか、区切りでまとめて 1 本にする。
+- ブランチ名は `feat/` `fix/` `chore/` `docs/` `refactor/` のどれか (vercel.json の除外に入っている)。
+
 ## 6. 画面スモーク確認 (波の区切り)
 
 波のマージ後に、**主要な流れ 1 本だけ**を確認する (例: ログイン → リスト作成 → 買い物中 → 結果)。全画面は見ない。
