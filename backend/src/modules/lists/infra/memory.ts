@@ -26,6 +26,13 @@ export const createMemoryListRepo = (): ListRepo => {
       lists.set(list.id, list)
       return list
     },
+    finishIfShopping: async (listId, spentAmount, finishedAt) => {
+      const cur = lists.get(listId)
+      if (cur?.status !== 'shopping') return null
+      const next: List = { ...cur, status: 'finished', spentAmount, finishedAt }
+      lists.set(listId, next)
+      return next
+    },
     update: async (listId, patch) => {
       const cur = lists.get(listId)
       if (!cur) throw new Error('list not found')
