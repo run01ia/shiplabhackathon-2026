@@ -9,6 +9,7 @@ import {
   deleteItem,
   fetchOrCreateList,
   ItemRow,
+  ListBonusToast,
   parseBudget,
   parseName,
   renameItem,
@@ -57,30 +58,33 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Lists() {
-  const { list, items } = useLoaderData<typeof clientLoader>()
+  const { list, items, listBonus } = useLoaderData<typeof clientLoader>()
   const starting = useNavigation().formData?.get('intent') === 'start'
   return (
-    <Screen>
-      <ScreenTitle>買い物リスト</ScreenTitle>
-      <BudgetCard listId={list.id} budget={list.budget} />
-      <Card>
-        {items.length > 0 ? (
-          items.map((it) => <ItemRow key={it.id} listId={list.id} id={it.id} name={it.name} />)
-        ) : (
-          <p className="py-2.5 text-center text-sm">まだ品目がありません。下から追加しよう</p>
-        )}
-      </Card>
-      <AddItemForm listId={list.id} />
-      <p className="my-3 text-xs font-normal">
-        スーパーの近くでアプリを開くと、自動で「買い物中」画面に切り替わります。
-      </p>
-      <Form method="post">
-        <input type="hidden" name="intent" value="start" />
-        <input type="hidden" name="listId" value={list.id} />
-        <Button type="submit" disabled={starting || items.length === 0}>
-          買い物スタート
-        </Button>
-      </Form>
-    </Screen>
+    <>
+      <ListBonusToast bonus={listBonus} />
+      <Screen>
+        <ScreenTitle>買い物リスト</ScreenTitle>
+        <BudgetCard listId={list.id} budget={list.budget} />
+        <Card>
+          {items.length > 0 ? (
+            items.map((it) => <ItemRow key={it.id} listId={list.id} id={it.id} name={it.name} />)
+          ) : (
+            <p className="py-2.5 text-center text-sm">まだ品目がありません。下から追加しよう</p>
+          )}
+        </Card>
+        <AddItemForm listId={list.id} />
+        <p className="my-3 text-xs font-normal">
+          スーパーの近くでアプリを開くと、自動で「買い物中」画面に切り替わります。
+        </p>
+        <Form method="post">
+          <input type="hidden" name="intent" value="start" />
+          <input type="hidden" name="listId" value={list.id} />
+          <Button type="submit" disabled={starting || items.length === 0}>
+            買い物スタート
+          </Button>
+        </Form>
+      </Screen>
+    </>
   )
 }

@@ -9,4 +9,5 @@ export {
 export { AddItemForm } from './components/AddItemForm'
 export { BudgetCard } from './components/BudgetCard'
 export { ItemRow } from './components/ItemRow'
+export { ListBonusToast } from './components/ListBonusToast'
 export { parseBudget, parseName } from './logic/parse'

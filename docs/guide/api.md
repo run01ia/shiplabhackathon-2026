@@ -112,6 +112,7 @@ Authorization: Bearer <アクセストークン>
 
 - `spent`: 購入済みの品目の金額の合計
 - `remaining`: `budget - spent` (超えるとマイナス)
+- `listBonus` (`POST /lists` と `GET /lists/current` だけ): リストの作成・閲覧ポイント。JST で 1 日 1 回 `{ "delta": 10 }`、付かなければ `null`。point_logs に「リストを準備した」で残る。点数は `backend/src/modules/lists/domain/list-bonus.ts` の `LIST_BONUS` (仮の値)
 
 ### `POST /lists/:id/items`
 
