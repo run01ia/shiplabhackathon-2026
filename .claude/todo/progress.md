@@ -23,19 +23,18 @@
 | `dev` への自動マージ | 権限の確認で拒否された | 2026-11-16 ユーザーが「どんどん進めて」と指示 |
 
 ## 作業中・PR 中
-なし (2026-11-16 に、オフラインのため区切りで停止)
+なし (Wave 1 は完了。次は Wave 2。2026-11-16)
 
 ## 次にやること (再開メモ)
-Wave 1 の Issue を起票済み。**未着手**。並行で実装する (worktree + サブエージェント、手順は `.claude/skills/autopilot/SKILL.md`)。
-
-| Issue | 内容 | 触る範囲 | 依存 |
-| --- | --- | --- | --- |
-| #17 | 画面モックのフィードバック反映 | `docs/mock/` | なし |
-| #18 | DB: 履歴テーブルと品目金額 null 可 | `supabase/` `docs/db/` | なし |
-| #19 | frontend の土台 | `frontend/` | なし |
-| #20 | backend の土台 | `backend/` | なし (#2 と `index.ts` が競合しうる) |
-
-Wave 2 (Wave 1 のあと、機能ごとに縦割り。まだ起票していない): 認証 (REQ-001)、買い物リスト (002/003)、買い物中・結果判定 (004/005)、ホーム・報酬・ショップ着せ替えポップアップ (006/007/008)、履歴 (014)。Issue 作成は `.claude/skills/autopilot/new-issue.sh`。
+**Wave 2: 機能ごとに縦割り (front + back)。まだ Issue を起票していない。** 手順は `.claude/skills/autopilot/SKILL.md` (起票は `new-issue.sh`)。
+1. 認証 (REQ-001): Supabase Auth、back の JWT 検証は土台にある。front の login 画面
+2. 買い物リスト (REQ-002/003): lists / list_items の API と画面
+3. 買い物中・結果判定 (REQ-004/005): リスト外の確認、購入金額の入力、判定 (`domain/` の score に配点を入れる。配点は #8 待ち)
+4. ホーム・報酬・ショップ着せ替えポップアップ (REQ-006/007/008): `profiles` の更新は API 経由
+5. 履歴 (REQ-014): `point_logs`、購入金額の手動修正
+- 先に `zod` と `@hono/zod-validator` を入れる (入力検証のルートが入る Issue で)。
+- **Phase 2 の完了時に、セキュリティチェックを挟む** (autopilot 5.6)。
+- 並行の指針: front と back は API の契約を先に決めれば並行できる。`routes.ts` と `app.ts` への登録は競合しやすいので、マージ順に注意する。
 
 ## 完了 (2026-11-15〜16)
 | タスク | PR |
@@ -46,3 +45,8 @@ Wave 2 (Wave 1 のあと、機能ごとに縦割り。まだ起票していな�
 | `.env.example` と開発ルール | #12 |
 | アーキテクチャ、デプロイ方針 (staging と main だけ)、autopilot | #14、#15 |
 | チームフィードバックの要件反映 (REQ-014 など) | #16 |
+| Wave 1: 画面モック更新 (#17) | #23 |
+| Wave 1: DB 履歴テーブル (#18) | #22 |
+| Wave 1: frontend の土台 (#19) | #25 |
+| Wave 1: backend の土台 (#20) | #26 |
+| autopilot、スモーク確認、セキュリティチェックのルール | #21、#24、#27 |
