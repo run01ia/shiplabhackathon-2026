@@ -6,7 +6,13 @@ export const createMemoryProfileRepo = (): ProfileRepo => {
   const ensure = (id: string): Profile => {
     const existing = profiles.get(id)
     if (existing) return existing
-    const created = { id, petName: 'ぷち', lastLoginRewardOn: null, lastShoppingJudgedOn: null }
+    const created: Profile = {
+      id,
+      petName: 'ぷち',
+      lastLoginRewardOn: null,
+      lastListRewardOn: null,
+      lastShoppingJudgedOn: null,
+    }
     profiles.set(id, created)
     return created
   }
@@ -17,6 +23,12 @@ export const createMemoryProfileRepo = (): ProfileRepo => {
       const profile = ensure(id)
       if (profile.lastLoginRewardOn === today) return false
       profiles.set(id, { ...profile, lastLoginRewardOn: today })
+      return true
+    },
+    claimListReward: async (id, today) => {
+      const profile = ensure(id)
+      if (profile.lastListRewardOn === today) return false
+      profiles.set(id, { ...profile, lastListRewardOn: today })
       return true
     },
     markShoppingJudged: async (id, today) => {

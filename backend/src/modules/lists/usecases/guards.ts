@@ -1,6 +1,27 @@
 // 複数の use-case が使う「取得して状態を確かめる」手順。use-case 同士は呼び合わず、共通部分はここに置く
+import { toJstDate } from '../../../shared/domain/date'
 import { AppError } from '../../../shared/errors'
+import type { ProfileRepo } from '../../profile/repository'
+import type { WalletRepo } from '../../wallet/repository'
+import { decideListBonus } from '../domain/list-bonus'
 import type { List, ListItem, ListRepo } from '../repository'
+
+export type ListBonusDeps = {
+  profiles: Pick<ProfileRepo, 'get' | 'claimListReward'>
+  wallets: Pick<WalletRepo, 'addPoints'>
+  clock: () => Date
+}
+
+/** リストの作成・閲覧ポイント (JST で 1 日 1 回)。付いたら { delta }、付かなければ null */
+export const grantListBonus = async (d: ListBonusDeps, userId: string) => {
+  const now = d.clock()
+  const profile = await d.profiles.get(userId)
+  const bonus = profile && decideListBonus(profile.lastListRewardOn, now)
+  // 付与日を先に原子的に取る。同時に呼ばれても片方だけが付与できる
+  if (!bonus || !(await d.profiles.claimListReward(userId, toJstDate(now)))) return null
+  await d.wallets.addPoints(userId, bonus.delta, bonus.reason)
+  return { delta: bonus.delta }
+}
 
 export const sumSpent = (items: ListItem[]) =>
   items.reduce((sum, i) => sum + (i.isChecked ? (i.price ?? 0) : 0), 0)

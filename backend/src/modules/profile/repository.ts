@@ -3,6 +3,7 @@ export type Profile = {
   id: string
   petName: string
   lastLoginRewardOn: string | null
+  lastListRewardOn: string | null
   lastShoppingJudgedOn: string | null
 }
 
@@ -12,4 +13,6 @@ export interface ProfileRepo {
   markShoppingJudged(userId: string, today: string): Promise<void>
   /** ログイン報酬の付与日を today にする。すでに today なら false (1 日 1 回を原子的に守る) */
   claimLoginReward(userId: string, today: string): Promise<boolean>
+  /** リスト作成・閲覧ポイントの付与日を today にする。すでに today なら false (原子的) */
+  claimListReward(userId: string, today: string): Promise<boolean>
 }
