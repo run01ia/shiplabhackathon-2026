@@ -40,6 +40,11 @@ export function ResultView({ result }: { result: FinishResult }) {
             <b className={tone(r.points)}>{signed(r.points)}</b>
           </div>
         ))}
+        {result.rewardedToday ? null : (
+          <p className="py-1.5 text-xs text-muted">
+            今日のごほうびは受け取り済み。2 回目からはマイナスだけ反映します
+          </p>
+        )}
         <div className="flex justify-between py-1.5 text-xl">
           <span>合計</span>
           <b className={tone(result.total)}>{signed(result.total)}</b>

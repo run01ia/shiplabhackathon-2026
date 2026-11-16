@@ -45,6 +45,16 @@ export const completionRate = (items: JudgeItem[]): number => {
   return planned.filter((i) => i.isChecked).length / planned.length
 }
 
+/**
+ * 1 日 1 回の制限をかける。今日 2 回目以降の買い物は、マイナスだけを反映する
+ * (0 円の買い物の繰り返しでコインやおみやげを集められないように。マイナスは逃げられない)
+ */
+export const limitToDaily = (j: ShoppingJudgement, firstToday: boolean): ShoppingJudgement => {
+  if (firstToday) return j
+  const breakdown = j.breakdown.filter((l) => l.points < 0)
+  return { ...j, breakdown, total: breakdown.reduce((sum, l) => sum + l.points, 0) }
+}
+
 export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
   const withinBudget = isWithinBudget(r.budget, r.spent)
   const unnecessaryCount = r.items.filter((i) => i.isUnnecessary).length

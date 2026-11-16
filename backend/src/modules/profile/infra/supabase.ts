@@ -18,12 +18,16 @@ export const createSupabaseProfileRepo = (db: Db): ProfileRepo => ({
       lastShoppingJudgedOn: data.last_shopping_judged_on as string | null,
     }
   },
-  async markShoppingJudged(userId, today) {
-    const { error } = await db
+  async claimShoppingReward(userId, today) {
+    // 条件付き更新。同時に呼ばれても 1 回だけ true (1 日 1 回の買い物のごほうび)
+    const { data, error } = await db
       .from('profiles')
       .update({ last_shopping_judged_on: today })
       .eq('id', userId)
+      .or(`last_shopping_judged_on.is.null,last_shopping_judged_on.neq.${today}`)
+      .select('id')
     if (error) throw error
+    return data.length > 0
   },
   async claimLoginReward(userId, today) {
     // 条件付き更新なので、同時に呼ばれても 1 回だけ true になる

@@ -9,7 +9,11 @@ export const getCurrentList =
     if (!list) throw new AppError('not_found', 'no active list')
     const [detail, listBonus] = await Promise.all([
       toDetail(d.lists, list),
-      grantListBonus(d, userId),
+      // ポイントの失敗でリストを開けなくしない
+      grantListBonus(d, userId).catch((e: unknown) => {
+        console.error('grantListBonus failed', e)
+        return null
+      }),
     ])
     return { ...detail, listBonus }
   }

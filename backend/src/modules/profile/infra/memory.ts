@@ -31,8 +31,11 @@ export const createMemoryProfileRepo = (): ProfileRepo => {
       profiles.set(id, { ...profile, lastListRewardOn: today })
       return true
     },
-    markShoppingJudged: async (id, today) => {
-      profiles.set(id, { ...ensure(id), lastShoppingJudgedOn: today })
+    claimShoppingReward: async (id, today) => {
+      const profile = ensure(id)
+      if (profile.lastShoppingJudgedOn === today) return false
+      profiles.set(id, { ...profile, lastShoppingJudgedOn: today })
+      return true
     },
   }
 }
