@@ -93,6 +93,9 @@
 - **マージ後**: Issue が閉じて `Done` になったことを確認する (ならなければ手で `Done`)。`progress.md` の完了表にも移す。
 - 新しく分かった作業は、その場で Issue を起票して Project に入れる。
 
+**ブロッカーの管理**: 着手できない・止まっている理由 (他の人の作業待ち、人の判断待ち、権限、調査未着手) は、`.claude/todo/progress.md` の「ブロッカー」表に必ず書く。解決したら「解決済み」へ移す。
+**開発ルールの追記**: 開発の進め方で新しく決まったことや、繰り返し使えるルールは、聞かれなくても**自分で `CLAUDE.md` に追記する** (長い手順は `.claude/skills/` や `docs/` に書き、ここにはリンクを置く)。
+
 ステータス更新のコマンド (Project: `run01ia/projects/1`):
 ```
 IID=$(gh project item-list 1 --owner run01ia --format json --jq '.items[]|select(.content.number==N)|.id')
