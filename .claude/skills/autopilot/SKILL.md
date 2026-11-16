@@ -67,8 +67,7 @@ Ready の Issue を、触るファイル範囲と依存から「波」に分け�
 ```
 gh pr diff N --name-only                                   # 範囲外のファイル、.env がないか
 gh pr diff N | grep -nE '^\+.*(sb_secret_|service_role|eyJ[A-Za-z0-9_-]{20}|API_KEY=.)'   # 秘密情報 (ヒットしたら中身を見る)
-grep -rnE "from ['\"](hono|@supabase)" backend/src/services backend/src/domain              # 禁止 import
-grep -rnE "from ['\"].*(repositories/|@supabase)" backend/src/routes
+pnpm exec biome check backend biome.json                    # 禁止 import (noRestrictedImports で機械的に検出)
 ```
 
 - 禁止 import の全体は [docs/architecture.md](../../../docs/architecture.md)。`domain/` を変えた PR は `pnpm --filter backend test` が通っていること。

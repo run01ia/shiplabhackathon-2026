@@ -21,8 +21,8 @@
 4. skill (**読むだけでなく使う**): backend なら `.claude/skills/hono/SKILL.md` を読み、Hono の API を使う前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。frontend なら `.claude/skills/react-best-practices/SKILL.md` を読み、コンポーネントやデータ取得を書く前に、該当するルール (再レンダリング、バンドル、データ取得) を確認する。DB なら `supabase/` と `supabase-postgres-best-practices/`。最終報告に「使った skill とその結果 (search の件数など)」を 1 行書く
 
 ## 範囲
-- 触ってよい: {{例: backend/src/routes/lists.ts、backend/src/services/、backend/src/schemas/}}
-- 登録の行だけ足してよい: {{例: backend/src/app.ts に `.route('/', lists(d))` を 1 行}}
+- 触ってよい: {{例: backend/src/modules/lists/ (routes.ts、schemas.ts、usecases/、infra/)}}
+- 登録の行だけ足してよい: {{例: backend/src/app.ts と backend/src/deps.ts に 1 行ずつ}}
 - 固定済みの契約 (変えない): {{API のパス・リクエスト・レスポンスの型、テーブル名など。なければ「なし」}}
 
 ## 禁止
