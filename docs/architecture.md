@@ -65,6 +65,8 @@ frontend/app/
 - `components/` は fetch (`api.ts` / hc) を直接呼ばない。データは props で受ける。
 
 ルール:
+- スタイルは **Tailwind v4**。色・影・角丸は `styles/app.css` の `@theme` で定義済み (`bg-sun`、`border-ink`、`shadow-pop`、`rounded-card` など。縁取りは `border-3`)。グローバル CSS は `@theme` と `@layer base` だけにし、クラス名ベースの CSS は書かない。
+- 共通部品 (`components/` の Button / Card / ProgressBar / BottomSheet / Toast / Coin / TabBar / Screen) は見た目を持つ。**機能の画面は共通部品を使い、レイアウト (余白・並び・幅) だけ Tailwind のユーティリティで書く。** 色や縁取りを画面側で直接書かない (足りなければ共通部品か `@theme` に足す)。
 - 画面は `docs/mock/index.html` に合わせる。スマホ幅 390px、タップ領域 44px 以上 (`CLAUDE.md` 参照)。
 - データ取得と更新は React Router の **loader / action** (仮決め。TanStack Query は入れない)。**loader / action は `features/*/api.ts` を呼んで返すだけ**にし、判定や整形は `logic/` に置く。
 - 型は `any` を使わない。API の型は backend の `AppType` から得る (手で重複して書かない)。
@@ -198,3 +200,4 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 - 2026-11-16: レビューで repository 層・domain 層・`createApp(deps)`・禁止 import・テスト容易性ルールを追加 (責務の分離と後からのテスト追加のため)。
 - 2026-11-16: ライブラリの選定方針を追記 (意欲的に検討するが、導入を目的にしない。構成の変更も可)。
 - 2026-11-16: テスト方針を「書かない」から「`domain/` の純粋関数にだけ最低限を書く (Vitest)」に変更 (スコアや日付の境界は、画面の確認では壊れても気づきにくいため)。
+- 2026-11-16: フロントのスタイル規則を追加。デザイン変数を Tailwind の `@theme` に移し、共通コンポーネントを Tailwind ユーティリティで書き直した (グローバル CSS の重複を無くし、画面はレイアウトだけを書くため)。

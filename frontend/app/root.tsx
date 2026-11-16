@@ -30,8 +30,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <div className="stage">
-      <div className="phone">
+    <div className="min-[600px]:flex min-[600px]:justify-center min-[600px]:p-6">
+      <div className="relative h-dvh w-full overflow-hidden bg-cream min-[600px]:h-[844px] min-[600px]:w-[390px] min-[600px]:rounded-[38px] min-[600px]:border-3 min-[600px]:border-ink min-[600px]:shadow-pop-lg">
         <Outlet />
       </div>
     </div>
