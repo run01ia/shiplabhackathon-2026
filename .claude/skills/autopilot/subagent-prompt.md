@@ -18,7 +18,7 @@
 1. `gh issue view {{N}} -R run01ia/shiplabhackathon-2026` (目的、完了の定義、関連パス)
 2. `docs/architecture.md` の {{「バックエンド」/「フロントエンド」}} と「テスト方針」
 3. {{REQ や設計のパス。例: docs/specs/2026-11-15-okaimonojyouzu/spec-requirements.md の REQ-002}}
-4. skill: {{.claude/skills/hono/SKILL.md、.claude/skills/supabase/SKILL.md など}}
+4. skill (**読むだけでなく使う**): backend なら `.claude/skills/hono/SKILL.md` を読み、Hono の API を使う前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く。frontend なら `.claude/skills/react-best-practices/SKILL.md` を読み、コンポーネントやデータ取得を書く前に、該当するルール (再レンダリング、バンドル、データ取得) を確認する。DB なら `supabase/` と `supabase-postgres-best-practices/`。最終報告に「使った skill とその結果 (search の件数など)」を 1 行書く
 
 ## 範囲
 - 触ってよい: {{例: backend/src/routes/lists.ts、backend/src/services/、backend/src/schemas/}}

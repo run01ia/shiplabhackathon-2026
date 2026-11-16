@@ -45,7 +45,7 @@
 
 ## 技術スタック
 - 言語: TypeScript
-- フロント: React (ライブラリは各自判断)
+- フロント: React (ライブラリは各自判断)。実装前に `.claude/skills/react-best-practices/` (Vercel 製の React の性能ルール) を使う
 - バック: Hono (Cloudflare Workers)。実装前に `npx -y @hono/cli search "<キーワード>"` で公式ドキュメントを引く (`.claude/skills/hono/SKILL.md`)。
 - DB: **Supabase** (認証も Supabase Auth)。Workers からは `supabase-js` (HTTP) で接続する。skill: `.claude/skills/supabase/`, `supabase-postgres-best-practices/`。
 - デプロイ: Vercel (フロント) / Cloudflare Workers (バック、Free プラン)。skill: `.claude/skills/workers-best-practices/`, `wrangler/`, `workers-development/`, `cloudflare-app-bootstrap/`, `cf-cli/`。
