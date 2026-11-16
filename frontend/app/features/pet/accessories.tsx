@@ -80,6 +80,107 @@ export const ACCESSORIES: Record<string, AccessoryDefinition> = {
       </>
     ),
   },
+  // ここから下の帽子は、おみやげ (ドロップ) 限定。backend の items.rarity と対応する
+  straw: {
+    key: 'straw',
+    slot: 'head',
+    iconViewBox: '-68 -48 136 66',
+    art: (
+      <>
+        <ellipse cx="0" cy="2" rx="62" ry="12" fill="#f3d27a" stroke={S} strokeWidth="5" />
+        <path
+          d="M-34 0q2-40 34-40t34 40z"
+          fill="#f3d27a"
+          stroke={S}
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
+        <path d="M-32-8q32 9 64 0" fill="none" stroke="#f2542d" strokeWidth="7" />
+      </>
+    ),
+  },
+  beanie: {
+    key: 'beanie',
+    slot: 'head',
+    iconViewBox: '-52 -66 104 78',
+    art: (
+      <>
+        <path
+          d="M-40-2q0-46 40-46t40 46z"
+          fill="#4aa3ff"
+          stroke={S}
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
+        <path d="M-20-40v28M0-46v34M20-40v28" stroke={S} strokeWidth="3" opacity=".25" />
+        <rect
+          x="-45"
+          y="-12"
+          width="90"
+          height="17"
+          rx="8.5"
+          fill="#fff"
+          stroke={S}
+          strokeWidth="5"
+        />
+        <circle cx="0" cy="-52" r="9" fill="#fff" stroke={S} strokeWidth="4" />
+      </>
+    ),
+  },
+  chef: {
+    key: 'chef',
+    slot: 'head',
+    iconViewBox: '-58 -82 116 92',
+    art: (
+      <>
+        <path
+          d="M-28-8v-22q-22-6-14-24q8-14 24-8q18-16 36 0q16-6 24 8q8 18-14 24v22z"
+          fill="#fff"
+          stroke={S}
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M-12-34v14M12-34v14"
+          stroke={S}
+          strokeWidth="3"
+          strokeLinecap="round"
+          opacity=".3"
+        />
+        <rect
+          x="-31"
+          y="-13"
+          width="62"
+          height="17"
+          rx="5"
+          fill="#fff"
+          stroke={S}
+          strokeWidth="5"
+        />
+      </>
+    ),
+  },
+  wizard: {
+    key: 'wizard',
+    slot: 'head',
+    iconViewBox: '-64 -80 128 98',
+    art: (
+      <>
+        <ellipse cx="0" cy="2" rx="56" ry="11" fill="#7b5cff" stroke={S} strokeWidth="5" />
+        <path
+          d="M-30 0l22-58q6-14 22-10q-10 4-8 14l24 54z"
+          fill="#7b5cff"
+          stroke={S}
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
+        <path d="M-27-8q27 9 54 0" fill="none" stroke="#ffc93c" strokeWidth="7" />
+        <path d="M0-42l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#ffc93c" />
+        <circle cx="-9" cy="-22" r="2.5" fill="#ffc93c" />
+        <circle cx="11" cy="-24" r="2" fill="#ffc93c" />
+      </>
+    ),
+  },
 }
 
 /** 旧 Pet の名前 (モック由来) を items.key に読み替える */

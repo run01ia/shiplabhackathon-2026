@@ -37,7 +37,8 @@ export function ShopSheet({
   onBuy,
   onEquip,
 }: Props) {
-  const shown = tab === 'dress' ? items.filter((i) => i.owned) : items
+  // おみやげ限定 (rarity あり) は買えないので、ショップの棚には出さない。持っていれば、きがえに出る
+  const shown = items.filter((i) => (tab === 'dress' ? i.owned : i.rarity === null))
   return (
     <BottomSheet open={tab !== null} onClose={onClose}>
       <motion.div

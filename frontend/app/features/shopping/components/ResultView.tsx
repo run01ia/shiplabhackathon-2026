@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '~/components/Card'
 import { ScreenTitle } from '~/components/Screen'
 import { formatYen } from '../logic/yen'
 import type { FinishResult } from '../types'
 import { ShoppingPet } from './ShoppingPet'
+import { Souvenir } from './Souvenir'
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n))
 const tone = (n: number) => (n < 0 ? 'text-red' : 'text-mint')
@@ -11,10 +13,14 @@ const tone = (n: number) => (n < 0 ? 'text-red' : 'text-mint')
 /** 結果・判定: 内訳、ポイント増減、ペットの表情 */
 export function ResultView({ result }: { result: FinishResult }) {
   const ok = result.withinBudget
+  const drop = result.drop
+  // 箱を開けたら、もらった帽子をその場でかぶる
+  const [opened, setOpened] = useState(false)
+  const hat = opened && drop && 'key' in drop ? drop.key : undefined
   return (
     <>
       <Card className="text-center">
-        <ShoppingPet mood={ok ? 'happy' : 'sad'} size={150} />
+        <ShoppingPet mood={hat ? 'joy' : ok ? 'happy' : 'sad'} size={150} hat={hat} />
         <ScreenTitle className="mt-1.5 mb-0">
           {ok ? '予算内でクリア！' : 'ちょっと使いすぎ…'}
         </ScreenTitle>
@@ -39,6 +45,7 @@ export function ResultView({ result }: { result: FinishResult }) {
           <b className={tone(result.total)}>{signed(result.total)}</b>
         </div>
       </Card>
+      {drop ? <Souvenir drop={drop} onOpen={() => setOpened(true)} /> : null}
       {/* Link をボタンの見た目にする (Button は <button> なので使えない) */}
       <Link
         to="/home"

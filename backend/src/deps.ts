@@ -5,9 +5,10 @@ import type { ListRepo } from './modules/lists/repository'
 import { createMemoryProfileRepo } from './modules/profile/infra/memory'
 import { createSupabaseProfileRepo } from './modules/profile/infra/supabase'
 import type { ProfileRepo } from './modules/profile/repository'
+import { DUPLICATE_COINS, pickDrop } from './modules/shop/domain/drop'
 import { createMemoryShopRepo } from './modules/shop/infra/memory'
 import { createSupabaseShopRepo } from './modules/shop/infra/supabase'
-import type { ShopRepo } from './modules/shop/repository'
+import type { DropPolicy, ShopRepo } from './modules/shop/repository'
 import { createMemoryWalletRepo } from './modules/wallet/infra/memory'
 import { createSupabaseWalletRepo } from './modules/wallet/infra/supabase'
 import type { WalletRepo } from './modules/wallet/repository'
@@ -29,17 +30,24 @@ export type Deps = {
   verifyToken: (token: string) => Promise<AuthUser | null>
 }
 
+/** おみやげの決め方 (規則は shop の domain、乱数はここで渡す) */
+const dropPolicy = (random: () => number): DropPolicy => ({
+  pick: (items) => pickDrop(items, random),
+  coins: DUPLICATE_COINS,
+})
+
 /** 本番 (Supabase) の組み立て */
 export const createDeps = (env: Bindings): Deps => {
   const db = createDb(env)
+  const random = Math.random
   return {
     clock: () => new Date(),
-    random: Math.random,
+    random,
     repos: {
       profiles: createSupabaseProfileRepo(db),
       lists: createSupabaseListRepo(db),
       wallets: createSupabaseWalletRepo(db),
-      shop: createSupabaseShopRepo(db),
+      shop: createSupabaseShopRepo(db, dropPolicy(random)),
     },
     verifyToken: async (token) => {
       const { data, error } = await db.auth.getUser(token)
@@ -48,14 +56,14 @@ export const createDeps = (env: Bindings): Deps => {
   }
 }
 
-const createMemoryRepositories = (): Repositories => {
+const createMemoryRepositories = (random: () => number): Repositories => {
   const wallets = createMemoryWalletRepo()
   return {
     profiles: createMemoryProfileRepo(),
     lists: createMemoryListRepo(),
     wallets,
     // memory の購入は、wallet の port 経由でコインを減らす
-    shop: createMemoryShopRepo(wallets),
+    shop: createMemoryShopRepo(wallets, dropPolicy(random)),
   }
 }
 
@@ -63,7 +71,8 @@ const createMemoryRepositories = (): Repositories => {
 export const createMemoryDeps = (overrides: Partial<Deps> = {}): Deps => ({
   clock: () => new Date(),
   random: Math.random,
-  repos: createMemoryRepositories(),
+  // おみやげの抽選は、上書きされた random を使う
+  repos: createMemoryRepositories(overrides.random ?? Math.random),
   // memory では "test-<userId>" をそのままユーザーとして扱う
   verifyToken: async (token) =>
     token.startsWith('test-') ? { id: token.slice('test-'.length) } : null,

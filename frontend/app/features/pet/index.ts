@@ -1,3 +1,4 @@
+export { findAccessory } from './accessories'
 export { fetchMe, loadHome, runShopAction } from './api'
 export { CatCompanion } from './components/CatCompanion'
 export { CatTapProvider } from './components/CatTapProvider'

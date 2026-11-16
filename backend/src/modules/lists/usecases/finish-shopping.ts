@@ -1,6 +1,7 @@
 import { toJstDate } from '../../../shared/domain/date'
 import { AppError } from '../../../shared/errors'
 import type { ProfileRepo } from '../../profile/repository'
+import type { Drop, ShopRepo } from '../../shop/repository'
 import type { WalletRepo } from '../../wallet/repository'
 import { judgeShopping } from '../domain/score'
 import type { ListRepo } from '../repository'
@@ -11,6 +12,7 @@ type Deps = {
   // 他モジュールは port (interface) の必要なメソッドだけを受け取る。実装は deps.ts が渡す
   profiles: Pick<ProfileRepo, 'markShoppingJudged'>
   wallets: Pick<WalletRepo, 'addPoints'>
+  shop: Pick<ShopRepo, 'rollDrop'>
   clock: () => Date
 }
 
@@ -29,5 +31,14 @@ export const finishShopping =
     for (const line of judgement.breakdown) {
       await d.wallets.addPoints(userId, line.points, line.label)
     }
-    return { list: finished, items, ...judgement }
+    // おみやげ: 予算内で、1 件以上買ったときだけ (D28 と同じ条件。作成 → 終了の繰り返しで集められない)
+    const earned = judgement.withinBudget && items.some((i) => i.isChecked)
+    // 買い物はもう終わっているので、おみやげの失敗で結果を返せなくしない
+    const drop: Drop | null = earned
+      ? await d.shop.rollDrop(userId).catch((e: unknown) => {
+          console.error('rollDrop failed', e)
+          return null
+        })
+      : null
+    return { list: finished, items, ...judgement, drop }
   }

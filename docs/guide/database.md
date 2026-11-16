@@ -54,6 +54,7 @@ erDiagram
     text key UK "例 hat"
     text name
     int price "コイン"
+    text rarity "null = ショップ / common, rare, epic = おみやげ限定"
   }
   user_items {
     uuid id PK
@@ -88,7 +89,7 @@ erDiagram
 | `profiles` | ユーザー 1 人に 1 行。ペット名、スコア、コイン、レベル、経験値と、日ごとの報酬を渡した日付。新規登録すると、トリガー `on_auth_user_created` が自動で作る |
 | `lists` | 買い物リスト。状態は `planning` (作成中) → `shopping` (買い物中) → `finished` (完了)。完了していないリストは 1 人 1 つまで (一意インデックス) |
 | `list_items` | リストの品目。金額は買ったときに入れる (`null` = 未入力)。リスト外の購入 (`is_extra`) と不要な購入 (`is_unnecessary`) の印を持つ |
-| `items` | 着せ替えアイテムのマスタ (全員共通)。初期データは `hat` (ぼうし 30)、`ribbon` (リボン 40)、`crown` (おうかん 200)、`glasses` (めがね 60) |
+| `items` | 着せ替えアイテムのマスタ (全員共通)。初期データは `hat` (ぼうし 30)、`ribbon` (リボン 40)、`crown` (おうかん 200)、`glasses` (めがね 60)。`rarity` が入っているものは、おみやげ (予算内クリアのドロップ) 限定で買えない: `straw` `beanie` (common)、`chef` (rare)、`wizard` (epic) |
 | `user_items` | 誰がどのアイテムを持っているか、着ているか。同じアイテムは 1 人 1 つまで |
 | `stores` | よく行くスーパー (名前と緯度経度)。現在地は保存しない |
 | `point_logs` | ポイントの増減の履歴 (理由つき) |
@@ -116,11 +117,12 @@ secret キー (service_role) は RLS を通らずに全部を操作できます�
 
 ### DB の関数 (rpc)
 
-supabase-js にはトランザクション (複数の更新をまとめて 1 回で行う仕組み) がないため、まとめて行いたい更新は Postgres の関数にしています。どちらも API (service_role) だけが呼べます。
+supabase-js にはトランザクション (複数の更新をまとめて 1 回で行う仕組み) がないため、まとめて行いたい更新は Postgres の関数にしています。どれも API (service_role) だけが呼べます。
 
 | 関数 | 内容 |
 |---|---|
 | `buy_item(p_user_id, p_item_key)` | コインを減らし、`user_items` に行を足す。コイン不足・所持済み・存在しないアイテムはエラー |
+| `grant_drop(p_user_id, p_item_key, p_coins)` | おみやげを付与する。帽子を `user_items` に足せたら `'item'`。`p_item_key` が `null` か所持済みなら、`coins` を `p_coins` だけ増やして (`score` は変えない) `point_logs` に「おみやげ」を残し、`'coins'` を返す |
 | `add_points(p_user_id, p_delta, p_reason)` | `coins` と `score` を増減し (コインは 0 未満にしない)、`point_logs` に 1 行足す |
 
 ## マイグレーションの追加方法
