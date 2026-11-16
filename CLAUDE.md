@@ -109,6 +109,7 @@
 ### ライブラリとアーキテクチャ
 
 - ライブラリは**意欲的に検討する**が、**導入を目的にしない。** 「何の問題を解くか」「自前で書くより軽いか」「期限内に使いこなせるか」を確認し、理由を Issue / PR に 1〜2 行で残す。
+- **backend は feature モジュール + use-case 層** (`backend/src/modules/<機能>/` に `routes.ts` (controller を兼ねる) / `usecases/` (1 操作 = 1 ファイル) / `repository.ts` (interface) / `infra/` (supabase・memory)、純粋関数は `domain/`、共通は `shared/`)。依存は `routes → use-case → repository (interface) ← infra` の一方向で、他モジュールは `repository.ts` だけ import できる。**禁止 import は Biome (`noRestrictedImports`) が検査する。** 1 ファイル約 120 行まで。`(c: Context) => ...` だけの controller の切り出しは禁止 (必要なら `createFactory().createHandlers`)。詳細は [docs/architecture.md](docs/architecture.md) の「バックエンド」。
 - [アーキテクチャ](docs/architecture.md)は目安。合わなくなったら変えてよい (同じ PR で `docs/architecture.md` を直し、変更履歴に理由を書く)。責務の分離とテストのしやすさは崩さない。
 - 依存の追加は、並行作業の前に親が 1 本の PR で入れる (`package.json` と `pnpm-lock.yaml` の競合を避ける)。
 
