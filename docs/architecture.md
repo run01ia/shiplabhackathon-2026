@@ -29,7 +29,7 @@ AI と人が迷わず同じ場所にコードを置けるよう、よく使わ�
 
 ## 設計方針 (責務の分離とテスト容易性)
 
-- **今はテストを書かない。ただし後から足せる構造にする。** そのため「ロジックは純粋関数」「外部 (DB・時刻・乱数) は引数で渡す」を守る。
+- **テストは、コアなドメイン (`backend/src/domain/`) にだけ最低限を書く** (下の「テスト方針」)。そのため「ロジックは純粋関数」「外部 (DB・時刻・乱数) は引数で渡す」を守る。
 - 判断基準は 1 つ: **ビジネスロジックを Hono・Supabase・React なしで呼べるか。**
 
 ## フロントエンド (`frontend/`)
@@ -88,7 +88,7 @@ backend/src/
 ├─ repositories/      # DB アクセスはここだけ
 │   ├─ types.ts       # interface (ListRepo, WalletRepo ...)
 │   ├─ supabase/      # 本番実装 (supabase-js)
-│   └─ memory/        # インメモリ実装 (後からテストで使う)
+│   └─ memory/        # インメモリ実装 (DB なしのローカル確認に使う)
 ├─ schemas/           # zod スキーマ (リクエスト検証)
 ├─ middleware/        # auth (JWT 検証)、error、cors
 └─ lib/               # env.ts (`Bindings` の型)、supabase.ts (クライアント生成。deps.ts からだけ使う)
@@ -150,25 +150,30 @@ export const createApp = (d: Deps) => new Hono<Env>().route('/', rewards(d)).rou
 - 認証は middleware で Supabase の JWT を検証し、`c.var.user` に入れる。
 - 通貨・スコアなど RLS で拒否している列は、**repository の supabase 実装が** secret キーのクライアントで更新する。**secret キーは API の中だけ**。
 - 複数テーブルの更新 (購入で通貨を減らし所持品を増やす等) は Postgres 関数 (`rpc`) にして 1 回の呼び出しにする。supabase-js にトランザクションはない。呼び出しは repository 内に閉じる。
-- 確認は `npx -y @hono/cli request backend/src/app.ts -P /lists` のように行う (今はテストコードを書かない)。
+- 確認は `npx -y @hono/cli request backend/src/app.ts -P /lists` のように行う (API のテストコードは書かない)。
 
-## テスト容易性のルール
+## テスト方針
 
-**今は書かない。書けるようにしておく。** 守ることは次の 5 つ。
+**最低限だけ書く。** 速度を優先し、壊れると困るところだけを守る。
+
+- **書く**: `backend/src/domain/` の純粋関数 (スコア計算、報酬判定、JST の日付)。Vitest で、テストは対象の隣に `*.test.ts` として置く。実行は `pnpm --filter backend test`。
+- **量**: 正常系と、ビジネス上大事な境界 (予算ちょうど、日付の境界) を、1 関数あたり数ケースまで。
+- **書かない**: 画面のテスト、DB や API の網羅的なテスト、重箱の隅を突くテスト。これらは、画面または API (`@hono/cli request`、memory 実装) で正常系を確認する。
+- **いつ**: `domain/` の関数を足した、または変えた PR に、テストも入れる。あとからまとめて書かない。
+
+テストしやすさを保つために守ること:
 
 1. **ロジックの置き場所**: スコア計算・報酬判定・購入可否・日次判定は backend の `domain/` (純粋関数)。frontend の判定・整形は `features/*/logic/`。
 2. **時刻と乱数は注入する**: `Date.now()` `new Date()` `Math.random()` を domain / service で直接呼ばない。`Deps` の `clock: () => Date` `random: () => number` を使う。JST の日付境界は `toJstDate(date)` に 1 か所で集める。
-3. **`createApp(deps)`**: `app` をモジュールのトップレベルで作らない。テストでは in-memory の deps を渡し、`app.request('/lists', { headers })` で呼べる。
+3. **`createApp(deps)`**: `app` をモジュールのトップレベルで作らない。in-memory の deps (`createMemoryDeps`) を渡せば、DB なしで `app.request('/lists', { headers })` を呼べる。
 4. **モックではなくインメモリ実装**: `repositories/memory/` に interface を満たす `Map` ベースの実装を置く (必要になった repository から作る)。モックライブラリで呼び出しを検証するより、結果の状態を検証する。
-5. **frontend**: コンポーネントは props を描画するだけ、データ取得は loader / `api.ts`、判定は `logic/`。後から Vitest で `logic/` を、必要なら Testing Library でコンポーネントを試す。
-
-導入するときの目安 (今はしない): backend / frontend に Vitest、`domain/` と `services/` を優先、次に `app.request()`。
+5. **frontend**: コンポーネントは props を描画するだけ、データ取得は loader / `api.ts`、判定は `logic/`。frontend のテストは書かない (大事な判定は backend の `domain/` に置く)。
 
 ## 依存の向きを機械で守る (任意・今は導入しない)
 
 - **ESLint `no-restricted-imports`** (または `eslint-plugin-boundaries`): `services/**` から `hono` `@supabase/supabase-js` を、`domain/**` から全部を禁止、など上の禁止表をそのまま設定にできる。最小でまずこれ。
 - **dependency-cruiser**: 層・feature の依存ルールと循環の検出を CI で行う。規模が大きくなったら。
-- どちらも入れない間は、PR レビューで上の「禁止する import」を確認する。
+- どちらも入れない間は、親エージェントがマージ前に上の「禁止する import」を確認する (`autopilot` skill の「5. PR と自動マージ」に grep がある)。
 
 ## ブランチとデプロイ
 
@@ -180,7 +185,8 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 
 - **`staging` と `main` だけ自動でデプロイする。** `dev` と feature ブランチは、デプロイしない (Vercel Hobby の回数制限と、検証以外でのデプロイを避けるため)。
 - `frontend/vercel.json` の `git.deploymentEnabled` で、`dev` `feat/*` `fix/*` `chore/*` `docs/*` を false にしている。それ以外 (`staging` `main`) は既定の true。
-- 動作を確認したいときだけ、`dev` から `staging` へ PR を出してマージする。
+- 動作を確認したいとき (目安はフェーズの完了時) だけ、`dev` から `staging` へ PR を出す。`dev` へのマージは親エージェントが自動で行うが、`staging` と `main` へのマージは自動にしない (デプロイを伴うため)。
+- 既定ブランチは `main`。そのため、`dev` 向けの PR の `Closes #N` では Issue が閉じない (マージ後に手で閉じる)。
 - 既存の README やワークフローには、`dev` を明示的にデプロイする記述はなかった (2026-11-16 確認)。`dev` のデプロイが必要になったら、このファイルと `vercel.json` を直す。
 - API (Workers) も同じ方針。`staging` と `main` を別の Worker / 環境として `wrangler.jsonc` で分ける。
 
@@ -191,3 +197,4 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 ## 変更履歴
 - 2026-11-16: レビューで repository 層・domain 層・`createApp(deps)`・禁止 import・テスト容易性ルールを追加 (責務の分離と後からのテスト追加のため)。
 - 2026-11-16: ライブラリの選定方針を追記 (意欲的に検討するが、導入を目的にしない。構成の変更も可)。
+- 2026-11-16: テスト方針を「書かない」から「`domain/` の純粋関数にだけ最低限を書く (Vitest)」に変更 (スコアや日付の境界は、画面の確認では壊れても気づきにくいため)。
