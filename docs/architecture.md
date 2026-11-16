@@ -3,6 +3,10 @@
 AI と人が迷わず同じ場所にコードを置けるよう、よく使われる構成に揃える。実装前に読む。
 関連: 要件 [specs](./specs/2026-11-15-okaimonojyouzu/index.md)、DB [schema.html](./db/schema.html)、スキル `.claude/skills/hono/` `supabase/` `workers-best-practices/`
 
+> **この構成は目安。** 必ずしもこの通りでなくてよい。新しい概念や要件が出て合わないときは、適宜変更してよい。
+> 変更したら、このファイルも同じ PR で更新し、理由を末尾の「変更履歴」に 1 行書く。
+> ただし、責務の分離とテストしやすさ (層の依存の向きを守ること) は崩さない。
+
 ## 全体像
 
 ```
@@ -22,75 +26,148 @@ AI と人が迷わず同じ場所にコードを置けるよう、よく使わ�
 - **クライアントが直接書いてよいもの**: リスト、品目、スーパー登録、ペット名、着用中 (RLS で本人の行だけ)。
 - **API だけが書くもの**: コイン、スコア、レベル、経験値、日次の報酬、リストの状態と支出額、アイテム購入 (RLS で拒否してある)。
 
+## 設計方針 (責務の分離とテスト容易性)
+
+- **今はテストを書かない。ただし後から足せる構造にする。** そのため「ロジックは純粋関数」「外部 (DB・時刻・乱数) は引数で渡す」を守る。
+- 判断基準は 1 つ: **ビジネスロジックを Hono・Supabase・React なしで呼べるか。**
+
 ## フロントエンド (`frontend/`)
 
-feature ごとにまとめる (機能単位のディレクトリ構成)。ルートは薄く、ロジックは feature に置く。
+feature ごとにまとめる。ルートは薄く、ロジックは feature に置く。
 
 ```
 frontend/app/
 ├─ root.tsx
 ├─ routes.ts              # ルート定義 (画面 ↔ ファイル)
-├─ routes/                # ルートモジュール = 画面。薄く保つ (loader / action / 画面の組み立てだけ)
-│   ├─ _auth.login.tsx
-│   ├─ home.tsx           # ホーム (ペット)
-│   ├─ lists.tsx          # 買い物リスト
-│   ├─ shopping.tsx       # 買い物中
-│   ├─ history.tsx        # 履歴
-│   └─ stores.tsx         # スーパー登録
-├─ features/              # 機能ごと。他の feature の中身は直接 import しない
-│   ├─ auth/        { components/, hooks/, api.ts, types.ts }
-│   ├─ list/        # 買い物リスト、品目、予算
-│   ├─ shopping/    # 買い物中、リスト外の確認、結果判定
-│   ├─ pet/         # ペット、報酬の演出、ショップ・着せ替えのポップアップ
-│   ├─ history/     # ポイント・購入履歴
-│   └─ store/       # スーパー登録、位置情報
-├─ components/        # 機能に依存しない共通 UI (Button, Sheet, ProgressBar ...)
-├─ lib/
-│   ├─ api.ts         # Hono の hc クライアント (AppType を import)
-│   ├─ supabase.ts    # Supabase クライアント (publishable キーのみ)
-│   └─ utils.ts
-├─ hooks/             # 共通フック
-└─ styles/            # グローバル CSS、デザイン変数 (docs/mock/index.html の配色)
+├─ routes/                # ルートモジュール = 画面。loader / action / 組み立てだけ
+├─ features/              # 機能ごと (auth, list, shopping, pet, history, store)
+│   └─ list/
+│       ├─ index.ts       # 公開 API。外から import してよいのはここだけ
+│       ├─ components/    # 見た目だけ (props を受けて描画)
+│       ├─ hooks/         # 状態・副作用 (useXxx)
+│       ├─ logic/         # 純粋関数 (合計金額、予算超過の判定など)。React 非依存
+│       ├─ api.ts         # hc を呼ぶ薄い関数 (loader / action から使う)
+│       └─ types.ts
+├─ components/            # 機能に依存しない共通 UI
+├─ lib/                   # api.ts (hc クライアント), supabase.ts (publishable キーのみ), utils.ts
+├─ hooks/                 # 共通フック
+└─ styles/
 ```
+
+依存の向き: `routes → features/*/index.ts → (components / hooks / logic / api) → lib, components`
+
+**禁止する import**
+- feature は他の feature の内部を import しない。他 feature が必要なら相手の `index.ts` 経由だけ。循環させない。共有したいものは `components/` `lib/` へ上げる。
+- `components/` `lib/` は `features/` `routes/` を import しない。
+- feature は `routes/` を import しない。
+- `logic/` は React・hc・supabase を import しない (純粋関数に保つ)。
+- `components/` は fetch (`api.ts` / hc) を直接呼ばない。データは props で受ける。
 
 ルール:
 - 画面は `docs/mock/index.html` に合わせる。スマホ幅 390px、タップ領域 44px 以上 (`CLAUDE.md` 参照)。
-- データ取得と更新は、React Router の **loader / action** に統一する (仮決め。TanStack Query は入れない)。
+- データ取得と更新は React Router の **loader / action** (仮決め。TanStack Query は入れない)。**loader / action は `features/*/api.ts` を呼んで返すだけ**にし、判定や整形は `logic/` に置く。
 - 型は `any` を使わない。API の型は backend の `AppType` から得る (手で重複して書かない)。
-- フォームの入力検証は zod (backend と同じスキーマを使えるなら共有する)。
+- フォームの入力検証は zod (backend のスキーマを共有できるなら共有する)。
 - secret / service_role キーは front に置かない。`VITE_` で始まる変数は公開される。
-- コンポーネント: 1 ファイル 1 コンポーネント、名前は PascalCase。フックは `useXxx`。
+- コンポーネント: 1 ファイル 1 コンポーネント、PascalCase。フックは `useXxx`。
 
 ## バックエンド (`backend/`)
 
-Hono の流儀に従い、**ルート定義にハンドラーをインラインで書く** (コントローラーに切り出さない。型推論が切れるため)。ビジネスロジックは service に置く。
+Hono の流儀に従い、**ルート定義にハンドラーをインラインで書く** (コントローラーに切り出さない。型推論が切れるため)。ただしインラインのハンドラーは「入力を取り出す → service を呼ぶ → 返す」だけにする。
 
 ```
 backend/src/
-├─ index.ts           # ローカル起動 (@hono/node-server) と Workers 用の export
-├─ app.ts             # アプリの組み立て。`export type AppType = typeof app`
-├─ routes/            # ルートごとに 1 ファイル。チェーンで書く
-│   ├─ lists.ts       # /lists, /lists/:id, /lists/:id/items ...
-│   ├─ shopping.ts    # 開始、リスト外の追加、終了と判定
-│   ├─ rewards.ts     # ログイン報酬、買い物に行かなかった報酬
-│   ├─ shop.ts        # アイテム購入、着用
-│   ├─ stores.ts      # スーパー登録
-│   └─ history.ts     # 履歴
-├─ services/          # ビジネスロジック (スコア計算、報酬、購入)。Hono に依存しない
+├─ index.ts           # Node 起動 (ローカル)。deps を作って createApp に渡す
+├─ worker.ts          # Workers の entry。`c.env` から deps を作る
+├─ app.ts             # `createApp(deps)` と `export type AppType = ReturnType<typeof createApp>`
+├─ deps.ts            # `Deps` 型 (services, clock, random ...) と本番用の組み立て (唯一の組み立て場所)
+├─ routes/            # ルートごとに 1 ファイル。`(deps) => new Hono()...` のチェーン
+├─ services/          # ユースケース (購入する、買い物を終える)。repository と domain を組み合わせる
+├─ domain/            # 純粋関数 (スコア計算、報酬の判定、日次判定、レベル)。I/O なし
+├─ repositories/      # DB アクセスはここだけ
+│   ├─ types.ts       # interface (ListRepo, WalletRepo ...)
+│   ├─ supabase/      # 本番実装 (supabase-js)
+│   └─ memory/        # インメモリ実装 (後からテストで使う)
 ├─ schemas/           # zod スキーマ (リクエスト検証)
 ├─ middleware/        # auth (JWT 検証)、error、cors
-└─ lib/
-    ├─ supabase.ts    # ユーザー JWT 付きクライアント / secret クライアントの生成
-    └─ env.ts         # `Bindings` の型
+└─ lib/               # env.ts (`Bindings` の型)、supabase.ts (クライアント生成。deps.ts からだけ使う)
+```
+
+### 層と依存の向き
+
+```
+route ──▶ service ──▶ repository (interface)
+  │          │              ▲
+  │          └──▶ domain    └── supabase 実装 / memory 実装 ──▶ Supabase
+  └──▶ schemas
+```
+
+| 層 | 責務 | 持ってはいけないもの |
+|---|---|---|
+| route | 入力検証、service 呼び出し、応答 | 計算、DB 呼び出し |
+| service | 手順の組み立て (取得 → domain で判定 → 保存) | Hono の型 (`Context`)、supabase-js |
+| domain | 純粋な規則と計算 | I/O、`Date.now()`、`Math.random()`、他層の import |
+| repository | DB の読み書きと行 ↔ 型の変換 | ビジネス判定 (報酬を出すか等) |
+
+**禁止する import**
+- route は repository / supabase-js を import しない (service 経由)。
+- service は `hono` と `@supabase/supabase-js` を import しない。repository は `repositories/types.ts` の interface に依存する。
+- domain は何も import しない (型と他の domain だけ)。
+- repository は service / route を import しない。
+- `lib/supabase.ts` は `deps.ts` と `repositories/supabase/` 以外から import しない。
+- service 同士の呼び合いは最小限にし、循環させない。共通処理は domain へ。
+
+各層の例 (抜粋):
+
+```ts
+// domain/reward.ts  純粋関数。時刻は引数で受ける
+export const isNewDay = (lastJstDate: string | null, now: Date) =>
+  lastJstDate !== toJstDate(now)
+
+// repositories/types.ts  service が依存するのはこれだけ
+export interface WalletRepo {
+  get(userId: string): Promise<Wallet>
+  save(userId: string, w: Wallet): Promise<void>
+}
+
+// services/rewards.ts  依存は引数で受ける
+export const claimLoginReward = (d: { wallet: WalletRepo; clock: () => Date }) =>
+  async (userId: string) => { /* 取得 → isNewDay → 付与 → save */ }
+
+// routes/rewards.ts  薄いインラインハンドラー
+export const rewards = (d: Deps) =>
+  new Hono<Env>().post('/rewards/login', async (c) =>
+    c.json(await d.services.claimLoginReward(c.var.user.id)))
+
+// app.ts
+export const createApp = (d: Deps) => new Hono<Env>().route('/', rewards(d)).route('/', lists(d))
 ```
 
 ルール:
-- **層**: route (入力検証と応答) → service (ロジック) → supabase-js (DB)。route に計算を書かない。
-- 入力は `@hono/zod-validator` で検証する。エラーは `HTTPException` で返す。
-- Cloudflare の変数は `c.env` から取り、`Bindings` に型を付ける。Node 専用 API は使わない。
+- 入力は `@hono/zod-validator` で検証する。エラーは `HTTPException` で返す (service は独自のエラー型を投げ、middleware で変換してよい)。
+- Cloudflare の変数は `c.env` から取り、`Bindings` に型を付ける。Node 専用 API は使わない。`Deps` は `worker.ts` / `index.ts` で作り、`createApp` に渡す。
 - 認証は middleware で Supabase の JWT を検証し、`c.var.user` に入れる。
-- 通貨・スコアなど RLS で拒否している列は、service が secret キーのクライアントで更新する。**secret キーは API の中だけ**。
-- 確認は `npx -y @hono/cli request backend/src/app.ts -P /lists` のように行う (テストコードは書かない)。
+- 通貨・スコアなど RLS で拒否している列は、**repository の supabase 実装が** secret キーのクライアントで更新する。**secret キーは API の中だけ**。
+- 複数テーブルの更新 (購入で通貨を減らし所持品を増やす等) は Postgres 関数 (`rpc`) にして 1 回の呼び出しにする。supabase-js にトランザクションはない。呼び出しは repository 内に閉じる。
+- 確認は `npx -y @hono/cli request backend/src/app.ts -P /lists` のように行う (今はテストコードを書かない)。
+
+## テスト容易性のルール
+
+**今は書かない。書けるようにしておく。** 守ることは次の 5 つ。
+
+1. **ロジックの置き場所**: スコア計算・報酬判定・購入可否・日次判定は backend の `domain/` (純粋関数)。frontend の判定・整形は `features/*/logic/`。
+2. **時刻と乱数は注入する**: `Date.now()` `new Date()` `Math.random()` を domain / service で直接呼ばない。`Deps` の `clock: () => Date` `random: () => number` を使う。JST の日付境界は `toJstDate(date)` に 1 か所で集める。
+3. **`createApp(deps)`**: `app` をモジュールのトップレベルで作らない。テストでは in-memory の deps を渡し、`app.request('/lists', { headers })` で呼べる。
+4. **モックではなくインメモリ実装**: `repositories/memory/` に interface を満たす `Map` ベースの実装を置く (必要になった repository から作る)。モックライブラリで呼び出しを検証するより、結果の状態を検証する。
+5. **frontend**: コンポーネントは props を描画するだけ、データ取得は loader / `api.ts`、判定は `logic/`。後から Vitest で `logic/` を、必要なら Testing Library でコンポーネントを試す。
+
+導入するときの目安 (今はしない): backend / frontend に Vitest、`domain/` と `services/` を優先、次に `app.request()`。
+
+## 依存の向きを機械で守る (任意・今は導入しない)
+
+- **ESLint `no-restricted-imports`** (または `eslint-plugin-boundaries`): `services/**` から `hono` `@supabase/supabase-js` を、`domain/**` から全部を禁止、など上の禁止表をそのまま設定にできる。最小でまずこれ。
+- **dependency-cruiser**: 層・feature の依存ルールと循環の検出を CI で行う。規模が大きくなったら。
+- どちらも入れない間は、PR レビューで上の「禁止する import」を確認する。
 
 ## ブランチとデプロイ
 
@@ -109,3 +186,6 @@ feat/* ─PR→ dev ─PR→ staging ─PR→ main
 ## 環境変数
 - `backend/.env`、`frontend/.env` に置く。ひな形は `*.env.example`。**`.env` はコミットしない。**
 - 共有してよい: URL、publishable キー。共有しない: secret / service_role キー、DB パスワード、`ANTHROPIC_API_KEY`。
+
+## 変更履歴
+- 2026-11-16: レビューで repository 層・domain 層・`createApp(deps)`・禁止 import・テスト容易性ルールを追加 (責務の分離と後からのテスト追加のため)。
