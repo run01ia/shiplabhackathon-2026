@@ -245,9 +245,10 @@ curl -H 'Authorization: Bearer test-u1' -F image=@receipt.jpg -F listId=<リス�
 - `category`: `food` (食材) / `daily` (日用品) / `drink` (飲み物) / `snack` (お菓子・嗜好品)。値引きの行は `price` がマイナス。
 - `verdict` とボーナス (配点は仮。`backend/src/modules/receipts/domain/judge.ts`): お菓子・嗜好品なし `no_snack` +5 / 金額の 20% 以下 `few_snack` +3 / それより多い `some_snack`・50% 以上 `many_snack` はコメントだけ (マイナスなし)。
 - ボーナスは **1 日 1 回** (JST)。2 回目以降は `bonus: null`、`alreadyRewarded: true`。1 件も買っていない買い物には付きません。
-- 読めるのは **1 日 5 回**まで (Claude API のコスト対策)。`GET /receipts/status` は `{ "enabled": true, "limit": 5, "remaining": 4 }`。
-- 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物が終わっていない・今日の買い物でない / `413` 5MB 超 / `422` レシートが読めない (回数に数える) / `429` 今日の上限 / `503` AI が混雑・停止 (回数に数えない)。
-- DB なし (メモリ実装) と、`RECEIPT_READER=memory` (本番以外) では、Claude API を呼ばず固定の読み取り結果を返します。
+- 読めるのは **1 人 1 日 5 回**まで、**全ユーザーの合計で 1 日 200 回**まで (Claude API のコスト対策。合計の上限は環境変数 `RECEIPT_DAILY_GLOBAL_LIMIT` で変えられます)。`GET /receipts/status` は `{ "enabled": true, "limit": 5, "remaining": 4 }`。
+- 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物が終わっていない・今日の買い物でない / `413` 5MB 超 / `422` レシートが読めない / `429` 自分の今日の上限、または全体の上限 (「今日は混み合っています」) / `503` AI が混雑・停止・応答なし。
+- 回数に数えない失敗は、**AI 側の都合 (429 と 5xx) だけ**です。AI が画像を受け付けなかった (400 系)、タイムアウト・接続エラー、読めなかった場合は数えます (壊れた画像を送り続けて API を呼び続けられないように)。
+- Claude API を呼ばず固定の読み取り結果を返すのは、DB なし (メモリ実装) のときと、`RECEIPT_READER=memory` **かつ `NODE_ENV=development`** を明示したとき (DB ありのローカル確認用) だけです。`NODE_ENV` が未設定・`production` なら `RECEIPT_READER` は無視します。
 
 ## エラーの形
 

@@ -5,10 +5,11 @@ import type { ListRepo } from './modules/lists/repository'
 import { createMemoryProfileRepo } from './modules/profile/infra/memory'
 import { createSupabaseProfileRepo } from './modules/profile/infra/supabase'
 import type { ProfileRepo } from './modules/profile/repository'
+import { parseGlobalLimit } from './modules/receipts/domain/limit'
 import { createClaudeReceiptReader } from './modules/receipts/infra/claude'
 import { createMemoryReceiptReader, createMemoryReceiptRepo } from './modules/receipts/infra/memory'
 import { createSupabaseReceiptRepo } from './modules/receipts/infra/supabase'
-import type { ReceiptReader, ReceiptRepo } from './modules/receipts/repository'
+import type { ReceiptEnv, ReceiptReader, ReceiptRepo } from './modules/receipts/repository'
 import { DUPLICATE_COINS, pickDrop } from './modules/shop/domain/drop'
 import { createMemoryShopRepo } from './modules/shop/infra/memory'
 import { createSupabaseShopRepo } from './modules/shop/infra/supabase'
@@ -52,7 +53,7 @@ const levelPolicy: LevelPolicy = {
 }
 
 /** 本番 (Supabase) の組み立て */
-export const createDeps = (env: Bindings): Deps => {
+export const createDeps = (env: Bindings & ReceiptEnv): Deps => {
   const db = createDb(env)
   const random = Math.random
   return {
@@ -63,7 +64,7 @@ export const createDeps = (env: Bindings): Deps => {
       lists: createSupabaseListRepo(db),
       wallets: createSupabaseWalletRepo(db, levelPolicy),
       shop: createSupabaseShopRepo(db, dropPolicy(random)),
-      receipts: createSupabaseReceiptRepo(db),
+      receipts: createSupabaseReceiptRepo(db, parseGlobalLimit(env.RECEIPT_DAILY_GLOBAL_LIMIT)),
       receiptReader: env.ANTHROPIC_API_KEY
         ? createClaudeReceiptReader(env.ANTHROPIC_API_KEY)
         : null,
@@ -83,7 +84,7 @@ const createMemoryRepositories = (random: () => number): Repositories => {
     wallets,
     // memory の購入は、wallet の port 経由でコインを減らす
     shop: createMemoryShopRepo(wallets, dropPolicy(random)),
-    receipts: createMemoryReceiptRepo(),
+    receipts: createMemoryReceiptRepo(parseGlobalLimit(undefined)),
     // memory では Claude API を呼ばず、固定の読み取り結果を返す
     receiptReader: createMemoryReceiptReader(),
   }

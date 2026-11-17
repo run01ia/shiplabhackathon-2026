@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { CATEGORIES, type ReadResult, type ReceiptReader } from '../repository'
+import { CATEGORIES, type ReadFailure, type ReadResult, type ReceiptReader } from '../repository'
 
 // D24: 画像を読める Haiku で、読み取りと分類を 1 回で行う
 const MODEL = 'claude-haiku-5-5'
@@ -48,16 +48,21 @@ const toBase64 = (bytes: Uint8Array): string => {
   return btoa(binary)
 }
 
-const billed = (reason: 'refused' | 'invalid_output'): ReadResult => ({
-  ok: false,
-  reason,
-  billed: true,
-})
-const unbilled = (reason: 'rate_limited' | 'unavailable'): ReadResult => ({
-  ok: false,
-  reason,
-  billed: false,
-})
+const failed = (reason: ReadFailure): ReadResult => ({ ok: false, reason })
+
+/**
+ * SDK の例外を、型で失敗の理由に分ける (文字列では判定しない)。SDK の例外でなければ null。
+ * 取り消してよいのは 429 と 5xx だけ。タイムアウト・接続エラーと 400 系は回数に数える
+ */
+export const classifyApiError = (e: unknown): ReadFailure | null => {
+  if (e instanceof Anthropic.RateLimitError) return 'rate_limited'
+  if (e instanceof Anthropic.InternalServerError) return 'server_error'
+  // APIConnectionTimeoutError は APIConnectionError の派生
+  if (e instanceof Anthropic.APIConnectionError) return 'unreachable'
+  // BadRequestError (壊れた画像)、認証・権限のエラーなど
+  if (e instanceof Anthropic.APIError) return 'rejected'
+  return null
+}
 
 /** Claude API でレシートを読む。鍵は backend の環境変数 (ANTHROPIC_API_KEY) だけ */
 export const createClaudeReceiptReader = (apiKey: string): ReceiptReader => {
@@ -87,24 +92,24 @@ export const createClaudeReceiptReader = (apiKey: string): ReceiptReader => {
             },
           ],
         })
-        if (res.stop_reason === 'refusal') return billed('refused')
+        if (res.stop_reason === 'refusal') return failed('refused')
         // max_tokens で切れた JSON は壊れている
-        if (res.stop_reason !== 'end_turn') return billed('invalid_output')
+        if (res.stop_reason !== 'end_turn') return failed('invalid_output')
         const text = res.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text
-        if (!text) return billed('invalid_output')
+        if (!text) return failed('invalid_output')
         try {
           return { ok: true, raw: JSON.parse(text) }
         } catch {
-          return billed('invalid_output')
+          return failed('invalid_output')
         }
       } catch (e) {
-        // 型で分ける。ログには種類と status だけを出す (鍵や画像を出さない)
-        if (e instanceof Anthropic.RateLimitError) return unbilled('rate_limited')
-        if (e instanceof Anthropic.APIError) {
+        const reason = classifyApiError(e)
+        if (!reason) throw e
+        // ログには種類と status だけを出す (鍵や画像を出さない)
+        if (reason !== 'rate_limited' && e instanceof Anthropic.APIError) {
           console.error('claude api error', e.name, e.status)
-          return unbilled('unavailable')
         }
-        throw e
+        return failed(reason)
       }
     },
   }

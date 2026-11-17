@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { checkImage, detectImageType, MAX_IMAGE_BYTES } from './image'
-import { DAILY_SCAN_LIMIT, remainingScans } from './limit'
+import {
+  checkReserve,
+  DAILY_GLOBAL_SCAN_LIMIT,
+  DAILY_SCAN_LIMIT,
+  parseGlobalLimit,
+  remainingScans,
+  shouldRelease,
+} from './limit'
 
 describe('remainingScans', () => {
   it('上限の 1 つ手前まではまだ読める', () => {
@@ -11,6 +18,38 @@ describe('remainingScans', () => {
   it('上限ちょうどと、それを超えたときは 0', () => {
     expect(remainingScans(DAILY_SCAN_LIMIT)).toBe(0)
     expect(remainingScans(DAILY_SCAN_LIMIT + 3)).toBe(0)
+  })
+})
+
+describe('checkReserve (全体の上限)', () => {
+  it('全体の上限の 1 つ手前までは確保でき、ちょうどで止まる', () => {
+    expect(checkReserve(0, 199, 5, 200)).toBeNull()
+    expect(checkReserve(0, 200, 5, 200)).toBe('global_limit')
+  })
+
+  it('自分の上限を先に伝える', () => {
+    expect(checkReserve(5, 200, 5, 200)).toBe('limit')
+  })
+
+  it('環境変数が未設定・不正なら既定値 (上限なしにはならない)', () => {
+    expect(parseGlobalLimit('50')).toBe(50)
+    expect(parseGlobalLimit(undefined)).toBe(DAILY_GLOBAL_SCAN_LIMIT)
+    expect(parseGlobalLimit('-1')).toBe(DAILY_GLOBAL_SCAN_LIMIT)
+    expect(parseGlobalLimit('Infinity')).toBe(DAILY_GLOBAL_SCAN_LIMIT)
+  })
+})
+
+describe('shouldRelease', () => {
+  it('429 と 5xx だけ、確保した 1 回を取り消す', () => {
+    expect(shouldRelease('rate_limited')).toBe(true)
+    expect(shouldRelease('server_error')).toBe(true)
+  })
+
+  it('400 系・タイムアウト・壊れた応答は回数に数える', () => {
+    expect(shouldRelease('rejected')).toBe(false)
+    expect(shouldRelease('unreachable')).toBe(false)
+    expect(shouldRelease('refused')).toBe(false)
+    expect(shouldRelease('invalid_output')).toBe(false)
   })
 })
 

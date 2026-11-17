@@ -5,7 +5,7 @@ import type { ReceiptRepo } from '../repository'
 const UNIQUE_VIOLATION = '23505'
 
 // receipt_scans は API (secret キー) だけが読み書きする。画像は保存しない
-export const createSupabaseReceiptRepo = (db: Db): ReceiptRepo => ({
+export const createSupabaseReceiptRepo = (db: Db, globalLimit: number): ReceiptRepo => ({
   async countOn(userId, today) {
     const { count, error } = await db
       .from('receipt_scans')
@@ -22,9 +22,13 @@ export const createSupabaseReceiptRepo = (db: Db): ReceiptRepo => ({
       p_list_id: listId,
       p_today: today,
       p_limit: limit,
+      p_global_limit: globalLimit,
     })
     if (error) throw error
-    return (data as string | null) ?? null
+    const { id, reason } = data as { id: string | null; reason: string | null }
+    if (id) return { ok: true, scanId: id }
+    // 想定外の値は、安全側 (読ませない) に倒す
+    return { ok: false, reason: reason === 'global_limit' ? 'global_limit' : 'limit' }
   },
   async release(scanId) {
     const { error } = await db.from('receipt_scans').delete().eq('id', scanId)

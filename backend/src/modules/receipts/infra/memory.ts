@@ -1,4 +1,10 @@
-import type { Reading, ReceiptReader, ReceiptRepo, ScanRecord } from '../repository'
+import {
+  checkReserve,
+  type Reading,
+  type ReceiptReader,
+  type ReceiptRepo,
+  type ScanRecord,
+} from '../repository'
 
 /** 固定の読み取り結果 (お菓子は 128 / 800 = 16% → 「ひかえめ」) */
 export const SAMPLE_READING: Reading = {
@@ -21,7 +27,7 @@ export const createMemoryReceiptReader = (reading: Reading = SAMPLE_READING): Re
 type Scan = { userId: string; today: string; rewarded: boolean; record: ScanRecord | null }
 
 // interface を満たす Map ベースの実装 (DB なしのローカル確認に使う)
-export const createMemoryReceiptRepo = (): ReceiptRepo => {
+export const createMemoryReceiptRepo = (globalLimit: number): ReceiptRepo => {
   const scans = new Map<string, Scan>()
   const on = (userId: string, today: string) =>
     [...scans.values()].filter((s) => s.userId === userId && s.today === today)
@@ -29,10 +35,12 @@ export const createMemoryReceiptRepo = (): ReceiptRepo => {
   return {
     countOn: async (userId, today) => on(userId, today).length,
     reserve: async (userId, _listId, today, limit) => {
-      if (on(userId, today).length >= limit) return null
-      const id = crypto.randomUUID()
-      scans.set(id, { userId, today, rewarded: false, record: null })
-      return id
+      const usedByAll = [...scans.values()].filter((s) => s.today === today).length
+      const refusal = checkReserve(on(userId, today).length, usedByAll, limit, globalLimit)
+      if (refusal) return { ok: false, reason: refusal }
+      const scanId = crypto.randomUUID()
+      scans.set(scanId, { userId, today, rewarded: false, record: null })
+      return { ok: true, scanId }
     },
     release: async (scanId) => {
       scans.delete(scanId)
