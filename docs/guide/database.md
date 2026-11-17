@@ -16,6 +16,7 @@ erDiagram
   auth_users ||--o{ point_logs : "履歴"
   auth_users ||--o{ receipt_scans : "レシート"
   lists ||--o{ receipt_scans : "買い物"
+  auth_users ||--o{ pantry_items : "家の在庫"
 
   auth_users {
     uuid id PK "Supabase Auth が管理"
@@ -91,6 +92,15 @@ erDiagram
     bool rewarded "今日のボーナスを受け取った"
     timestamptz created_at
   }
+  pantry_items {
+    uuid id PK
+    uuid user_id FK
+    text name "品目名"
+    text name_key "比較用のキー (user_id と合わせて一意)"
+    text status "have / low"
+    timestamptz stocked_at "最後に入れた日時"
+    timestamptz created_at
+  }
 ```
 
 図の `auth_users` は、Supabase Auth が持つ `auth.users` テーブルです (Mermaid では `.` が使えないため `_` にしています)。
@@ -107,6 +117,7 @@ erDiagram
 | `stores` | よく行くスーパー (名前と緯度経度)。現在地は保存しない |
 | `point_logs` | ポイントの増減の履歴 (理由つき) |
 | `receipt_scans` | レシートの AI 判定 (REQ-012) の回数と読み取り結果。1 回読むごとに 1 行。画像は保存しない。1 日の回数制限は `(user_id, scanned_on)` の件数、ボーナスの 1 日 1 回は部分一意インデックス (`rewarded` の行は 1 日 1 つ) で守る |
+| `pantry_items` | 家の在庫 (REQ-013)。品目名と「ある (`have`) / 少ない (`low`)」だけで、数量は持たない。`name_key` は API が表記ゆれを揃えた名前で、同じ品目は 1 人 1 行 (`unique (user_id, name_key)`) |
 
 ## RLS の考え方 (誰が何を読める・書けるか)
 
@@ -122,6 +133,7 @@ erDiagram
   - `user_items.equipped` の変更
   - `stores` の作成・変更・削除
 - **API (secret キー) だけが書けるもの**: コイン、スコア、レベル、経験値、報酬の日付、リストの状態 (`status`) と支出 (`spent_amount`)、アイテムの購入 (`user_items` の追加)、`point_logs` の追加。
+- **`pantry_items`**: 読めるのは自分の行の `id` `user_id` `name` `status` `stocked_at` だけです。書き込みは API だけが行います (`lists` と同じ方針)。
 - **`receipt_scans`**: ブラウザからは読めません・書けません (policy と `grant` なし)。API だけが使います。
 - **完了したリストの品目**: ブラウザから変えられるのは `price` と `is_unnecessary` だけです (トリガー `list_items_guard_finished` が他の列の変更を拒否します)。
 - **ログインしていない人 (`anon`)**: どのテーブルにも権限がありません。

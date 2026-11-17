@@ -33,7 +33,7 @@ export function AddItemForm({ listId }: { listId: string }) {
         autoComplete="off"
         required
       />
-      <Button type="submit" small className="mb-0 w-auto shrink-0 px-4" disabled={busy}>
+      <Button type="submit" small className="mb-0! w-auto! shrink-0 px-4" disabled={busy}>
         追加
       </Button>
     </fetcher.Form>

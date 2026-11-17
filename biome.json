@@ -110,6 +110,7 @@
                       "**/shop/**",
                       "**/profile/**",
                       "**/receipts/**",
+                      "**/pantry/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
@@ -147,7 +148,8 @@
                       "**/wallet/**",
                       "**/shop/**",
                       "**/profile/**",
-                      "**/receipts/**"
+                      "**/receipts/**",
+                      "**/pantry/**"
                     ],
                     "message": "routes (controller) は他モジュールを import しない。必要なら use-case が相手の repository (interface) を受け取る (docs/architecture.md)"
                   }
@@ -192,6 +194,7 @@
                       "**/shop/**",
                       "**/profile/**",
                       "**/receipts/**",
+                      "**/pantry/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
@@ -238,6 +241,7 @@
                       "**/shop/**",
                       "**/profile/**",
                       "**/receipts/**",
+                      "**/pantry/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールの infra は import しない。必要なら相手の repository.ts (interface) を引数で受け取る (docs/architecture.md)"
