@@ -3,6 +3,7 @@ import { cors } from 'hono/cors'
 import type { Deps } from './deps'
 import { lists } from './modules/lists/routes'
 import { profile } from './modules/profile/routes'
+import { receipts } from './modules/receipts/routes'
 import { shop } from './modules/shop/routes'
 import { wallet } from './modules/wallet/routes'
 import type { Env } from './shared/env'
@@ -19,5 +20,6 @@ export const createApp = (d: Deps, corsOrigins: string[] = ['http://localhost:51
     .route('/', shop(d))
     .route('/', wallet(d))
     .route('/', lists(d))
+    .route('/', receipts(d))
 
 export type AppType = ReturnType<typeof createApp>

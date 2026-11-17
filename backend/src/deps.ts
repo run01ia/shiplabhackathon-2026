@@ -5,6 +5,10 @@ import type { ListRepo } from './modules/lists/repository'
 import { createMemoryProfileRepo } from './modules/profile/infra/memory'
 import { createSupabaseProfileRepo } from './modules/profile/infra/supabase'
 import type { ProfileRepo } from './modules/profile/repository'
+import { createClaudeReceiptReader } from './modules/receipts/infra/claude'
+import { createMemoryReceiptReader, createMemoryReceiptRepo } from './modules/receipts/infra/memory'
+import { createSupabaseReceiptRepo } from './modules/receipts/infra/supabase'
+import type { ReceiptReader, ReceiptRepo } from './modules/receipts/repository'
 import { DUPLICATE_COINS, pickDrop } from './modules/shop/domain/drop'
 import { createMemoryShopRepo } from './modules/shop/infra/memory'
 import { createSupabaseShopRepo } from './modules/shop/infra/supabase'
@@ -20,6 +24,9 @@ export type Repositories = {
   lists: ListRepo
   wallets: WalletRepo
   shop: ShopRepo
+  receipts: ReceiptRepo
+  /** レシートを読む AI。null = ANTHROPIC_API_KEY が未設定 (機能を隠す) */
+  receiptReader: ReceiptReader | null
 }
 
 export type Deps = {
@@ -48,6 +55,10 @@ export const createDeps = (env: Bindings): Deps => {
       lists: createSupabaseListRepo(db),
       wallets: createSupabaseWalletRepo(db),
       shop: createSupabaseShopRepo(db, dropPolicy(random)),
+      receipts: createSupabaseReceiptRepo(db),
+      receiptReader: env.ANTHROPIC_API_KEY
+        ? createClaudeReceiptReader(env.ANTHROPIC_API_KEY)
+        : null,
     },
     verifyToken: async (token) => {
       const { data, error } = await db.auth.getUser(token)
@@ -64,6 +75,9 @@ const createMemoryRepositories = (random: () => number): Repositories => {
     wallets,
     // memory の購入は、wallet の port 経由でコインを減らす
     shop: createMemoryShopRepo(wallets, dropPolicy(random)),
+    receipts: createMemoryReceiptRepo(),
+    // memory では Claude API を呼ばず、固定の読み取り結果を返す
+    receiptReader: createMemoryReceiptReader(),
   }
 }
 

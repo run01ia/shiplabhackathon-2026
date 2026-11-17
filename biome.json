@@ -107,6 +107,7 @@
                       "**/wallet/**",
                       "**/shop/**",
                       "**/profile/**",
+                      "**/receipts/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
@@ -139,7 +140,13 @@
                     "message": "routes (controller) は use-case と schemas だけを呼ぶ。repository / infra / supabase-js / domain を import しない (docs/architecture.md)"
                   },
                   {
-                    "group": ["**/lists/**", "**/wallet/**", "**/shop/**", "**/profile/**"],
+                    "group": [
+                      "**/lists/**",
+                      "**/wallet/**",
+                      "**/shop/**",
+                      "**/profile/**",
+                      "**/receipts/**"
+                    ],
                     "message": "routes (controller) は他モジュールを import しない。必要なら use-case が相手の repository (interface) を受け取る (docs/architecture.md)"
                   }
                 ]
@@ -182,6 +189,7 @@
                       "**/wallet/**",
                       "**/shop/**",
                       "**/profile/**",
+                      "**/receipts/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
@@ -227,6 +235,7 @@
                       "**/wallet/**",
                       "**/shop/**",
                       "**/profile/**",
+                      "**/receipts/**",
                       "!**/repository"
                     ],
                     "message": "他モジュールの infra は import しない。必要なら相手の repository.ts (interface) を引数で受け取る (docs/architecture.md)"
