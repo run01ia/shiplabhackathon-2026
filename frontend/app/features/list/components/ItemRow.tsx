@@ -3,10 +3,11 @@ import { useFetcher } from 'react-router'
 import { Button } from '~/components/Button'
 import { fieldClass } from './fieldClass'
 
-type Props = { listId: string; id: string; name: string }
+/** note: 名前の下に出す注意 (家の在庫にあるとき「家に◯◯があるよ」) */
+type Props = { listId: string; id: string; name: string; note?: string }
 
 /** 品目 1 行。名前タップで編集、削除ボタンで削除 (送信先はルートの clientAction) */
-export function ItemRow({ listId, id, name }: Props) {
+export function ItemRow({ listId, id, name, note }: Props) {
   const fetcher = useFetcher()
   const [editing, setEditing] = useState(false)
   // 送信中は楽観的に表示を変える
@@ -45,13 +46,16 @@ export function ItemRow({ listId, id, name }: Props) {
           onClick={() => setEditing(true)}
         >
           {shown}
+          {note && pendingIntent !== 'rename' ? (
+            <span className="block text-red text-xs">{note}</span>
+          ) : null}
         </button>
       )}
       <fetcher.Form method="post">
         <input type="hidden" name="intent" value="delete" />
         <input type="hidden" name="listId" value={listId} />
         <input type="hidden" name="itemId" value={id} />
-        <Button type="submit" variant="sub" small className="mb-0 w-auto px-3.5">
+        <Button type="submit" variant="sub" small className="mb-0! w-auto! px-3.5">
           削除
         </Button>
       </fetcher.Form>

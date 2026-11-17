@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '~/components/Card'
 import { ScreenTitle } from '~/components/Screen'
+import { StockPantryButton } from '~/features/pantry'
 import { ReceiptCard } from '~/features/receipt'
 import { formatYen } from '../logic/yen'
 import type { FinishResult } from '../types'
@@ -67,6 +68,8 @@ export function ResultView({ result }: { result: FinishResult }) {
         </motion.div>
       ) : null}
       {drop ? <Souvenir drop={drop} onOpen={() => setOpened(true)} /> : null}
+      {/* 家の在庫 (REQ-013)。買ったものをワンタップで入れる */}
+      <StockPantryButton names={result.items.filter((i) => i.isChecked).map((i) => i.name)} />
       {/* レシートの AI 判定 (REQ-012)。機能が無効なら何も出ない */}
       <ReceiptCard listId={result.list.id} />
       {/* Link をボタンの見た目にする (Button は <button> なので使えない) */}

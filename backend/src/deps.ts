@@ -2,6 +2,9 @@
 import { createMemoryListRepo } from './modules/lists/infra/memory'
 import { createSupabaseListRepo } from './modules/lists/infra/supabase'
 import type { ListRepo } from './modules/lists/repository'
+import { createMemoryPantryRepo } from './modules/pantry/infra/memory'
+import { createSupabasePantryRepo } from './modules/pantry/infra/supabase'
+import type { PantryRepo } from './modules/pantry/repository'
 import { createMemoryProfileRepo } from './modules/profile/infra/memory'
 import { createSupabaseProfileRepo } from './modules/profile/infra/supabase'
 import type { ProfileRepo } from './modules/profile/repository'
@@ -27,6 +30,7 @@ export type Repositories = {
   wallets: WalletRepo
   shop: ShopRepo
   receipts: ReceiptRepo
+  pantry: PantryRepo
   /** レシートを読む AI。null = ANTHROPIC_API_KEY が未設定 (機能を隠す) */
   receiptReader: ReceiptReader | null
 }
@@ -65,6 +69,7 @@ export const createDeps = (env: Bindings & ReceiptEnv): Deps => {
       wallets: createSupabaseWalletRepo(db, levelPolicy),
       shop: createSupabaseShopRepo(db, dropPolicy(random)),
       receipts: createSupabaseReceiptRepo(db, parseGlobalLimit(env.RECEIPT_DAILY_GLOBAL_LIMIT)),
+      pantry: createSupabasePantryRepo(db),
       receiptReader: env.ANTHROPIC_API_KEY
         ? createClaudeReceiptReader(env.ANTHROPIC_API_KEY)
         : null,
@@ -85,6 +90,7 @@ const createMemoryRepositories = (random: () => number): Repositories => {
     // memory の購入は、wallet の port 経由でコインを減らす
     shop: createMemoryShopRepo(wallets, dropPolicy(random)),
     receipts: createMemoryReceiptRepo(parseGlobalLimit(undefined)),
+    pantry: createMemoryPantryRepo(),
     // memory では Claude API を呼ばず、固定の読み取り結果を返す
     receiptReader: createMemoryReceiptReader(),
   }

@@ -42,6 +42,11 @@ Authorization: Bearer <アクセストークン>
 | POST | `/lists/:id/finish` | 買い物を終える。結果を判定し、ポイントを付ける。body `{ "spentAmount"?: number }` | 必要 |
 | GET | `/history/lists` | 完了したリストと品目 (新しい順、最大 50) | 必要 |
 | GET | `/receipts/status` | レシートの AI 判定が使えるか (`enabled`) と、今日の残り回数。backend に `ANTHROPIC_API_KEY` がなければ `enabled: false` (画面はボタンを出さない) | 必要 |
+| GET | `/pantry` | 家にあるもの (在庫、REQ-013)。入れた日時の新しい順 | 必要 |
+| POST | `/pantry/items` | 在庫にまとめて入れる。body `{ "names": string[] }` (1〜50 個)。同じ品目は入れ直し (日時を更新して「ある」に戻す) | 必要 |
+| POST | `/pantry/matches` | 品目名のうち、家にあるものを返す。body `{ "names": string[] }` | 必要 |
+| PATCH | `/pantry/items/:id` | 「ある / 少ない」を変える。body `{ "status": "have" \| "low" }` | 必要 |
+| DELETE | `/pantry/items/:id` | 在庫から消す (なくなった)。`204` (本文なし) | 必要 |
 | POST | `/receipts/scan` | レシートの写真を読み、品目を分類して、ペットのひとことと小さなボーナスを返す。`multipart/form-data` (`image`, `listId`)。画像は保存しない | 必要 |
 | PATCH | `/history/items/:itemId` | 完了したリストの品目の金額・不要の印を直す。body `{ "price"?, "isUnnecessary"? }` (どちらか必須)。ポイントは計算し直さない | 必要 |
 
@@ -249,6 +254,31 @@ curl -H 'Authorization: Bearer test-u1' -F image=@receipt.jpg -F listId=<リス�
 - 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物が終わっていない・今日の買い物でない / `413` 5MB 超 / `422` レシートが読めない / `429` 自分の今日の上限、または全体の上限 (「今日は混み合っています」) / `503` AI が混雑・停止・応答なし。
 - 回数に数えない失敗は、**AI 側の都合 (429 と 5xx) だけ**です。AI が画像を受け付けなかった (400 系)、タイムアウト・接続エラー、読めなかった場合は数えます (壊れた画像を送り続けて API を呼び続けられないように)。
 - Claude API を呼ばず固定の読み取り結果を返すのは、DB なし (メモリ実装) のときと、`RECEIPT_READER=memory` **かつ `NODE_ENV=development`** を明示したとき (DB ありのローカル確認用) だけです。`NODE_ENV` が未設定・`production` なら `RECEIPT_READER` は無視します。
+
+### `/pantry` (家の在庫、REQ-013)
+
+数量は持たず、品目名と「ある (`have`) / 少ない (`low`)」だけです。書き込みは API だけが行います。
+
+```bash
+curl -X POST -H 'Authorization: Bearer test-u1' -H 'Content-Type: application/json' \
+  -d '{"names":["牛乳","トマト"]}' http://localhost:3000/pantry/items
+curl -X POST -H 'Authorization: Bearer test-u1' -H 'Content-Type: application/json' \
+  -d '{"names":[" 牛乳","とまと","卵"]}' http://localhost:3000/pantry/matches
+```
+
+```json
+{
+  "matches": [
+    { "name": " 牛乳", "item": { "id": "…", "name": "牛乳", "status": "have", "stockedAt": "2026-11-17T00:30:00.000Z" } },
+    { "name": "とまと", "item": { "id": "…", "name": "トマト", "status": "have", "stockedAt": "2026-11-17T00:30:00.000Z" } }
+  ]
+}
+```
+
+- `GET /pantry` と `POST /pantry/items` は `{ "items": [{ id, name, status, stockedAt }] }` を返します。
+- 名前の比較は API が行います (`backend/src/modules/pantry/domain/name.ts`)。全角半角、空白、カタカナ / ひらがな、大文字小文字の違いは同じ品目として扱います。漢字とかな (卵 / たまご) は別の品目です。
+- 在庫は 1 人 200 個までです (超えると `400`)。
+- 画面: 買い物の結果画面の「買ったものを家の在庫に入れる」(購入済みの品目をまとめて `POST /pantry/items`)、リスト画面の「家にあるもの」(折りたたみ)。リストの品目が家にあると、品目の下に「家に◯◯があるよ (2 日前に入れた)」と出ます (足すのは止めません)。
 
 ## エラーの形
 

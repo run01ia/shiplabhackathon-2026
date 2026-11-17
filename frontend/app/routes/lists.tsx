@@ -16,20 +16,42 @@ import {
   startShopping,
   updateBudget,
 } from '~/features/list'
+import {
+  addToPantry,
+  fetchPantryForList,
+  PantrySection,
+  pantryNotices,
+  parsePantryCommand,
+  removeFromPantry,
+  setPantryStatus,
+} from '~/features/pantry'
 import { requireAccessToken } from '~/lib/session'
 import type { Route } from './+types/lists'
 
 // 未完了のリストを続きから開く (なければ作る)。買い物中なら /shopping へ
 export async function clientLoader() {
-  const detail = await fetchOrCreateList(await requireAccessToken())
+  const token = await requireAccessToken()
+  const detail = await fetchOrCreateList(token)
   if (detail.list.status === 'shopping') throw redirect('/shopping')
-  return detail
+  // 家の在庫 (REQ-013): 一覧と、リストの品目のうち家にあるもの
+  const pantry = await fetchPantryForList(
+    token,
+    detail.items.map((it) => it.name),
+  )
+  return { ...detail, pantry }
 }
 
 export async function clientAction({ request }: Route.ClientActionArgs) {
   const [token, form] = await Promise.all([requireAccessToken(), request.formData()])
   const listId = String(form.get('listId') ?? '')
   const itemId = String(form.get('itemId') ?? '')
+  const pantry = parsePantryCommand(form)
+  if (pantry?.type === 'add') return addToPantry(token, [pantry.name])
+  if (pantry?.type === 'status') return setPantryStatus(token, pantry.id, pantry.status)
+  if (pantry?.type === 'remove') {
+    await removeFromPantry(token, pantry.id)
+    return { ok: true }
+  }
   switch (form.get('intent')) {
     case 'budget': {
       const budget = parseBudget(form.get('budget'))
@@ -58,7 +80,9 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 }
 
 export default function Lists() {
-  const { list, items, listBonus } = useLoaderData<typeof clientLoader>()
+  const { list, items, listBonus, pantry } = useLoaderData<typeof clientLoader>()
+  const now = new Date()
+  const notices = pantryNotices(pantry.matches, now)
   const starting = useNavigation().formData?.get('intent') === 'start'
   return (
     <>
@@ -66,9 +90,18 @@ export default function Lists() {
       <Screen>
         <ScreenTitle>買い物リスト</ScreenTitle>
         <BudgetCard listId={list.id} budget={list.budget} />
+        <PantrySection items={pantry.items} now={now} />
         <Card>
           {items.length > 0 ? (
-            items.map((it) => <ItemRow key={it.id} listId={list.id} id={it.id} name={it.name} />)
+            items.map((it) => (
+              <ItemRow
+                key={it.id}
+                listId={list.id}
+                id={it.id}
+                name={it.name}
+                note={notices.get(it.name)}
+              />
+            ))
           ) : (
             <p className="py-2.5 text-center text-sm">まだ品目がありません。下から追加しよう</p>
           )}
