@@ -16,7 +16,9 @@
       "!**/.claude",
       "!**/supabase",
       "!**/docs",
-      "!pnpm-lock.yaml"
+      "!pnpm-lock.yaml",
+      "!pnpm-workspace.yaml",
+      "!**/*.md"
     ]
   },
   "formatter": {
