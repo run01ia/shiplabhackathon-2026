@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Link, useFetcher, useLoaderData } from 'react-router'
 import { Button } from '~/components/Button'
 import { Card } from '~/components/Card'
 import { Screen, ScreenTitle } from '~/components/Screen'
+import { Toast } from '~/components/Toast'
 import { useCatTap } from '~/features/pet'
 import {
   AskSheet,
@@ -60,6 +61,8 @@ export default function Shopping() {
   const [step, setStep] = useState<'shop' | 'fin'>('shop')
   const [target, setTarget] = useState<ListItem | null>(null)
   const [asking, setAsking] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const clearToast = useCallback(() => setToast(null), [])
   const { tap } = useCatTap()
 
   // 終了後は loader が null になるので、判定の結果を先に見る
@@ -163,7 +166,17 @@ export default function Shopping() {
         </Button>
       </Screen>
       <PriceSheet item={target} onClose={() => setTarget(null)} onSubmit={purchase} />
-      <AskSheet open={asking} onClose={() => setAsking(false)} onBuy={buyExtra} />
+      <AskSheet
+        open={asking}
+        onClose={() => setAsking(false)}
+        onBuy={buyExtra}
+        onSkip={() => {
+          setAsking(false)
+          setToast('がまんできた！ えらい (+5)')
+          tap()
+        }}
+      />
+      <Toast message={toast} onDone={clearToast} />
     </>
   )
 }

@@ -2,6 +2,8 @@
 import type { AppType } from '@backend/app'
 import { hc } from 'hono/client'
 import type { SuccessStatusCode } from 'hono/utils/http-status'
+import { redirect } from 'react-router'
+import { supabase } from './supabase'
 
 const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 
@@ -43,6 +45,11 @@ const errorMessage = async (res: Res): Promise<string> => {
 
 /** `!res.ok` なら文言付きで例外を投げ、ok なら 2xx の JSON を型付きで返す (204 は本文なし) */
 export const unwrap = async <R extends Res>(res: R): Promise<OkBody<R>> => {
+  // ログインが切れていたら (DB のリセットなど)、ログアウトしてログイン画面へ
+  if (res.status === 401) {
+    await supabase.auth.signOut()
+    throw redirect('/login')
+  }
   if (!res.ok) throw new Error(await errorMessage(res))
   if (res.status === 204) return undefined as OkBody<R>
   return res.json() as Promise<OkBody<R>>

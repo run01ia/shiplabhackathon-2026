@@ -30,7 +30,7 @@ export default function Login() {
     <Screen tab={false} className="justify-center">
       <Pet accessories={['cap']} size={170} bob />
       <ScreenTitle className="mt-2 text-center text-[28px]">お買い物上手</ScreenTitle>
-      <p className="mb-5 text-center text-sm">買い物をがんばって、もちおを育てよう</p>
+      <p className="mb-5 text-center text-sm">買い物をがんばって、相棒の猫を育てよう</p>
       <LoginForm message={data?.message} pending={pending} />
     </Screen>
   )

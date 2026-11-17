@@ -9,10 +9,12 @@ type Props = {
   open: boolean
   onClose: () => void
   onBuy: (name: string, price: number) => void
+  /** 「やめておく」を押した (がまんできた) */
+  onSkip: () => void
 }
 
-/** リスト外のものを買う前の確認。「やめておく」は何もしない (閉じるだけ) */
-export function AskSheet({ open, onClose, onBuy }: Props) {
+/** リスト外のものを買う前の確認。「やめておく」はほめて閉じる (+5 は結果画面で付く) */
+export function AskSheet({ open, onClose, onBuy, onSkip }: Props) {
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = new FormData(e.currentTarget)
@@ -33,7 +35,7 @@ export function AskSheet({ open, onClose, onBuy }: Props) {
           aria-label="金額"
           required
         />
-        <Button variant="mint" onClick={onClose}>
+        <Button variant="mint" onClick={onSkip}>
           やめておく +5
         </Button>
         <Button type="submit" variant="sub">

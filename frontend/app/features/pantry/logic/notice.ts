@@ -11,8 +11,12 @@ export const stockedAgo = (stockedAt: string, now: Date): string => {
 }
 
 /** 「家に牛乳があるよ (2 日前に入れた)」。少ないときは「少しあるよ」 */
-export const pantryNotice = ({ item }: PantryMatch, now: Date): string =>
-  `家に${item.name}が${item.status === 'low' ? '少し' : ''}あるよ (${stockedAgo(item.stockedAt, now)}に入れた)`
+export const pantryNotice = ({ item }: PantryMatch, now: Date): string => {
+  const ago = stockedAgo(item.stockedAt, now)
+  // 「今日入れた」「昨日入れた」「2 日前に入れた」
+  const when = ago.endsWith('前') ? `${ago}に` : ago
+  return `家に${item.name}が${item.status === 'low' ? '少し' : ''}あるよ (${when}入れた)`
+}
 
 /** リストの品目名 → 注意の文言 */
 export const pantryNotices = (matches: readonly PantryMatch[], now: Date): Map<string, string> =>
