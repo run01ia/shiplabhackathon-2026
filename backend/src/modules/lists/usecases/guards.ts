@@ -12,15 +12,15 @@ export type ListBonusDeps = {
   clock: () => Date
 }
 
-/** リストの作成・閲覧ポイント (JST で 1 日 1 回)。付いたら { delta }、付かなければ null */
+/** リストの作成・閲覧ポイント (JST で 1 日 1 回)。付いたら { delta, growth, levelUp }、付かなければ null */
 export const grantListBonus = async (d: ListBonusDeps, userId: string) => {
   const now = d.clock()
   const profile = await d.profiles.get(userId)
   const bonus = profile && decideListBonus(profile.lastListRewardOn, now)
   // 付与日を先に原子的に取る。同時に呼ばれても片方だけが付与できる
   if (!bonus || !(await d.profiles.claimListReward(userId, toJstDate(now)))) return null
-  await d.wallets.addPoints(userId, bonus.delta, bonus.reason)
-  return { delta: bonus.delta }
+  const { growth, levelUp } = await d.wallets.addPoints(userId, bonus.delta, bonus.reason)
+  return { delta: bonus.delta, growth, levelUp }
 }
 
 export const sumSpent = (items: ListItem[]) =>

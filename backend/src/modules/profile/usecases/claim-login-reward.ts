@@ -6,7 +6,7 @@ import type { ProfileRepo } from '../repository'
 
 type Deps = {
   profiles: Pick<ProfileRepo, 'get' | 'claimLoginReward'>
-  wallets: Pick<WalletRepo, 'get' | 'addPoints'>
+  wallets: Pick<WalletRepo, 'addPointsBatch'>
   clock: () => Date
 }
 
@@ -21,14 +21,15 @@ export const claimLoginReward = (d: Deps) => async (userId: string) => {
   const claimed = grants.length > 0 && (await d.profiles.claimLoginReward(userId, toJstDate(now)))
   const applied = claimed ? grants : []
 
-  let wallet = await d.wallets.get(userId)
-  for (const g of applied) wallet = await d.wallets.addPoints(userId, g.delta, g.reason)
-  if (!wallet) throw new AppError('not_found', 'profile not found')
+  // 内訳をまとめて 1 回で付ける (空なら今の状態が返る)
+  const wallet = await d.wallets.addPointsBatch(userId, applied)
   return {
     granted: applied.length > 0,
     rewards: applied,
     total: applied.reduce((sum, g) => sum + g.delta, 0),
     coins: wallet.coins,
     score: wallet.score,
+    growth: wallet.growth,
+    levelUp: wallet.levelUp,
   }
 }

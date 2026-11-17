@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '~/components/Card'
@@ -15,6 +16,8 @@ const tone = (n: number) => (n < 0 ? 'text-red' : 'text-mint')
 export function ResultView({ result }: { result: FinishResult }) {
   const ok = result.withinBudget
   const drop = result.drop
+  const levelUp = result.levelUp
+  const reduced = useReducedMotion()
   // 箱を開けたら、もらった帽子をその場でかぶる
   const [opened, setOpened] = useState(false)
   const hat = opened && drop && 'key' in drop ? drop.key : undefined
@@ -51,6 +54,18 @@ export function ResultView({ result }: { result: FinishResult }) {
           <b className={tone(result.total)}>{signed(result.total)}</b>
         </div>
       </Card>
+      {levelUp ? (
+        <motion.div
+          className="mb-3.5 rounded-card border-3 border-ink bg-sun p-3 text-center shadow-pop"
+          initial={reduced ? false : { scale: 0.6, rotate: -4 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 11, delay: 0.4 }}
+        >
+          <small className="block text-xs tracking-[0.25em]">LEVEL UP!</small>
+          <b className="block text-2xl">Lv.{levelUp.to} になった！</b>
+          <span className="text-xs font-normal">ホームで すがたを見てみよう</span>
+        </motion.div>
+      ) : null}
       {drop ? <Souvenir drop={drop} onOpen={() => setOpened(true)} /> : null}
       {/* レシートの AI 判定 (REQ-012)。機能が無効なら何も出ない */}
       <ReceiptCard listId={result.list.id} />

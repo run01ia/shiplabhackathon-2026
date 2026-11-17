@@ -16,6 +16,8 @@ type Props = {
   items: readonly ShopItem[]
   equipped: readonly string[]
   mood: Mood
+  /** ペットのレベル (育った見た目で試着する) */
+  level?: number
   onBuy: (item: ShopItem) => void
   onEquip: (item: ShopItem) => void
 }
@@ -34,6 +36,7 @@ export function ShopSheet({
   items,
   equipped,
   mood,
+  level,
   onBuy,
   onEquip,
 }: Props) {
@@ -64,7 +67,14 @@ export function ShopSheet({
           ))}
         </div>
         <PetRoom compact>
-          <Character accessories={equipped} mood={mood} size={128} shadow reactToTap />
+          <Character
+            accessories={equipped}
+            mood={mood}
+            level={level}
+            size={128}
+            shadow
+            reactToTap
+          />
         </PetRoom>
         <div className="grid grid-cols-2 gap-3">
           {shown.map((item) =>

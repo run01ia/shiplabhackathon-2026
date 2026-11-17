@@ -139,7 +139,7 @@ supabase-js にはトランザクション (複数の更新をまとめて 1 回
 | `buy_item(p_user_id, p_item_key)` | コインを減らし、`user_items` に行を足す。コイン不足・所持済み・存在しないアイテムはエラー |
 | `grant_drop(p_user_id, p_item_key, p_coins)` | おみやげを付与する。帽子を `user_items` に足せたら `'item'`。`p_item_key` が `null` か所持済みなら、`coins` を `p_coins` だけ増やして (`score` は変えない) `point_logs` に「おみやげ」を残し、`'coins'` を返す |
 | `reserve_receipt_scan(p_user_id, p_list_id, p_today, p_limit)` | 今日のレシートの読み取りが `p_limit` 回未満なら `receipt_scans` に 1 行足して id を返す。上限なら `null`。`profiles` の行をロックするので、同時に呼ばれても上限を超えない |
-| `add_points(p_user_id, p_delta, p_reason)` | `coins` と `score` を増減し (コインは 0 未満にしない)、`point_logs` に 1 行足す |
+| `add_points(p_user_id, p_deltas[], p_reasons[], p_exp_gains[], p_thresholds[])` | 複数の付与を 1 回で反映する。`coins` と `score` を増減し (コインは 0 未満にしない)、`exp` (累計の経験値) を増やし、`level` を上げ (下げない)、`point_logs` に付与の数だけ行を足す。更新後の `profiles` の列と `previous_level` を jsonb で返す。レベルの規則は SQL に書かず、API が渡す: `p_exp_gains` = 付与ごとの経験値、`p_thresholds` = レベル 2, 3, ... に届く累計の経験値 (`backend/src/modules/wallet/domain/level.ts`) |
 
 ## マイグレーションの追加方法
 
