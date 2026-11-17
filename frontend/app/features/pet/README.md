@@ -42,6 +42,12 @@ const { tap } = useCatTap()
 - 部屋 (`PetRoom`) の空は、開いた時刻で朝・昼・夕方・夜に変わる。
 - キャラの定義に `earLeft` / `earRight` (任意) を足すと、耳が動く。なくても描ける。
 
+## 育つ (レベルと見た目)
+
+- レベルと経験値は backend が決める (`me.growth` の `levelExp / nextLevelExp` がゲージ)。画面は式を持たない。
+- **レベルアップの演出** (`hooks/useLevelUp.ts`、`components/LevelUpFx.tsx`、`LevelBadge.tsx`): ホームで「最後に見せたレベル」(localStorage の `pet:seenLevel`) より上がっていたら祝う。報酬のコインが届き終わってから、Lv の数字が跳ね、後光と帯と紙吹雪が出て、猫が宙返りする。リストや買い物で上がったぶんも、次にホームを開いたときに祝う。
+- **レベルで増える見た目**: キャラの定義の `growth` (`level`、`name`、`layer` = `head` / `tail`、絵)。猫は Lv.2 ほっぺの光、Lv.3 すずの首輪 (首のアクセサリーを着けているあいだは出さない)、Lv.5 しっぽの星。`<Character level={...} />` で描く。足すときは `characters/cat.tsx` の `growth` に 1 つ足す。
+
 ## 新しいキャラを足す (5 行)
 
 1. `characters/cat.tsx` を `characters/dog.tsx` にコピーし、`key`、`name`、`viewBox` を書き換える。

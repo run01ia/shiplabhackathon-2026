@@ -15,6 +15,7 @@ export const KEYFRAMES = `
 @keyframes pet-breathe-deep{0%,100%{transform:scale(1.014,.976)}50%{transform:scale(.99,1.03)}}
 @keyframes pet-zzz{0%{transform:translate(0,0) scale(.5);opacity:0}20%{opacity:1}100%{transform:translate(-.9em,-2.2em) scale(1.25);opacity:0}}
 @keyframes pet-ear{0%,38%,46%,100%{transform:rotate(0)}40%,44%{transform:rotate(-13deg)}42%{transform:rotate(-3deg)}}
+@keyframes pet-glint{0%,100%{transform:scale(1);opacity:1}45%{transform:scale(.35);opacity:.3}}
 @keyframes pet-tilt{0%,52%,80%,100%{transform:rotate(0)}58%,74%{transform:rotate(4deg)}}
 `
 
@@ -40,6 +41,10 @@ export const BREATHE_SLEEP =
   'origin-bottom animate-[pet-breathe-deep_4.6s_ease-in-out_infinite] motion-reduce:animate-none'
 export const ZZZ =
   'absolute opacity-0 animate-[pet-zzz_2.7s_ease-out_infinite] motion-reduce:animate-none motion-reduce:opacity-100'
+
+/** 育つと増える光 (ほっぺ)。自分の中心で、またたく */
+export const GLINT =
+  '[transform-box:fill-box] origin-center animate-[pet-glint_2.6s_ease-in-out_infinite] motion-reduce:animate-none'
 
 /** ぺち: 手を素早く持ち上げて叩きつけ、体が一瞬つぶれて戻る */
 export const TAP = {

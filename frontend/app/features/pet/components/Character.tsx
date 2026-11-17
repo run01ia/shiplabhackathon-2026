@@ -21,6 +21,8 @@ type Props = {
   pulse?: number
   /** 足元の影 */
   shadow?: boolean
+  /** ペットのレベル。上がると見た目が増える (定義の growth) */
+  level?: number
 }
 
 const NONE: readonly string[] = []
@@ -51,8 +53,16 @@ export function Character({
   reactToTap = false,
   pulse = 0,
   shadow = false,
+  level = 1,
 }: Props) {
   const { viewBox, parts, pivots, slots, accessoryAdjust } = definition
+  const worn = resolveAccessories(accessories)
+  // レベルで増える見た目。同じ場所にアクセサリーがあれば、そちらを優先する
+  const grown = (layer: 'head' | 'tail') =>
+    definition.growth
+      ?.filter((g) => g.layer === layer && level >= g.level)
+      .filter((g) => !worn.some((a) => a.slot === g.hiddenBy))
+      .map((g) => <g key={g.key}>{g.art}</g>)
   const face = parts.face[mood]
   const m = useCharacterMotion({ mood, pulse, reactToTap, size, viewHeight: viewBox.height })
   const on = (className?: string) => (idle ? className : undefined)
@@ -62,7 +72,7 @@ export function Character({
       className={`relative mx-auto ${bob ? 'animate-bob motion-reduce:animate-none' : ''}`}
       style={{ width: size, height: (size * viewBox.height) / viewBox.width }}
     >
-      <style href="pet-keyframes-2" precedence="medium">
+      <style href="pet-keyframes-3" precedence="medium">
         {KEYFRAMES}
       </style>
       {shadow ? (
@@ -85,6 +95,7 @@ export function Character({
             >
               <g className={on(TAIL[mood])} style={origin(pivots.tail)}>
                 {parts.tail}
+                {grown('tail')}
               </g>
               {parts.body}
               <motion.g style={{ y: m.headY, rotate: m.headRotate, ...EAR_ORIGIN }}>
@@ -119,7 +130,8 @@ export function Character({
                     </g>
                   </motion.g>
                   {face.mouth}
-                  {resolveAccessories(accessories).map((a) => {
+                  {grown('head')}
+                  {worn.map((a) => {
                     const s = slots[a.slot]
                     const adj = accessoryAdjust?.[a.key]
                     const x = s.x + (adj?.dx ?? 0)

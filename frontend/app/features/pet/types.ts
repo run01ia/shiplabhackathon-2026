@@ -30,6 +30,21 @@ export type SlotAnchor = Point & { scale?: number; rotate?: number }
 export type AccessoryAdjust = { dx?: number; dy?: number; scale?: number; rotate?: number }
 
 /**
+ * レベルが上がると増える見た目 (育成)。level 以上で描く。絵は viewBox の座標でそのまま描く。
+ * layer = どのパーツと一緒に動くか (head = 顔のまわり、tail = しっぽ)
+ */
+export type GrowthPart = {
+  key: string
+  level: number
+  /** レベルアップの演出で出す名前 */
+  name: string
+  layer: 'head' | 'tail'
+  art: ReactNode
+  /** この slot にアクセサリーを着けているあいだは描かない (例: 首輪とリボン) */
+  hiddenBy?: Slot
+}
+
+/**
  * キャラ 1 体ぶんの定義。絵 (パーツ) と座標だけを持ち、動きは <Character> が付ける。
  * パーツは viewBox の座標でそのまま描く (描画順: tail → body → 耳 → head → 顔 → アクセサリー → 手)。
  */
@@ -62,6 +77,8 @@ export type CharacterDefinition = {
     earRight?: Point
   }
   slots: Record<Slot, SlotAnchor>
+  /** レベルで増える見た目 (なくてもよい) */
+  growth?: readonly GrowthPart[]
   /** アクセサリーの key ごとの補正 (例: 耳が大きいキャラだけ帽子を上げる) */
   accessoryAdjust?: Partial<Record<string, AccessoryAdjust>>
 }

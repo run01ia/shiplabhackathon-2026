@@ -3,17 +3,20 @@ import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '~/components/Button'
 import { Coin } from '~/components/Coin'
-import { ProgressBar } from '~/components/ProgressBar'
 import { Screen } from '~/components/Screen'
 import { Toast } from '~/components/Toast'
 import { BIG_EVERY } from '../animations'
 import type { LoginReward, Me, ShopItem, ShopResult } from '../api'
+import { CHARACTERS, DEFAULT_CHARACTER, unlockedBetween } from '../characters'
 import { useCatTap } from '../hooks/useCatTap'
 import { useDoze } from '../hooks/useDoze'
+import { useLevelUp } from '../hooks/useLevelUp'
 import { useShopActions } from '../hooks/useShopActions'
 import type { Mood } from '../types'
 import { Character } from './Character'
 import { HeartPop } from './HeartPop'
+import { LevelBadge } from './LevelBadge'
+import { LevelUpFx, LevelUpRays } from './LevelUpFx'
 import { PetRoom } from './PetRoom'
 import { RewardFx } from './RewardFx'
 import { type SheetTab, ShopSheet } from './ShopSheet'
@@ -63,6 +66,24 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
   const [pets, setPets] = useState(0)
 
   const coins = me.coins - pendingCoins
+  // レベルアップは、報酬のコインが届き終わってから祝う。それまでは上がる前のレベルと見た目を出す
+  const levelUp = useLevelUp({
+    level: me.level,
+    hint: reward?.levelUp ?? null,
+    wait: rewards.length > 0,
+    onStart: ({ to }) => {
+      setBubble(`Lv.${to} になったよ！`)
+      // 大技 (宙返り) で喜ぶ
+      setPets((n) => n + BIG_EVERY - (n % BIG_EVERY))
+      feel('joy', 2600)
+    },
+  })
+  const total = reward?.granted ? reward.total : 0
+  // ゲージ: 上がる直前は、コインが届くたびに満ちていく (上がる前の量は分からないので、割合で見せる)
+  const filling = levelUp.pending && pendingCoins > 0 && total > 0
+  const gauge = filling
+    ? { value: 0.3 + 0.7 * (1 - pendingCoins / total), max: 1 }
+    : { value: Math.max(0, me.growth.levelExp - pendingCoins), max: me.growth.nextLevelExp }
   // しばらく触らないと居眠りする。なでる・ボタンを押すと起きる
   const asleep = useDoze(DOZE_MS)
   const shownMood: Mood = mood === 'happy' && asleep ? 'sleep' : mood
@@ -133,18 +154,18 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
     <>
       <Screen>
         <div className="mb-3 flex items-center gap-3">
-          <div>
-            <div className="text-xs font-normal text-muted">買い物上手</div>
-            <b className="text-xl">Lv.{me.level}</b>
-          </div>
-          <div className="flex-1">
-            <ProgressBar value={me.exp % 100} color="var(--color-sun)" />
-          </div>
+          <LevelBadge
+            level={levelUp.shown}
+            value={gauge.value}
+            max={gauge.max}
+            rising={filling ? 'filling' : levelUp.pending ? 'full' : null}
+          />
           <div ref={coinRef}>
             <Coin amount={coins} />
           </div>
         </div>
         <PetRoom bubble={shownMood === 'sleep' ? 'すやすや…' : bubble}>
+          {levelUp.celebration ? <LevelUpRays /> : null}
           <button
             type="button"
             className="relative mx-auto block cursor-pointer border-0 bg-transparent p-0"
@@ -152,7 +173,7 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
             onClick={pet}
           >
             <motion.div
-              key={me.equippedItems.join(',')}
+              key={`${me.equippedItems.join(',')}-${levelUp.shown}`}
               initial={{ scale: 0.92 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 480, damping: 12 }}
@@ -162,6 +183,7 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
                 mood={shownMood}
                 size={220}
                 pulse={pets}
+                level={levelUp.shown}
                 shadow
                 reactToTap
               />
@@ -207,6 +229,7 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
         coins={coins}
         items={items}
         equipped={me.equippedItems}
+        level={levelUp.shown}
         mood={mood}
         onBuy={buy}
         onEquip={toggle}
@@ -225,10 +248,25 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
           onDone={() => {
             setRewards([])
             setPendingCoins(0)
+            if (levelUp.pending) return
             setBubble('おかえり！ えらい！')
-            // 全部届いたら大技 (宙返り) で喜ぶ
+            // 全部届いたら大技 (宙返り) で喜ぶ。レベルアップが続くときは、そちらで喜ぶ
             setPets((n) => n + BIG_EVERY - (n % BIG_EVERY))
             feel('joy')
+          }}
+        />
+      ) : null}
+      {levelUp.celebration ? (
+        <LevelUpFx
+          levelUp={levelUp.celebration}
+          perks={unlockedBetween(
+            CHARACTERS[DEFAULT_CHARACTER],
+            levelUp.celebration.from,
+            levelUp.celebration.to,
+          ).map((g) => g.name)}
+          onDone={() => {
+            levelUp.finish()
+            setBubble('もっと そだててね')
           }}
         />
       ) : null}

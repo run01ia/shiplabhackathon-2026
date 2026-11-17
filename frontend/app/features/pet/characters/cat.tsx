@@ -1,4 +1,5 @@
-import type { CharacterDefinition } from '../types'
+import { GLINT } from '../animations'
+import type { CharacterDefinition, GrowthPart } from '../types'
 
 const S = '#2b2118'
 const FUR = '#f6b26b'
@@ -32,6 +33,57 @@ const eye = (cx: number, ry = 10) => (
     <circle cx={cx - 2.5} cy="110.5" r="1.5" fill="#fff" />
   </>
 )
+
+// 4 つの角がある小さな光 (中心 cx, cy、大きさ r)
+const glint = (cx: number, cy: number, r: number) =>
+  `M${cx} ${cy - r}q${r * 0.18} ${r * 0.82} ${r} ${r}q-${r * 0.82} ${r * 0.18}-${r} ${r}q-${r * 0.18}-${r * 0.82}-${r}-${r}q${r * 0.82}-${r * 0.18} ${r}-${r}z`
+const COLLAR = 'M61 161q39 19 78 0'
+
+/** 育つと増える見た目。帽子やめがねを着けていても見える場所 (ほっぺ・首・しっぽ) に置く */
+const growth: readonly GrowthPart[] = [
+  {
+    key: 'cheek-glint',
+    level: 2,
+    name: 'きらきらのほっぺ',
+    layer: 'head',
+    art: (
+      <>
+        <path d={glint(53, 124, 6.5)} fill="#fff" className={GLINT} />
+        <path d={glint(147, 124, 6.5)} fill="#fff" className={`${GLINT} [animation-delay:-1.3s]`} />
+      </>
+    ),
+  },
+  {
+    key: 'bell-collar',
+    level: 3,
+    name: 'すずの首輪',
+    layer: 'head',
+    hiddenBy: 'neck',
+    art: (
+      <>
+        <path d={COLLAR} fill="none" stroke={S} strokeWidth="12" strokeLinecap="round" />
+        <path d={COLLAR} fill="none" stroke="#f2542d" strokeWidth="6" strokeLinecap="round" />
+        <circle cx="100" cy="174" r="8" fill="#ffc93c" stroke={S} strokeWidth="3.5" />
+        <path d="M94 173h12M100 175v5" stroke={S} strokeWidth="2.5" strokeLinecap="round" />
+      </>
+    ),
+  },
+  {
+    key: 'tail-star',
+    level: 5,
+    name: 'しっぽの星',
+    layer: 'tail',
+    art: (
+      <path
+        d="M181 124l4.4 9 9.9 1.4-7.2 7 1.7 9.8-8.8-4.6-8.8 4.6 1.7-9.8-7.2-7 9.9-1.4z"
+        fill="#ffc93c"
+        stroke={S}
+        strokeWidth="3.5"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+]
 
 /** 最初の 1 体。新しいキャラはこのファイルをコピーして作る (README.md) */
 export const cat: CharacterDefinition = {
@@ -178,4 +230,5 @@ export const cat: CharacterDefinition = {
     face: { x: 100, y: 106 },
     neck: { x: 100, y: 167 },
   },
+  growth,
 }

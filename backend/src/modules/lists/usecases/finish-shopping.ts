@@ -11,7 +11,7 @@ type Deps = {
   lists: ListRepo
   // 他モジュールは port (interface) の必要なメソッドだけを受け取る。実装は deps.ts が渡す
   profiles: Pick<ProfileRepo, 'claimShoppingReward'>
-  wallets: Pick<WalletRepo, 'addPoints'>
+  wallets: Pick<WalletRepo, 'addPointsBatch'>
   shop: Pick<ShopRepo, 'rollDrop'>
   clock: () => Date
 }
@@ -30,9 +30,11 @@ export const finishShopping =
     // ごほうび (プラスとおみやげ) は 1 日 1 回。2 回目以降はマイナスだけ反映する
     const firstToday = await d.profiles.claimShoppingReward(userId, toJstDate(d.clock()))
     const judgement = limitToDaily(raw, firstToday)
-    for (const line of judgement.breakdown) {
-      await d.wallets.addPoints(userId, line.points, line.label)
-    }
+    // 内訳をまとめて 1 回で付ける (途中で失敗して半分だけ付くことがない)。ペットの経験値とレベルも一緒に変わる
+    const { growth, levelUp } = await d.wallets.addPointsBatch(
+      userId,
+      judgement.breakdown.map((line) => ({ delta: line.points, reason: line.label })),
+    )
     // おみやげ: 予算内で、1 件以上買ったときだけ (D28 と同じ条件。作成 → 終了の繰り返しで集められない)
     const earned = firstToday && judgement.withinBudget && items.some((i) => i.isChecked)
     // 買い物はもう終わっているので、おみやげの失敗で結果を返せなくしない
@@ -42,5 +44,5 @@ export const finishShopping =
           return null
         })
       : null
-    return { list: finished, items, ...judgement, drop, rewardedToday: firstToday }
+    return { list: finished, items, ...judgement, drop, rewardedToday: firstToday, growth, levelUp }
   }

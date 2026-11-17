@@ -9,9 +9,10 @@ import { DUPLICATE_COINS, pickDrop } from './modules/shop/domain/drop'
 import { createMemoryShopRepo } from './modules/shop/infra/memory'
 import { createSupabaseShopRepo } from './modules/shop/infra/supabase'
 import type { DropPolicy, ShopRepo } from './modules/shop/repository'
+import { expGain, LEVEL_THRESHOLDS, levelProgress } from './modules/wallet/domain/level'
 import { createMemoryWalletRepo } from './modules/wallet/infra/memory'
 import { createSupabaseWalletRepo } from './modules/wallet/infra/supabase'
-import type { WalletRepo } from './modules/wallet/repository'
+import type { LevelPolicy, WalletRepo } from './modules/wallet/repository'
 import type { AuthUser, Bindings } from './shared/env'
 import { createDb } from './shared/supabase'
 
@@ -36,6 +37,13 @@ const dropPolicy = (random: () => number): DropPolicy => ({
   coins: DUPLICATE_COINS,
 })
 
+/** レベルの規則 (wallet の domain)。infra は domain を import しないので、ここで渡す */
+const levelPolicy: LevelPolicy = {
+  thresholds: LEVEL_THRESHOLDS,
+  progress: levelProgress,
+  gain: expGain,
+}
+
 /** 本番 (Supabase) の組み立て */
 export const createDeps = (env: Bindings): Deps => {
   const db = createDb(env)
@@ -46,7 +54,7 @@ export const createDeps = (env: Bindings): Deps => {
     repos: {
       profiles: createSupabaseProfileRepo(db),
       lists: createSupabaseListRepo(db),
-      wallets: createSupabaseWalletRepo(db),
+      wallets: createSupabaseWalletRepo(db, levelPolicy),
       shop: createSupabaseShopRepo(db, dropPolicy(random)),
     },
     verifyToken: async (token) => {
@@ -57,7 +65,7 @@ export const createDeps = (env: Bindings): Deps => {
 }
 
 const createMemoryRepositories = (random: () => number): Repositories => {
-  const wallets = createMemoryWalletRepo()
+  const wallets = createMemoryWalletRepo(levelPolicy)
   return {
     profiles: createMemoryProfileRepo(),
     lists: createMemoryListRepo(),

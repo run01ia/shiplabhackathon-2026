@@ -61,8 +61,20 @@ Authorization: Bearer <アクセストークン>
 ### `GET /me`
 
 ```json
-{ "petName": "ぷち", "coins": 0, "score": 0, "level": 1, "exp": 0, "equippedItems": [] }
+{
+  "petName": "ぷち", "coins": 0, "score": 0, "level": 1, "exp": 0,
+  "growth": { "level": 1, "exp": 0, "levelExp": 0, "nextLevelExp": 50 },
+  "equippedItems": []
+}
 ```
+
+### ペットの育ち方 (`growth` と `levelUp`)
+
+プラスのポイントは、そのまま経験値になります (マイナスでは減りません)。ポイントが付く応答 (`POST /rewards/login`、`listBonus`、`POST /lists/:id/finish`) と `GET /me` に、次が入ります。
+
+- `growth`: `level`、`exp` (累計の経験値)、`levelExp` (今のレベルになってから貯めた量)、`nextLevelExp` (次のレベルに必要な量。最大レベルでは `0`)。ゲージは `levelExp / nextLevelExp` です。
+- `levelUp` (ポイントが付く応答だけ): その付与でレベルが上がったら `{ "from": 1, "to": 2 }`、上がらなければ `null`。一度に 2 つ以上上がることもあります。
+- 必要な経験値は Lv.1 → 2 が 50 で、以後 25 ずつ増えます (`backend/src/modules/wallet/domain/level.ts`。仮の値)。
 
 `equippedItems` は着用中のアイテムの `key` の配列です (例: `["hat"]`)。
 
@@ -79,7 +91,9 @@ Authorization: Bearer <アクセストークン>
   ],
   "total": 50,
   "coins": 50,
-  "score": 50
+  "score": 50,
+  "growth": { "level": 2, "exp": 50, "levelExp": 0, "nextLevelExp": 75 },
+  "levelUp": { "from": 1, "to": 2 }
 }
 ```
 
@@ -112,7 +126,7 @@ Authorization: Bearer <アクセストークン>
 
 - `spent`: 購入済みの品目の金額の合計
 - `remaining`: `budget - spent` (超えるとマイナス)
-- `listBonus` (`POST /lists` と `GET /lists/current` だけ): リストの作成・閲覧ポイント。JST で 1 日 1 回 `{ "delta": 10 }`、付かなければ `null`。point_logs に「リストを準備した」で残る。点数は `backend/src/modules/lists/domain/list-bonus.ts` の `LIST_BONUS` (仮の値)
+- `listBonus` (`POST /lists` と `GET /lists/current` だけ): リストの作成・閲覧ポイント。JST で 1 日 1 回 `{ "delta": 10, "growth": { ... }, "levelUp": null }`、付かなければ `null`。point_logs に「リストを準備した」で残る。点数は `backend/src/modules/lists/domain/list-bonus.ts` の `LIST_BONUS` (仮の値)
 
 ### `POST /lists/:id/items`
 
@@ -153,7 +167,9 @@ Authorization: Bearer <アクセストークン>
     { "label": "不要買いをやめた", "points": 5 }
   ],
   "total": 45,
-  "drop": { "key": "straw", "name": "むぎわらぼうし", "rarity": "common" }
+  "drop": { "key": "straw", "name": "むぎわらぼうし", "rarity": "common" },
+  "growth": { "level": 2, "exp": 105, "levelExp": 55, "nextLevelExp": 75 },
+  "levelUp": null
 }
 ```
 
