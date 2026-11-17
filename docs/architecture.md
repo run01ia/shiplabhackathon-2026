@@ -105,7 +105,7 @@ backend/src/
     └─ domain/           # 機能をまたぐ純粋関数 (date.ts: JST の日付)
 ```
 
-モジュールと担当: `lists` (リスト・品目・買い物・履歴)、`wallet` (コイン・スコア・ポイント履歴)、`shop` (着せ替えの購入・着用)、`profile` (`/me`、ログイン報酬)。
+モジュールと担当: `lists` (リスト・品目・買い物・履歴)、`wallet` (コイン・スコア・ポイント履歴)、`shop` (着せ替えの購入・着用)、`profile` (`/me`、ログイン報酬)、`receipts` (レシートの AI 判定、回数制限)。
 
 モジュールを足すとき: `modules/<名前>/` を作る → `deps.ts` の `Repositories` に repository を足す → `app.ts` に `.route('/', xxx(d))` を 1 行足す → `biome.json` の「他モジュール」の group (`**/<名前>/**`) に名前を足す。
 
