@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData } from 'react-router'
+import { Outlet, useLoaderData, useLocation } from 'react-router'
 import { TabBar } from '~/components/TabBar'
 import { CatCompanion, CatTapProvider, fetchMe } from '~/features/pet'
 import { requireAccessToken } from '~/lib/session'
@@ -16,10 +16,12 @@ export async function clientLoader() {
 
 export default function TabLayout() {
   const { equippedItems } = useLoaderData<typeof clientLoader>()
+  // ホームには大きな猫がいるので、隅の猫は出さない (2 匹に見える)
+  const onHome = useLocation().pathname === '/home'
   return (
     <CatTapProvider>
       <Outlet />
-      <CatCompanion accessories={equippedItems} />
+      {onHome ? null : <CatCompanion accessories={equippedItems} />}
       <TabBar />
     </CatTapProvider>
   )

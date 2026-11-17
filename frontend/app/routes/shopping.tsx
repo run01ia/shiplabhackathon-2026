@@ -14,7 +14,6 @@ import {
   finishShopping,
   ItemRow,
   type ListItem,
-  PriceSheet,
   parseYen,
   purchaseItem,
   ResultView,
@@ -59,7 +58,6 @@ export default function Shopping() {
   const fetcher = useFetcher<typeof clientAction>()
   const finisher = useFetcher<typeof clientAction>()
   const [step, setStep] = useState<'shop' | 'fin'>('shop')
-  const [target, setTarget] = useState<ListItem | null>(null)
   const [asking, setAsking] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const clearToast = useCallback(() => setToast(null), [])
@@ -105,14 +103,13 @@ export default function Shopping() {
     )
   }
 
-  const purchase = (price: number) => {
-    if (!target) return
-    tap()
+  // チェックはワンタップ。金額は行の中で後から入れられる
+  const purchase = (item: ListItem, price: number) => {
+    if (!item.isChecked) tap()
     fetcher.submit(
-      { intent: 'purchase', listId, itemId: target.id, price: String(price) },
+      { intent: 'purchase', listId, itemId: item.id, price: String(price) },
       { method: 'post' },
     )
-    setTarget(null)
   }
 
   const buyExtra = (name: string, price: number) => {
@@ -155,7 +152,7 @@ export default function Shopping() {
         <BudgetCard budget={list.budget} remaining={remaining} />
         <Card className="py-1">
           {items.map((it) => (
-            <ItemRow key={it.id} item={it} onTap={busy ? undefined : setTarget} />
+            <ItemRow key={it.id} item={it} onPurchase={purchase} />
           ))}
         </Card>
         <Button variant="sub" onClick={() => setAsking(true)}>
@@ -165,7 +162,6 @@ export default function Shopping() {
           買い物おわり
         </Button>
       </Screen>
-      <PriceSheet item={target} onClose={() => setTarget(null)} onSubmit={purchase} />
       <AskSheet
         open={asking}
         onClose={() => setAsking(false)}

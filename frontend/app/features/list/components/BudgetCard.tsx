@@ -1,53 +1,61 @@
-import { useState } from 'react'
 import { useFetcher } from 'react-router'
-import { BottomSheet } from '~/components/BottomSheet'
-import { Button } from '~/components/Button'
 import { Card } from '~/components/Card'
-import { formatYen } from '../logic/parse'
-import { fieldClass } from './fieldClass'
+import { parseBudget } from '../logic/parse'
 
-/** 今日の予算。タップで BottomSheet を開いて変更する */
+const presets = [1000, 2000, 3000]
+
+/** 今日の予算。カードの中で直接入力し、Enter かフォーカスを外したら保存する。よく使う金額はワンタップ */
 export function BudgetCard({ listId, budget }: { listId: string; budget: number }) {
   const fetcher = useFetcher()
-  const [open, setOpen] = useState(false)
   const pending = fetcher.formData?.get('budget')
   const shown = pending != null ? Number(pending) : budget
 
+  const save = (value: number) => {
+    if (value === shown) return
+    fetcher.submit({ intent: 'budget', listId, budget: String(value) }, { method: 'post' })
+  }
+
   return (
-    <>
-      <Card className="p-0">
-        <button
-          type="button"
-          className="block w-full cursor-pointer border-0 bg-transparent p-3.5 text-left"
-          onClick={() => setOpen(true)}
-        >
-          <div className="text-muted text-xs font-normal">今日の予算</div>
-          <div className="flex items-center justify-between">
-            <b className="text-[30px]">{formatYen(shown)}</b>
-            <span className="text-muted text-xs font-normal">タップで変更</span>
-          </div>
-        </button>
-      </Card>
-      <BottomSheet open={open} onClose={() => setOpen(false)}>
-        <h3 className="mb-3 text-lg">今日の予算</h3>
-        <fetcher.Form method="post" onSubmit={() => setOpen(false)}>
-          <input type="hidden" name="intent" value="budget" />
-          <input type="hidden" name="listId" value={listId} />
-          <input
-            className={`${fieldClass} mb-3`}
-            name="budget"
-            type="number"
-            inputMode="numeric"
-            min={0}
-            step={1}
-            defaultValue={budget || ''}
-            placeholder="例: 2000"
-            aria-label="予算 (円)"
-            required
-          />
-          <Button type="submit">決定</Button>
-        </fetcher.Form>
-      </BottomSheet>
-    </>
+    <Card>
+      <label htmlFor="budget" className="block text-xs font-normal text-muted">
+        今日の予算
+      </label>
+      <div className="flex items-center gap-1 border-b-3 border-ink">
+        <span className="text-[26px]">¥</span>
+        <input
+          // 保存した値が変わったら入力欄も作り直す (プリセットを押したとき)
+          key={shown}
+          id="budget"
+          className="w-full min-w-0 border-0 bg-transparent py-1 text-[30px] font-bold outline-none"
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={100}
+          defaultValue={shown || ''}
+          placeholder="2000"
+          enterKeyHint="done"
+          onBlur={(e) => {
+            const raw = e.currentTarget.value
+            const v = raw === '' ? null : parseBudget(raw)
+            if (v != null) save(v)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+          }}
+        />
+      </div>
+      <div className="mt-2.5 flex gap-2">
+        {presets.map((p) => (
+          <button
+            key={p}
+            type="button"
+            className={`min-h-11 flex-1 cursor-pointer rounded-full border-3 border-ink text-sm ${shown === p ? 'bg-sun' : 'bg-white'}`}
+            onClick={() => save(p)}
+          >
+            {p.toLocaleString()}円
+          </button>
+        ))}
+      </div>
+    </Card>
   )
 }

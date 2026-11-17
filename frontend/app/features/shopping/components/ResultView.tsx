@@ -46,7 +46,7 @@ export function ResultView({ result }: { result: FinishResult }) {
         ))}
         {result.rewardedToday ? null : (
           <p className="py-1.5 text-xs text-muted">
-            今日のごほうびは受け取り済み。2 回目からはマイナスだけ反映します
+            ごほうびは 1 日 1 回。今日の分はもうもらったよ、また明日！
           </p>
         )}
         <div className="flex justify-between py-1.5 text-xl">

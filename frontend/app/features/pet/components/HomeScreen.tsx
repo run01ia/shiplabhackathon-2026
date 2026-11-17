@@ -218,7 +218,7 @@ export function HomeScreen({ me, items, reward, footer }: Props) {
             navigate('/lists')
           }}
         >
-          買い物リストを作る
+          買い物リストへ
         </Button>
         {footer}
       </Screen>
