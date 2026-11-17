@@ -2,6 +2,8 @@
 export type Bindings = {
   SUPABASE_URL: string
   SUPABASE_SECRET_KEY: string
+  /** Claude API (レシートの AI 判定)。未設定なら機能を隠す。backend の中だけで使う */
+  ANTHROPIC_API_KEY?: string
 }
 
 export type AuthUser = { id: string }
