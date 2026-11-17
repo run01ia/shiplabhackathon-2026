@@ -3,7 +3,15 @@ import { createApp } from './app'
 import { createDeps, createMemoryDeps } from './deps'
 import { createMemoryReceiptReader } from './modules/receipts/infra/memory'
 
-const { SUPABASE_URL, SUPABASE_SECRET_KEY, ANTHROPIC_API_KEY, CORS_ORIGINS, NODE_ENV } = process.env
+const {
+  SUPABASE_URL,
+  SUPABASE_SECRET_KEY,
+  ANTHROPIC_API_KEY,
+  RECEIPT_DAILY_GLOBAL_LIMIT,
+  RECEIPT_READER,
+  CORS_ORIGINS,
+  NODE_ENV,
+} = process.env
 const corsOrigins = (CORS_ORIGINS ?? '')
   .split(',')
   .map((s) => s.trim())
@@ -11,7 +19,12 @@ const corsOrigins = (CORS_ORIGINS ?? '')
 const createLocalDeps = () => {
   if (SUPABASE_URL && SUPABASE_SECRET_KEY) {
     // ANTHROPIC_API_KEY が空なら、レシートの AI 判定は無効 (画面にボタンを出さない)
-    return createDeps({ SUPABASE_URL, SUPABASE_SECRET_KEY, ANTHROPIC_API_KEY })
+    return createDeps({
+      SUPABASE_URL,
+      SUPABASE_SECRET_KEY,
+      ANTHROPIC_API_KEY,
+      RECEIPT_DAILY_GLOBAL_LIMIT,
+    })
   }
   // memory 実装は `Bearer test-<id>` で誰でも通るので、本番では起動させない
   if (NODE_ENV === 'production') throw new Error('SUPABASE_URL と SUPABASE_SECRET_KEY が必要です')
@@ -19,9 +32,15 @@ const createLocalDeps = () => {
   return createMemoryDeps()
 }
 const deps = createLocalDeps()
-// ローカルの確認用: RECEIPT_READER=memory なら、Claude API を呼ばず固定の読み取り結果を返す (本番では無視)
-if (process.env.RECEIPT_READER === 'memory' && NODE_ENV !== 'production') {
-  deps.repos.receiptReader = createMemoryReceiptReader()
+// DB ありのローカル確認用: Claude API を呼ばず、固定の読み取り結果を返す。
+// NODE_ENV=development を明示したときだけ効く (NODE_ENV 未設定の本番で、偽の読み取りにならないように)
+if (RECEIPT_READER === 'memory') {
+  if (NODE_ENV === 'development') {
+    console.warn('RECEIPT_READER=memory: レシートは固定の読み取り結果を返します')
+    deps.repos.receiptReader = createMemoryReceiptReader()
+  } else if (SUPABASE_URL && SUPABASE_SECRET_KEY) {
+    console.warn('RECEIPT_READER=memory は NODE_ENV=development のときだけ有効です (無視します)')
+  }
 }
 
 const port = 3000

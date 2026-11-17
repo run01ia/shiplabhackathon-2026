@@ -4,7 +4,7 @@ import type { ListRepo } from '../../lists/repository'
 import type { WalletRepo } from '../../wallet/repository'
 import { checkImage } from '../domain/image'
 import { judgeReceipt } from '../domain/judge'
-import { DAILY_SCAN_LIMIT, remainingScans } from '../domain/limit'
+import { DAILY_SCAN_LIMIT, remainingScans, shouldRelease } from '../domain/limit'
 import type { Reading, ReceiptReader, ReceiptRepo } from '../repository'
 
 type Deps = {
@@ -24,6 +24,7 @@ export type ScanFailure =
   | 'bad_image'
   | 'not_today'
   | 'limit'
+  | 'crowded'
   | 'busy'
   | 'unavailable'
   | 'unreadable'
@@ -33,7 +34,7 @@ const fail = (reason: ScanFailure) => ({ ok: false as const, reason })
 
 /**
  * レシートを読み、分類からペットのひとことと小さなボーナスを決める。
- * 画像は保存しない。回数は 1 日 DAILY_SCAN_LIMIT 回まで、ボーナスは 1 日 1 回 (JST)
+ * 画像は保存しない。回数は 1 日 DAILY_SCAN_LIMIT 回まで (全ユーザーの合計にも上限あり)、ボーナスは 1 日 1 回 (JST)
  */
 export const scanReceipt =
   (d: Deps) => async (userId: string, listId: string, bytes: Uint8Array) => {
@@ -52,19 +53,22 @@ export const scanReceipt =
     if (toJstDate(new Date(list.finishedAt)) !== today) return fail('not_today')
 
     // 先に 1 回ぶんを確保する (AI を呼ぶ前に上限を確かめる。コスト対策)
-    const scanId = await d.receipts.reserve(userId, listId, today, DAILY_SCAN_LIMIT)
-    if (!scanId) return fail('limit')
+    const reserved = await d.receipts.reserve(userId, listId, today, DAILY_SCAN_LIMIT)
+    // crowded = 全ユーザー合計の 1 日上限に達した
+    if (!reserved.ok) return fail(reserved.reason === 'global_limit' ? 'crowded' : 'limit')
+    const { scanId } = reserved
 
     const read = await reader.read({ bytes, mediaType: image.mediaType }).catch((e: unknown) => {
       console.error('receipt reader failed', e instanceof Error ? e.name : 'unknown')
-      return { ok: false, reason: 'unavailable', billed: false } as const
+      // 想定外の失敗は回数に数える (取り消すのは 429 と 5xx だけ)
+      return { ok: false, reason: 'unreachable' } as const
     })
     if (!read.ok) {
-      // 料金がかからなかった失敗は、回数に数えない
-      if (!read.billed) await d.receipts.release(scanId)
-      return fail(
-        read.reason === 'rate_limited' ? 'busy' : read.billed ? 'unreadable' : 'unavailable',
-      )
+      // API 側の都合 (429 / 5xx) だけ、回数に数えない。400 系やタイムアウトは数える
+      if (shouldRelease(read.reason)) await d.receipts.release(scanId)
+      if (read.reason === 'rate_limited') return fail('busy')
+      const down = read.reason === 'server_error' || read.reason === 'unreachable'
+      return fail(down ? 'unavailable' : 'unreadable')
     }
     const reading = d.parseReading(read.raw)
     if (!reading) return fail('unreadable')
