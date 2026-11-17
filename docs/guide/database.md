@@ -14,6 +14,8 @@ erDiagram
   items ||--o{ user_items : "マスタ"
   auth_users ||--o{ stores : "登録"
   auth_users ||--o{ point_logs : "履歴"
+  auth_users ||--o{ receipt_scans : "レシート"
+  lists ||--o{ receipt_scans : "買い物"
 
   auth_users {
     uuid id PK "Supabase Auth が管理"
@@ -78,6 +80,17 @@ erDiagram
     text reason "理由"
     timestamptz created_at
   }
+  receipt_scans {
+    uuid id PK
+    uuid user_id FK
+    uuid list_id FK "null 可"
+    date scanned_on "読んだ日 (JST)"
+    jsonb items "品目 (name, price, category)"
+    int total "レシートの合計 (円)"
+    int bonus "付与したポイント"
+    bool rewarded "今日のボーナスを受け取った"
+    timestamptz created_at
+  }
 ```
 
 図の `auth_users` は、Supabase Auth が持つ `auth.users` テーブルです (Mermaid では `.` が使えないため `_` にしています)。
@@ -93,6 +106,7 @@ erDiagram
 | `user_items` | 誰がどのアイテムを持っているか、着ているか。同じアイテムは 1 人 1 つまで |
 | `stores` | よく行くスーパー (名前と緯度経度)。現在地は保存しない |
 | `point_logs` | ポイントの増減の履歴 (理由つき) |
+| `receipt_scans` | レシートの AI 判定 (REQ-012) の回数と読み取り結果。1 回読むごとに 1 行。画像は保存しない。1 日の回数制限は `(user_id, scanned_on)` の件数、ボーナスの 1 日 1 回は部分一意インデックス (`rewarded` の行は 1 日 1 つ) で守る |
 
 ## RLS の考え方 (誰が何を読める・書けるか)
 
@@ -108,6 +122,7 @@ erDiagram
   - `user_items.equipped` の変更
   - `stores` の作成・変更・削除
 - **API (secret キー) だけが書けるもの**: コイン、スコア、レベル、経験値、報酬の日付、リストの状態 (`status`) と支出 (`spent_amount`)、アイテムの購入 (`user_items` の追加)、`point_logs` の追加。
+- **`receipt_scans`**: ブラウザからは読めません・書けません (policy と `grant` なし)。API だけが使います。
 - **完了したリストの品目**: ブラウザから変えられるのは `price` と `is_unnecessary` だけです (トリガー `list_items_guard_finished` が他の列の変更を拒否します)。
 - **ログインしていない人 (`anon`)**: どのテーブルにも権限がありません。
 
@@ -123,6 +138,7 @@ supabase-js にはトランザクション (複数の更新をまとめて 1 回
 |---|---|
 | `buy_item(p_user_id, p_item_key)` | コインを減らし、`user_items` に行を足す。コイン不足・所持済み・存在しないアイテムはエラー |
 | `grant_drop(p_user_id, p_item_key, p_coins)` | おみやげを付与する。帽子を `user_items` に足せたら `'item'`。`p_item_key` が `null` か所持済みなら、`coins` を `p_coins` だけ増やして (`score` は変えない) `point_logs` に「おみやげ」を残し、`'coins'` を返す |
+| `reserve_receipt_scan(p_user_id, p_list_id, p_today, p_limit)` | 今日のレシートの読み取りが `p_limit` 回未満なら `receipt_scans` に 1 行足して id を返す。上限なら `null`。`profiles` の行をロックするので、同時に呼ばれても上限を超えない |
 | `add_points(p_user_id, p_deltas[], p_reasons[], p_exp_gains[], p_thresholds[])` | 複数の付与を 1 回で反映する。`coins` と `score` を増減し (コインは 0 未満にしない)、`exp` (累計の経験値) を増やし、`level` を上げ (下げない)、`point_logs` に付与の数だけ行を足す。更新後の `profiles` の列と `previous_level` を jsonb で返す。レベルの規則は SQL に書かず、API が渡す: `p_exp_gains` = 付与ごとの経験値、`p_thresholds` = レベル 2, 3, ... に届く累計の経験値 (`backend/src/modules/wallet/domain/level.ts`) |
 
 ## マイグレーションの追加方法

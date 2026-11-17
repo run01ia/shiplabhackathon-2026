@@ -41,6 +41,8 @@ Authorization: Bearer <アクセストークン>
 | POST | `/lists/:id/extra-items` | リスト外の品目を、購入済みで足す。body `{ "name", "price", "isUnnecessary"?: boolean }` | 必要 |
 | POST | `/lists/:id/finish` | 買い物を終える。結果を判定し、ポイントを付ける。body `{ "spentAmount"?: number }` | 必要 |
 | GET | `/history/lists` | 完了したリストと品目 (新しい順、最大 50) | 必要 |
+| GET | `/receipts/status` | レシートの AI 判定が使えるか (`enabled`) と、今日の残り回数。backend に `ANTHROPIC_API_KEY` がなければ `enabled: false` (画面はボタンを出さない) | 必要 |
+| POST | `/receipts/scan` | レシートの写真を読み、品目を分類して、ペットのひとことと小さなボーナスを返す。`multipart/form-data` (`image`, `listId`)。画像は保存しない | 必要 |
 | PATCH | `/history/items/:itemId` | 完了したリストの品目の金額・不要の印を直す。body `{ "price"?, "isUnnecessary"? }` (どちらか必須)。ポイントは計算し直さない | 必要 |
 
 入力のルール (`schemas.ts`):
@@ -213,6 +215,39 @@ Authorization: Bearer <アクセストークン>
 ```json
 { "lists": [{ "list": { "...": "status=finished" }, "items": [] }] }
 ```
+
+### `POST /receipts/scan` (レシートの AI 判定、REQ-012)
+
+`multipart/form-data` で送ります。`image` は JPEG / PNG / WebP で 5MB まで (frontend は送る前に長い辺 2000px の JPEG に縮めます)。`listId` は**今日 (JST) 終えた自分の買い物**の id です。
+
+```bash
+curl -H 'Authorization: Bearer test-u1' -F image=@receipt.jpg -F listId=<リストの id> http://localhost:3000/receipts/scan
+```
+
+```json
+{
+  "items": [
+    { "name": "にんじん", "price": 98, "category": "food" },
+    { "name": "ポテトチップス", "price": 128, "category": "snack" }
+  ],
+  "total": 800,
+  "snackCount": 1,
+  "snackTotal": 128,
+  "snackRatio": 0.16,
+  "verdict": "few_snack",
+  "comment": "お菓子はちょっとだけ。じょうずに買えたね",
+  "bonus": { "label": "レシート: お菓子ひかえめ", "points": 3 },
+  "alreadyRewarded": false,
+  "remaining": 4
+}
+```
+
+- `category`: `food` (食材) / `daily` (日用品) / `drink` (飲み物) / `snack` (お菓子・嗜好品)。値引きの行は `price` がマイナス。
+- `verdict` とボーナス (配点は仮。`backend/src/modules/receipts/domain/judge.ts`): お菓子・嗜好品なし `no_snack` +5 / 金額の 20% 以下 `few_snack` +3 / それより多い `some_snack`・50% 以上 `many_snack` はコメントだけ (マイナスなし)。
+- ボーナスは **1 日 1 回** (JST)。2 回目以降は `bonus: null`、`alreadyRewarded: true`。1 件も買っていない買い物には付きません。
+- 読めるのは **1 日 5 回**まで (Claude API のコスト対策)。`GET /receipts/status` は `{ "enabled": true, "limit": 5, "remaining": 4 }`。
+- 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物が終わっていない・今日の買い物でない / `413` 5MB 超 / `422` レシートが読めない (回数に数える) / `429` 今日の上限 / `503` AI が混雑・停止 (回数に数えない)。
+- DB なし (メモリ実装) と、`RECEIPT_READER=memory` (本番以外) では、Claude API を呼ばず固定の読み取り結果を返します。
 
 ## エラーの形
 
