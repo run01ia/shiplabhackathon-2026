@@ -22,6 +22,7 @@ export function PriceSheet({ item, onClose, onSubmit }: Props) {
       <form onSubmit={submit}>
         <Field
           key={item?.id}
+          autoFocus
           name="price"
           inputMode="numeric"
           placeholder="¥ いくら？"

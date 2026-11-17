@@ -11,7 +11,7 @@ type Props = { value: HistoryTab; onChange: (tab: HistoryTab) => void }
 export function HistoryTabs({ value, onChange }: Props) {
   return (
     <div
-      className="mb-3.5 flex overflow-hidden rounded-[14px] border-3 border-ink bg-white"
+      className="mb-3.5 flex shrink-0 overflow-hidden rounded-[14px] border-3 border-ink bg-white"
       role="tablist"
     >
       {tabs.map((t) => (
