@@ -1,64 +1,20 @@
-import { useCallback, useState } from 'react'
-import { type ClientActionFunctionArgs, useLoaderData } from 'react-router'
+import { useLoaderData } from 'react-router'
 import { Screen, ScreenTitle } from '~/components/Screen'
-import { Toast } from '~/components/Toast'
-import {
-  applyFix,
-  fetchHistoryLists,
-  fetchPointLogs,
-  fixHistoryItem,
-  type HistoryTab,
-  HistoryTabs,
-  PointLogList,
-  parseYen,
-  ShoppingHistory,
-  useFixItem,
-} from '~/features/history'
+import { fetchPointLogs, PointLogList } from '~/features/history'
 import { requireAccessToken } from '~/lib/session'
 
-// ポイントと買い物は独立なので並列に取る
+// 履歴はポイントだけ。買い物の記録 (何をいくらで買ったか) は今回のスコープ外なので画面から外した (D38)
 export async function clientLoader() {
   const token = await requireAccessToken()
-  const [points, history] = await Promise.all([fetchPointLogs(token), fetchHistoryLists(token)])
-  return { points, lists: history.lists }
-}
-
-// 「なおす」の保存。ポイントは再計算しない (API 側の仕様)
-export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const token = await requireAccessToken()
-  const fd = await request.formData()
-  const price = parseYen(String(fd.get('price') ?? ''))
-  return fixHistoryItem(token, String(fd.get('itemId')), {
-    ...(price === undefined ? {} : { price }),
-    isUnnecessary: fd.get('isUnnecessary') === 'true',
-  })
+  return { points: await fetchPointLogs(token) }
 }
 
 export default function History() {
-  const { points, lists } = useLoaderData<typeof clientLoader>()
-  const [tab, setTab] = useState<HistoryTab>('points')
-  const [toast, setToast] = useState<string | null>(null)
-  const clearToast = useCallback(() => setToast(null), [])
-  const showSaved = useCallback(() => setToast('なおしました'), [])
-  const { editingId, startEdit, save, pending } = useFixItem(showSaved)
-
+  const { points } = useLoaderData<typeof clientLoader>()
   return (
-    <>
-      <Screen>
-        <ScreenTitle>履歴</ScreenTitle>
-        <HistoryTabs value={tab} onChange={setTab} />
-        {tab === 'points' ? (
-          <PointLogList logs={points} />
-        ) : (
-          <ShoppingHistory
-            lists={applyFix(lists, pending)}
-            editingId={editingId}
-            onEdit={startEdit}
-            onSave={save}
-          />
-        )}
-      </Screen>
-      <Toast message={toast} onDone={clearToast} />
-    </>
+    <Screen>
+      <ScreenTitle>ポイントの履歴</ScreenTitle>
+      <PointLogList logs={points} />
+    </Screen>
   )
 }
