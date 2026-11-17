@@ -1,5 +1,4 @@
 import { Form, redirect, useLoaderData } from 'react-router'
-import { Button } from '~/components/Button'
 import { signOut } from '~/features/auth'
 import { HomeScreen, loadHome, runShopAction } from '~/features/pet'
 import { requireAccessToken } from '~/lib/session'
@@ -28,11 +27,15 @@ export default function Home() {
       items={items}
       reward={reward}
       footer={
-        <Form method="post" className="mt-auto w-28">
+        // めったに使わないので、画面の一番下に小さく置く
+        <Form method="post" className="mt-auto text-center">
           <input type="hidden" name="intent" value="logout" />
-          <Button type="submit" variant="sub" small>
+          <button
+            type="submit"
+            className="min-h-11 cursor-pointer border-0 bg-transparent px-3 text-xs text-muted underline"
+          >
             ログアウト
-          </Button>
+          </button>
         </Form>
       }
     />
