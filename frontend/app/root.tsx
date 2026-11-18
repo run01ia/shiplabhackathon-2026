@@ -4,7 +4,7 @@ import type { Route } from './+types/root'
 import { supabase } from './lib/supabase'
 import './styles/app.css'
 
-export const meta: Route.MetaFunction = () => [{ title: 'お買い物上手' }]
+export const meta: Route.MetaFunction = () => [{ title: '買いネコ' }]
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
