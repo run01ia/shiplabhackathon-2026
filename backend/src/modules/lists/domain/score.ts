@@ -6,7 +6,26 @@ export const POINTS = {
   overBudget: -20,
   /** 不要購入 1 件あたり */
   unnecessary: -15,
+  /** 節約: 予算をおさえた割合 10% ごと */
+  savingPer10Pct: 3,
+  /** 節約の上限 (予算を高めに入れて稼げないように) */
+  savingMax: 15,
 } as const
+
+/**
+ * 節約ボーナス。予算内で、リストの品目をすべて買えたときだけ (買わずに浮いたぶんは数えない)。
+ * おさえた割合 (切り捨てで % の整数) と点数を返す。対象外は null
+ */
+export const savingBonus = (
+  budget: number,
+  spent: number,
+  rate: number,
+): { percent: number; points: number } | null => {
+  if (budget <= 0 || spent > budget || rate < 1) return null
+  const percent = Math.floor(((budget - spent) * 100) / budget)
+  const points = Math.min(Math.floor(percent / 10) * POINTS.savingPer10Pct, POINTS.savingMax)
+  return points > 0 ? { percent, points } : null
+}
 
 export type JudgeItem = {
   isChecked: boolean
@@ -77,6 +96,8 @@ export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
       ? { label: '予算内', points: POINTS.withinBudget }
       : { label: '予算超過', points: POINTS.overBudget },
   ]
+  const saving = savingBonus(r.budget, r.spent, rate)
+  if (saving) breakdown.push({ label: `予算を ${saving.percent}% おさえた`, points: saving.points })
   if (asPlanned) breakdown.push({ label: 'リスト通り', points: POINTS.asPlanned })
   if (unnecessaryCount === 0) {
     breakdown.push({ label: '不要買いをやめた', points: POINTS.noUnnecessary })
