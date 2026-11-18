@@ -32,7 +32,7 @@ flowchart TD
 - **backend (Hono API)** はトークンを検証し、DB を読み書きします。コインやスコアなど、ずるができると困る値は API だけが変えます。
 - **secret キー** (DB を何でも操作できる鍵) は backend の中だけで使います。frontend には置きません。
 
-> 現在の状況: backend はローカルでは Node.js で動きます (`backend/src/index.ts`)。Workers 用の入口 (`worker.ts`) と `wrangler` の設定は、まだリポジトリにありません。Supabase のクラウド側も未作成です。デプロイに足りないものと手順は Issue (デプロイの残り) にまとめています。
+> 現在の状況: backend はローカルでは Node.js で動きます (`backend/src/index.ts`)。Workers 用の入口 (`worker.ts`) と `wrangler` の設定は、まだリポジトリにありません。Supabase のクラウド側も未作成です。デプロイに足りないものと手順は Issue #107 にまとめています。
 
 ## frontend のフォルダ (`frontend/app/`)
 
