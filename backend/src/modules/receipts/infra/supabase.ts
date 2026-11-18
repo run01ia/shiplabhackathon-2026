@@ -1,5 +1,5 @@
 import type { Db } from '../../../shared/supabase'
-import type { ReceiptRepo } from '../repository'
+import type { ReceiptRepo, ScanRecord } from '../repository'
 
 /** Postgres の unique 違反 */
 const UNIQUE_VIOLATION = '23505'
@@ -37,15 +37,29 @@ export const createSupabaseReceiptRepo = (db: Db, globalLimit: number): ReceiptR
   async complete(scanId, record) {
     const { error } = await db
       .from('receipt_scans')
-      .update({ items: record.items, total: record.total, bonus: record.bonus })
+      .update({ items: record.items, total: record.total })
       .eq('id', scanId)
     if (error) throw error
   },
-  async claimReward(scanId) {
+  async getCompleted(userId, listId, scanId) {
+    // 本人の・このリストの・品目を記録した読み取りだけ (条件はすべて DB で絞る)
+    const { data, error } = await db
+      .from('receipt_scans')
+      .select('items, total')
+      .eq('id', scanId)
+      .eq('user_id', userId)
+      .eq('list_id', listId)
+      .not('items', 'is', null)
+      .maybeSingle()
+    if (error) throw error
+    if (!data) return null
+    return { items: data.items as ScanRecord['items'], total: data.total }
+  },
+  async claimReward(scanId, points) {
     // 1 日 1 回は、部分 unique インデックス (user_id, scanned_on) where rewarded が守る
     const { data, error } = await db
       .from('receipt_scans')
-      .update({ rewarded: true })
+      .update({ rewarded: true, bonus: points })
       .eq('id', scanId)
       .eq('rewarded', false)
       .select('id')

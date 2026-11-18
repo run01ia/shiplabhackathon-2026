@@ -1,4 +1,5 @@
 import type { ProfileRepo } from '../../profile/repository'
+import type { ReceiptRepo } from '../../receipts/repository'
 import type { ShopRepo } from '../../shop/repository'
 import type { WalletRepo } from '../../wallet/repository'
 import type { ListRepo } from '../repository'
@@ -20,6 +21,7 @@ export type ListUsecaseDeps = {
   profiles: ProfileRepo
   wallets: WalletRepo
   shop: ShopRepo
+  receipts: ReceiptRepo
   clock: () => Date
 }
 

@@ -9,4 +9,6 @@ export type ReceiptItem = {
   /** 円。値引きの行はマイナス */
   price: number
   category: Category
+  /** 買い物リストにある品目か (表記ゆれは同じとみなす)。false = リスト外の買い物 */
+  onList: boolean
 }
