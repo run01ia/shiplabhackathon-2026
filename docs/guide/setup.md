@@ -75,7 +75,10 @@ VITE_API_URL=http://localhost:3000
 SUPABASE_URL=http://127.0.0.1:54321
 SUPABASE_PUBLISHABLE_KEY=<Publishable key (anon key)>
 SUPABASE_SECRET_KEY=<Secret key (service_role key)>
-ANTHROPIC_API_KEY=        # 使うときだけ。今は空でよい
+ANTHROPIC_API_KEY=        # レシートの AI 判定を使うときだけ。空なら機能ごと隠れる
+RECEIPT_DAILY_GLOBAL_LIMIT=   # 全ユーザー合計の 1 日の読み取り上限。空なら 200
+RECEIPT_READER=           # memory にすると Claude API を呼ばず固定の結果を返す (NODE_ENV=development のときだけ)
+CORS_ORIGINS=             # 画面の URL の許可リスト (カンマ区切り)。空なら http://localhost:5173
 ```
 
 > **注意**
@@ -173,6 +176,6 @@ gh pr create --base dev                        # PR は dev 向け
 | `supabase start` が失敗する | Docker が起動していない。Docker Desktop を起動し、`docker info` が通るか確かめる |
 | `pnpm install` や起動で Node のエラーが出る | Node.js が古い。`node -v` で 22.12 以上か確かめる |
 | ログに `SUPABASE_* 未設定のため memory 実装で起動します` と出て、ログインしても `401` | backend が `.env` を読んでいない。[5. の手順](#backend-をローカルの-supabase-につなぐ) で環境変数を読み込んでから起動する |
-| 画面から API を呼ぶと CORS エラー | backend が許しているのは `http://localhost:5173` だけ (`backend/src/app.ts`)。`127.0.0.1:5173` ではなく `localhost:5173` で開く |
+| 画面から API を呼ぶと CORS エラー | backend が許しているのは、既定では `http://localhost:5173` だけ (`backend/src/app.ts`。変えるときは `CORS_ORIGINS`)。`127.0.0.1:5173` ではなく `localhost:5173` で開く |
 | 位置情報が取れない | ブラウザの位置情報は HTTPS か `localhost` でしか使えない。スマホから PC の IP アドレス (`http://192.168...`) で開くと使えない。許可を拒否した場合も取れない |
 | スマホの見た目を確認したい | PC のブラウザの開発者ツールで、幅 390px (iPhone 14/15 相当) にする |

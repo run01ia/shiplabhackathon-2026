@@ -5,6 +5,7 @@
 
 ## 読む順番
 
+0. [how-to-play.md](./how-to-play.md): アプリの遊び方と、ポイントのもらい方 (開発しない人もここだけ)
 1. [setup.md](./setup.md): 自分の PC でアプリを動かすまでの手順
 2. [architecture.md](./architecture.md): 全体の図と、フォルダの役割
 3. [tech-stack.md](./tech-stack.md): 使っている技術と、選んだ理由

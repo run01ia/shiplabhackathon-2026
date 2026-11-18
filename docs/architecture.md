@@ -90,7 +90,7 @@ backend/src/
 ├─ worker.ts             # Workers の entry。`c.env` から deps を作る (未作成)
 ├─ app.ts                # `createApp(deps)` と `AppType`。モジュールの routes を束ねるだけ
 ├─ deps.ts               # `Deps` 型と組み立て (createDeps / createMemoryDeps)。infra を import してよい唯一の場所
-├─ modules/              # 機能ごと: lists / wallet / shop / profile
+├─ modules/              # 機能ごと: lists / wallet / shop / profile / receipts / pantry
 │   └─ lists/
 │       ├─ routes.ts     # controller を兼ねる。`(deps) => new Hono()...` のチェーン
 │       ├─ controller.ts # (必要なときだけ) `factory.createHandlers(...)` で書いたハンドラー

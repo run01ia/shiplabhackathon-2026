@@ -170,10 +170,11 @@ Authorization: Bearer <アクセストークン>
   "asPlanned": true,
   "breakdown": [
     { "label": "予算内", "points": 30 },
+    { "label": "予算を 80% おさえた", "points": 15 },
     { "label": "リスト通り", "points": 10 },
     { "label": "不要買いをやめた", "points": 5 }
   ],
-  "total": 45,
+  "total": 60,
   "drop": { "key": "straw", "name": "むぎわらぼうし", "rarity": "common" },
   "growth": { "level": 2, "exp": 105, "levelExp": 55, "nextLevelExp": 75 },
   "levelUp": null
@@ -185,7 +186,7 @@ Authorization: Bearer <アクセストークン>
 - `completionRate`: リスト外を除く品目のうち、購入済みの割合 (0〜1)。
 - `asPlanned`: リストの品目をすべて買い、リスト外の購入がないとき `true`。
 - `breakdown` の 1 行ごとに、ポイントの履歴 (`point_logs`) に 1 行残ります。
-- 配点は `backend/src/modules/lists/domain/score.ts` の `POINTS` (仮の値): 予算内 +30、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。何も買っていない買い物はポイントなし (D28)。
+- 配点は `backend/src/modules/lists/domain/score.ts` の `POINTS` (仮の値): 予算内 +30、節約 (予算をおさえた割合 10% ごとに +3、最大 +15。リストを全部買えたときだけ、D39)、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。何も買っていない買い物はポイントなし (D28)。
 
 ### `GET /shop/items`
 
