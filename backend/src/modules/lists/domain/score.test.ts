@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { completionRate, isWithinBudget, judgeShopping, limitToDaily } from './score'
+import { completionRate, isWithinBudget, judgeShopping, limitToDaily, savingBonus } from './score'
 
 const planned = (isChecked: boolean) => ({ isChecked, isExtra: false, isUnnecessary: false })
 
@@ -57,5 +57,27 @@ describe('limitToDaily', () => {
     const limited = limitToDaily(j, false)
     expect(limited.breakdown.every((l) => l.points < 0)).toBe(true)
     expect(limited.total).toBe(-15)
+  })
+})
+
+describe('savingBonus', () => {
+  it('おさえた割合 10% ごとに +3、上限 +15', () => {
+    expect(savingBonus(1000, 910, 1)).toBeNull() // 9%
+    expect(savingBonus(1000, 900, 1)).toEqual({ percent: 10, points: 3 })
+    expect(savingBonus(1000, 710, 1)).toEqual({ percent: 29, points: 6 })
+    expect(savingBonus(1000, 500, 1)).toEqual({ percent: 50, points: 15 })
+    expect(savingBonus(1000, 100, 1)).toEqual({ percent: 90, points: 15 })
+  })
+
+  it('リストを買いきれていない・予算超過・予算 0 は対象外', () => {
+    expect(savingBonus(1000, 500, 0.5)).toBeNull()
+    expect(savingBonus(1000, 1001, 1)).toBeNull()
+    expect(savingBonus(0, 0, 1)).toBeNull()
+  })
+
+  it('判定の内訳に入る', () => {
+    const j = judgeShopping({ budget: 1000, spent: 700, items: [planned(true)] })
+    expect(j.breakdown).toContainEqual({ label: '予算を 30% おさえた', points: 9 })
+    expect(j.total).toBe(30 + 9 + 10 + 5)
   })
 })
