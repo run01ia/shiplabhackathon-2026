@@ -86,7 +86,7 @@ erDiagram
     uuid user_id FK
     uuid list_id FK "null 可"
     date scanned_on "読んだ日 (JST)"
-    jsonb items "品目 (name, price, category)"
+    jsonb items "品目 (name, price, category, onList)"
     int total "レシートの合計 (円)"
     int bonus "付与したポイント"
     bool rewarded "今日のボーナスを受け取った"
