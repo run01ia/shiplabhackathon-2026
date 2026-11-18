@@ -15,7 +15,7 @@ description: Hono (バックエンド API) を実装・変更するときに使�
 | ドキュメント本文 | `npx -y @hono/cli docs <path>` (`search` の `path` を渡す) |
 | API の動作確認 | `npx -y @hono/cli request <app.ts> -P /path -X POST -d '{...}' -H 'Content-Type: application/json' -i` |
 
-`request` はサーバーを立てずに `app.request()` で叩く。**テストコードは書かない方針なので、これを正常系の確認に使う。**
+`request` はサーバーを立てずに `app.request()` で叩く。**API のテストコードは書かない方針なので、これを正常系の確認に使う** (テストを書くのは `domain/` の純粋関数だけ)。
 
 ## 実装ルール
 
@@ -29,7 +29,7 @@ description: Hono (バックエンド API) を実装・変更するときに使�
 
 ## 手順
 
-1. `.claude/todo/progress.md` を読み、同じタスクが作業中でないか確認する。
+1. (親エージェントのみ) `.claude/todo/progress.md` を読み、同じタスクが作業中でないか確認する。
 2. 実装する API を `search` で確認する。
 3. 実装する。
 4. `request` で正常系を確認し、結果を PR の「動作確認」に 1 行で書く。

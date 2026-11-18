@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8"><title>DB スキーマ (レビュー用)</title>
+<style>
+body{background:#fff4dc;color:#2b2118;font:15px/1.6 sans-serif;max-width:960px;margin:24px auto;padding:0 16px}
+h1,h2{border-bottom:4px solid #2b2118;padding-bottom:4px}
+details{border:3px solid #2b2118;background:#fffaf0;margin:8px 0;padding:6px 12px}
+summary{font-weight:bold;cursor:pointer}
+table{border-collapse:collapse;width:100%;margin:8px 0}
+th,td{border:2px solid #2b2118;padding:3px 8px;text-align:left;font-size:13px;vertical-align:top}
+th{background:#f3d9a0}
+code{font-family:monospace}
+.box{border:4px solid #2b2118;background:#ffe08a;padding:8px 16px}
+svg text{font:13px sans-serif;fill:#2b2118}
+</style></head><body>
+<h1>DB スキーマ (Issue #7)</h1>
+<p>Supabase (Postgres)。マイグレーション: <code>supabase/migrations/20261116000000_init.sql</code>。金額は整数 (円)。履歴は <code>supabase/migrations/20261116100000_history.sql</code> で追加 (Issue #18)。</p>
+
+<h2>関係図</h2>
+<svg viewBox="0 0 900 300" width="100%" style="background:#fffaf0;border:3px solid #2b2118">
+<g stroke="#2b2118" stroke-width="3" fill="#f3d9a0">
+<rect x="360" y="110" width="150" height="70"/><rect x="40" y="20" width="150" height="50"/>
+<rect x="40" y="220" width="150" height="50"/><rect x="360" y="20" width="150" height="50"/>
+<rect x="700" y="20" width="150" height="50"/><rect x="700" y="220" width="150" height="50"/>
+<rect x="360" y="220" width="150" height="50"/></g>
+<g stroke="#2b2118" stroke-width="3" fill="none">
+<path d="M360 135 L190 50"/><path d="M360 160 L190 245"/><path d="M435 110 L435 70"/>
+<path d="M510 135 L700 50"/><path d="M510 160 L700 245"/><path d="M435 180 L435 220"/></g>
+<text x="400" y="140">auth.users</text><text x="385" y="160">(Supabase Auth)</text>
+<text x="75" y="50">profiles</text><text x="70" y="245">stores</text>
+<text x="400" y="50">lists</text><text x="720" y="50">user_items</text>
+<text x="735" y="245">items(マスタ)</text><text x="385" y="245">(lists→list_items)</text>
+<text x="195" y="90">1:1</text><text x="195" y="215">1:N</text><text x="440" y="95">1:N</text>
+<text x="560" y="75">1:N</text><text x="570" y="215">user_items.item_id → items</text>
+</svg>
+<p style="font-size:13px">図の補足: lists の下に list_items (1:N)。user_items は auth.users と items を結ぶ (N:M)。</p>
+
+<h2>テーブル</h2>
+<details><summary>profiles (REQ-006, 007)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>id</td><td>uuid PK, FK auth.users</td><td>1:1。登録時トリガーで自動作成</td></tr>
+<tr><td>pet_name</td><td>text</td><td>ペット名 (クライアント更新可)</td></tr>
+<tr><td>score / coins</td><td>int</td><td>買い物上手スコア / 通貨の現在残高 (coins &gt;= 0)</td></tr>
+<tr><td>level / exp</td><td>int</td><td>ペットの成長</td></tr>
+<tr><td>last_login_reward_on</td><td>date</td><td>ログインボーナス付与日 (1 日 1 回判定)</td></tr>
+<tr><td>last_list_reward_on</td><td>date</td><td>リスト作成・閲覧ポイント付与日</td></tr>
+<tr><td>last_shopping_judged_on</td><td>date</td><td>「買い物に行かなかった日」判定済みの日</td></tr>
+</table></details>
+<details><summary>lists (REQ-002, 003, 005)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>id / user_id</td><td>uuid PK / FK</td><td>所有者</td></tr>
+<tr><td>budget</td><td>int</td><td>予算 (円)</td></tr>
+<tr><td>status</td><td>text</td><td>planning / shopping / finished (API が変更)</td></tr>
+<tr><td>spent_amount</td><td>int null</td><td>実際の支出 (API が設定)</td></tr>
+<tr><td>created_at / finished_at</td><td>timestamptz</td><td>作成・終了時刻</td></tr>
+</table>未完了リストは 1 ユーザー 1 つ (部分ユニーク索引)。</details>
+<details><summary>list_items (REQ-002, 004)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>list_id</td><td>uuid FK (cascade)</td><td>所属リスト</td></tr>
+<tr><td>name / price</td><td>text / int null</td><td>品名 / 金額 (円)。price は null 可 (購入時に入れる。入れる場合は 0 以上)</td></tr>
+<tr><td>is_checked</td><td>bool</td><td>購入済み</td></tr>
+<tr><td>is_extra</td><td>bool</td><td>リスト外購入</td></tr>
+<tr><td>is_unnecessary</td><td>bool</td><td>不要購入</td></tr>
+</table>完了後のリストの品目は、本人でも price と is_unnecessary しか更新できない (トリガーで他の列を拒否。REQ-014 の手動修正)。</details>
+<details><summary>point_logs (REQ-006, 014)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>user_id</td><td>uuid FK (cascade)</td><td>所有者。索引 (user_id, created_at desc)</td></tr>
+<tr><td>delta</td><td>int</td><td>ポイント増減</td></tr>
+<tr><td>reason</td><td>text</td><td>理由</td></tr>
+<tr><td>created_at</td><td>timestamptz</td><td>日時</td></tr>
+</table>本人の select のみ。追加は API (service_role) のみ。</details>
+<details><summary>items / user_items (REQ-008)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>items.key / name / price</td><td>text / text / int</td><td>マスタ: ぼうし30, リボン40, おうかん200, めがね60</td></tr>
+<tr><td>user_items.user_id, item_id</td><td>uuid FK</td><td>所持 (unique 組)</td></tr>
+<tr><td>user_items.equipped</td><td>bool</td><td>装備中 (クライアント更新可)</td></tr>
+</table></details>
+<details><summary>stores (REQ-009)</summary><table>
+<tr><th>列</th><th>型</th><th>意味</th></tr>
+<tr><td>user_id</td><td>uuid FK</td><td>所有者</td></tr>
+<tr><td>name</td><td>text</td><td>店名</td></tr>
+<tr><td>lat / lng</td><td>double</td><td>緯度経度 (範囲 check)。現在地は保存しない</td></tr>
+</table></details>
+
+<h2>RLS 方針</h2>
+<ul>
+<li>全テーブルで RLS 有効。自分の行 (<code>auth.uid()</code>) のみ操作可。user_metadata は使わない。</li>
+<li>anon の権限は全て剥奪。authenticated には列単位の GRANT で最小限のみ付与。</li>
+<li>coins / score / level / exp / 日次判定日 / list.status / spent_amount / user_items の insert は API (service_role) のみ。</li>
+<li>point_logs は本人の select のみ。insert / update / delete はクライアント不可。</li>
+<li>items は認証済みユーザーの select のみ。</li>
+</ul>
+
+<h2>仮決め・要確認</h2>
+<div class="box"><ol>
+<li>通貨は別テーブルにせず profiles に同居 (1:1 で更新が 1 行で済むため)。</li>
+<li>list.status と spent_amount はクライアント更新不可。開始・終了は API 経由。</li>
+<li>未完了リストは 1 ユーザー 1 つに制限。複数同時に作る要件があれば外す。</li>
+<li>リスト作成・閲覧ポイントを 1 日 1 回とし last_list_reward_on を追加。毎回付与なら不要。</li>
+<li>items の key は hat / ribbon / crown / glasses と仮置き (docs/mock が無かったため値は依頼文のもの)。</li>
+<li>着せ替えの部位排他 (帽子は 1 つだけ等) は未対応。</li>
+</ol></div>
+</body></html>

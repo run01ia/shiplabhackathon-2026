@@ -1,0 +1,109 @@
+// 組み立て場所 (composition root)。infra の実装を import してよいのは、このファイルだけ
+import { createMemoryListRepo } from './modules/lists/infra/memory'
+import { createSupabaseListRepo } from './modules/lists/infra/supabase'
+import type { ListRepo } from './modules/lists/repository'
+import { createMemoryPantryRepo } from './modules/pantry/infra/memory'
+import { createSupabasePantryRepo } from './modules/pantry/infra/supabase'
+import type { PantryRepo } from './modules/pantry/repository'
+import { createMemoryProfileRepo } from './modules/profile/infra/memory'
+import { createSupabaseProfileRepo } from './modules/profile/infra/supabase'
+import type { ProfileRepo } from './modules/profile/repository'
+import { parseGlobalLimit } from './modules/receipts/domain/limit'
+import { createClaudeReceiptReader } from './modules/receipts/infra/claude'
+import { createMemoryReceiptReader, createMemoryReceiptRepo } from './modules/receipts/infra/memory'
+import { createSupabaseReceiptRepo } from './modules/receipts/infra/supabase'
+import type { ReceiptEnv, ReceiptReader, ReceiptRepo } from './modules/receipts/repository'
+import { DUPLICATE_COINS, pickDrop } from './modules/shop/domain/drop'
+import { createMemoryShopRepo } from './modules/shop/infra/memory'
+import { createSupabaseShopRepo } from './modules/shop/infra/supabase'
+import type { DropPolicy, ShopRepo } from './modules/shop/repository'
+import { expGain, LEVEL_THRESHOLDS, levelProgress } from './modules/wallet/domain/level'
+import { createMemoryWalletRepo } from './modules/wallet/infra/memory'
+import { createSupabaseWalletRepo } from './modules/wallet/infra/supabase'
+import type { LevelPolicy, WalletRepo } from './modules/wallet/repository'
+import type { AuthUser, Bindings } from './shared/env'
+import { createDb } from './shared/supabase'
+
+export type Repositories = {
+  profiles: ProfileRepo
+  lists: ListRepo
+  wallets: WalletRepo
+  shop: ShopRepo
+  receipts: ReceiptRepo
+  pantry: PantryRepo
+  /** レシートを読む AI。null = ANTHROPIC_API_KEY が未設定 (機能を隠す) */
+  receiptReader: ReceiptReader | null
+}
+
+export type Deps = {
+  clock: () => Date
+  random: () => number
+  repos: Repositories
+  /** Bearer トークンを検証してユーザーを返す。無効なら null */
+  verifyToken: (token: string) => Promise<AuthUser | null>
+}
+
+/** おみやげの決め方 (規則は shop の domain、乱数はここで渡す) */
+const dropPolicy = (random: () => number): DropPolicy => ({
+  pick: (items) => pickDrop(items, random),
+  coins: DUPLICATE_COINS,
+})
+
+/** レベルの規則 (wallet の domain)。infra は domain を import しないので、ここで渡す */
+const levelPolicy: LevelPolicy = {
+  thresholds: LEVEL_THRESHOLDS,
+  progress: levelProgress,
+  gain: expGain,
+}
+
+/** 本番 (Supabase) の組み立て */
+export const createDeps = (env: Bindings & ReceiptEnv): Deps => {
+  const db = createDb(env)
+  const random = Math.random
+  return {
+    clock: () => new Date(),
+    random,
+    repos: {
+      profiles: createSupabaseProfileRepo(db),
+      lists: createSupabaseListRepo(db),
+      wallets: createSupabaseWalletRepo(db, levelPolicy),
+      shop: createSupabaseShopRepo(db, dropPolicy(random)),
+      receipts: createSupabaseReceiptRepo(db, parseGlobalLimit(env.RECEIPT_DAILY_GLOBAL_LIMIT)),
+      pantry: createSupabasePantryRepo(db),
+      receiptReader: env.ANTHROPIC_API_KEY
+        ? createClaudeReceiptReader(env.ANTHROPIC_API_KEY)
+        : null,
+    },
+    verifyToken: async (token) => {
+      const { data, error } = await db.auth.getUser(token)
+      return error || !data.user ? null : { id: data.user.id }
+    },
+  }
+}
+
+const createMemoryRepositories = (random: () => number): Repositories => {
+  const wallets = createMemoryWalletRepo(levelPolicy)
+  return {
+    profiles: createMemoryProfileRepo(),
+    lists: createMemoryListRepo(),
+    wallets,
+    // memory の購入は、wallet の port 経由でコインを減らす
+    shop: createMemoryShopRepo(wallets, dropPolicy(random)),
+    receipts: createMemoryReceiptRepo(parseGlobalLimit(undefined)),
+    pantry: createMemoryPantryRepo(),
+    // memory では Claude API を呼ばず、固定の読み取り結果を返す
+    receiptReader: createMemoryReceiptReader(),
+  }
+}
+
+/** テスト・ローカル確認用 (memory)。必要な項目だけ上書きできる */
+export const createMemoryDeps = (overrides: Partial<Deps> = {}): Deps => ({
+  clock: () => new Date(),
+  random: Math.random,
+  // おみやげの抽選は、上書きされた random を使う
+  repos: createMemoryRepositories(overrides.random ?? Math.random),
+  // memory では "test-<userId>" をそのままユーザーとして扱う
+  verifyToken: async (token) =>
+    token.startsWith('test-') ? { id: token.slice('test-'.length) } : null,
+  ...overrides,
+})

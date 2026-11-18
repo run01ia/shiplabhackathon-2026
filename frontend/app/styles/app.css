@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* デザイン変数 (docs/mock/index.html と同じ値)。bg-sun / border-ink / shadow-pop のように使う */
+@theme {
+  --color-ink: #2b2118;
+  --color-cream: #fff4dc;
+  --color-paper: #fffdf6;
+  --color-red: #f2542d;
+  --color-mint: #3dbe8b;
+  --color-sun: #ffc93c;
+  --color-pink: #ffb3a7;
+  --color-gray: #d9ccb4;
+  --color-muted: #6d5d45;
+  --color-backdrop: #e9dfc8;
+
+  --shadow-pop: 0 4px 0 var(--color-ink);
+  --shadow-pop-lg: 0 8px 0 var(--color-ink);
+
+  --radius-card: 18px;
+  --radius-btn: 16px;
+  --radius-pill: 20px;
+  --radius-sheet: 26px;
+
+  --font-sans: "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+
+  --animate-bob: bob 2.4s ease-in-out infinite;
+  @keyframes bob {
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+  /* ペットの部屋の雲 (ゆっくり行って戻る) */
+  --animate-drift: drift 9s ease-in-out infinite alternate;
+  @keyframes drift {
+    to {
+      transform: translateX(14px);
+    }
+  }
+  /* 夜空の星 (またたく) */
+  --animate-twinkle: twinkle 2.8s ease-in-out infinite;
+  @keyframes twinkle {
+    50% {
+      opacity: 0.25;
+      transform: scale(0.6);
+    }
+  }
+}
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,
+  body {
+    min-height: 100dvh;
+  }
+  body {
+    @apply bg-backdrop font-sans text-base font-bold text-ink;
+  }
+  button,
+  input {
+    font: inherit;
+    color: inherit;
+  }
+}

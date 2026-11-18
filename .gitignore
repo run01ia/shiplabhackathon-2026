@@ -1,0 +1,29 @@
+# --- pnpm / Node ---
+node_modules/
+.pnpm-debug.log*
+.pnpm-store/
+.npm-log/
+
+# --- Build Outputs & Caches (Monorepo & Frontend/Backend) ---
+dist/
+build/
+.output/
+.react-router/
+.vite/
+
+# --- Environment Files ---
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+supabase/.temp/
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+.agents
+
+# --- Claude Code worktrees (サブエージェントの作業場所) ---
+.claude/worktrees/

@@ -1,0 +1,297 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.6.8/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/build",
+      "!**/dist",
+      "!**/.react-router",
+      "!**/.claude",
+      "!**/supabase",
+      "!**/docs",
+      "!pnpm-lock.yaml",
+      "!pnpm-workspace.yaml",
+      "!**/*.md"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noNonNullAssertion": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["backend/src/**/domain/**", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**", "!./*", "!**/shared/domain/*"],
+                    "message": "domain は純粋関数。同じ domain/ と shared/domain/ 以外を import しない (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/modules/*/usecases/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["hono", "hono/**", "@hono/**", "@supabase/**", "zod"],
+                    "message": "use-case は HTTP (hono / zod) と supabase-js を知らない。repository の interface と domain だけを使う (docs/architecture.md)"
+                  },
+                  {
+                    "group": [
+                      "**/infra/**",
+                      "**/routes",
+                      "**/controller",
+                      "**/schemas",
+                      "**/deps",
+                      "**/app",
+                      "**/shared/supabase",
+                      "**/shared/middleware/**"
+                    ],
+                    "message": "use-case は infra / routes / deps を import しない。実装は deps.ts が渡す (docs/architecture.md)"
+                  },
+                  {
+                    "group": [
+                      "**/lists/**",
+                      "**/wallet/**",
+                      "**/shop/**",
+                      "**/profile/**",
+                      "**/receipts/**",
+                      "**/pantry/**",
+                      "!**/repository"
+                    ],
+                    "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/modules/*/routes.ts", "backend/src/modules/*/controller.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "@supabase/**",
+                      "**/infra/**",
+                      "**/repository",
+                      "**/shared/supabase",
+                      "**/domain",
+                      "**/domain/**"
+                    ],
+                    "message": "routes (controller) は use-case と schemas だけを呼ぶ。repository / infra / supabase-js / domain を import しない (docs/architecture.md)"
+                  },
+                  {
+                    "group": [
+                      "**/lists/**",
+                      "**/wallet/**",
+                      "**/shop/**",
+                      "**/profile/**",
+                      "**/receipts/**",
+                      "**/pantry/**"
+                    ],
+                    "message": "routes (controller) は他モジュールを import しない。必要なら use-case が相手の repository (interface) を受け取る (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/modules/*/repository.ts", "backend/src/modules/*/schemas.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "@supabase/**",
+                      "**/infra/**",
+                      "**/usecases",
+                      "**/usecases/**",
+                      "**/routes",
+                      "**/controller",
+                      "**/deps",
+                      "**/app",
+                      "**/shared/supabase",
+                      "**/shared/middleware/**"
+                    ],
+                    "message": "repository.ts (interface) と schemas.ts は、上位の層 (use-case / routes) と実装 (infra / supabase-js) を import しない (docs/architecture.md)"
+                  },
+                  {
+                    "group": [
+                      "**/lists/**",
+                      "**/wallet/**",
+                      "**/shop/**",
+                      "**/profile/**",
+                      "**/receipts/**",
+                      "**/pantry/**",
+                      "!**/repository"
+                    ],
+                    "message": "他モジュールから import してよいのは repository.ts (interface) の型だけ (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/modules/*/infra/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": [
+                      "hono",
+                      "hono/**",
+                      "@hono/**",
+                      "zod",
+                      "**/usecases",
+                      "**/usecases/**",
+                      "**/routes",
+                      "**/controller",
+                      "**/schemas",
+                      "**/deps",
+                      "**/app",
+                      "**/domain",
+                      "**/domain/**",
+                      "**/shared/middleware/**"
+                    ],
+                    "message": "infra は DB の読み書きと行 ↔ 型の変換だけ。上位の層 (use-case / routes) と domain (ビジネス判定) を import しない (docs/architecture.md)"
+                  },
+                  {
+                    "group": [
+                      "**/lists/**",
+                      "**/wallet/**",
+                      "**/shop/**",
+                      "**/profile/**",
+                      "**/receipts/**",
+                      "**/pantry/**",
+                      "!**/repository"
+                    ],
+                    "message": "他モジュールの infra は import しない。必要なら相手の repository.ts (interface) を引数で受け取る (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/shared/**", "!backend/src/shared/supabase.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@supabase/**", "**/supabase", "**/modules/**", "**/deps", "**/app"],
+                    "message": "shared は modules / deps を import しない。supabase-js は shared/supabase.ts と infra だけ (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["backend/src/app.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@supabase/**", "**/infra/**", "**/shared/supabase"],
+                    "message": "app.ts は routes を束ねるだけ。infra の組み立ては deps.ts (docs/architecture.md)"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
