@@ -17,7 +17,7 @@ Issue 駆動で、**起票 → 並行性の判断 → 設計 → 並行実装 �
 ## 0. 前提
 
 - 進捗の正は Issue と Project (https://github.com/users/run01ia/projects/1)。`.claude/todo/progress.md` は、ブロッカーと再開メモの補助。**着手・PR・マージ・中断のたびに親が更新する** (コンテキストが圧縮されても再開できるようにする)。サブエージェントには更新させない。
-- ブランチは `origin/dev` から切り、PR のベースは `dev`。`staging` と `main` へのマージは、デプロイを伴うので自動にしない。
+- ブランチは `origin/dev` から切り、PR のベースは `dev`。`main` へのマージは、デプロイを伴うので自動にしない (staging はない、D40)。
 - **他の人の担当は取らない。** 担当者が付いた Issue と、その範囲のコードには着手しない。現在の例: #2 環境構築 = ルノリア、#6 位置情報 = ゆうと (アラートの検知 REQ-009/010/011 と、スーパー登録 `/stores` を含む)、#8 スコア・ポイントの仕様 = ゲーム担当。待ちになる作業は、`progress.md` のブロッカーに書く。
 
 ## 1. 起票
@@ -80,7 +80,7 @@ pnpm exec biome check backend biome.json                    # 禁止 import (noR
 ステータスの更新: `.claude/skills/autopilot/set-status.sh <Issue番号> "In progress"|"In review"|Done|Ready|Backlog`
 
 ### push と PR を増やしすぎない (ビルドの回数)
-- push のたびに、Cloudflare の Workers Builds (リポジトリ連携) が走る。Vercel は `vercel.json` で staging と main 以外を止めている (`deploymentEnabled` と `ignoreCommand`)。
+- push のたびに、Cloudflare の Workers Builds (リポジトリ連携) が走る。Vercel は `vercel.json` で main 以外を止めている (`deploymentEnabled` と `ignoreCommand`)。
 - 進捗ボードや docs だけの小さな更新は、単独の PR にしない。次の実装の PR に同乗させるか、区切りでまとめて 1 本にする。
 - ブランチ名は `feat/` `fix/` `chore/` `docs/` `refactor/` のどれか (vercel.json の除外に入っている)。
 
@@ -106,11 +106,11 @@ pnpm exec biome check backend biome.json                    # 禁止 import (noR
 
 結果は重大度 (高 / 中 / 低) 別に Issue にする。**高は直るまで次のフェーズに進まない** (`progress.md` のブロッカーに書く)。RLS を実際に攻撃して試す確認は、親が `supabase start` で行う。
 
-その後、`staging` への PR を親が作る (`dev → staging`)。マージはデプロイを伴うので、人に確認する。
+本番に出すときは、`main` への PR を親が作る (`dev → main`)。マージはデプロイを伴うので、人に確認する。
 
 ## 8. 止まる条件 (人に聞く)
 
-- **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワークの変更)、**取り消しにくい外部操作** (`staging` / `main` へのマージ、本番データの変更、force push)。
+- **セキュリティ** (鍵・認可・個人情報)、**コスト** (課金が発生する選択)、**技術的に大きな決断** (DB・フレームワークの変更)、**取り消しにくい外部操作** (`main` へのマージ、本番データの変更、force push)。
 - 操作が権限の確認で拒否されたとき。**言い換えて繰り返さない。** 何をしたかったかと理由を伝え、許可の方法を聞く。
 - 要件どうしが矛盾し、どちらを取るかで画面や DB が大きく変わるとき。
 

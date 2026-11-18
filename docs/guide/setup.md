@@ -164,7 +164,7 @@ git push -u origin feat/<やること>
 gh pr create --base dev                        # PR は dev 向け
 ```
 
-- ブランチは `feat/* → dev → staging → main` の順に進みます。デプロイされるのは `staging` と `main` だけです。
+- ブランチは `feat/* → dev → main` の順に進みます。デプロイされるのは `main` だけです (staging はありません)。
 - PR の本文には `Closes #<Issue番号>` を入れます。`dev` へのマージでは Issue は自動で閉じないので、マージ後に閉じます。
 - コミットメッセージは `feat: ...` `fix: ...` `docs: ...` のような英語の接頭辞 + 日本語です (`.claude/skills/commit/`)。
 

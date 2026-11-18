@@ -238,17 +238,17 @@ type Deps = {
 ## ブランチとデプロイ
 
 ```
-feat/* ─PR→ dev ─PR→ staging ─PR→ main
- (開発)   (統合)    (検証用)     (本番)
-  デプロイなし  デプロイなし   デプロイ     デプロイ
+feat/* ─PR→ dev ─PR→ main
+ (開発)   (統合)    (本番)
+  デプロイなし  デプロイなし   デプロイ
 ```
 
-- **`staging` と `main` だけ自動でデプロイする。** `dev` と feature ブランチは、デプロイしない (Vercel Hobby の回数制限と、検証以外でのデプロイを避けるため)。
-- `frontend/vercel.json` の `git.deploymentEnabled` で、`dev` `feat/*` `fix/*` `chore/*` `docs/*` を false にしている。それ以外 (`staging` `main`) は既定の true。
-- 動作を確認したいとき (目安はフェーズの完了時) だけ、`dev` から `staging` へ PR を出す。`dev` へのマージは親エージェントが自動で行うが、`staging` と `main` へのマージは自動にしない (デプロイを伴うため)。
+- **`main` だけ自動でデプロイする。** `dev` と feature ブランチは、デプロイしない (Vercel Hobby の回数制限と、検証以外でのデプロイを避けるため)。staging は作らない (D40)。
+- `frontend/vercel.json` の `git.deploymentEnabled` で、`dev` `feat/*` `fix/*` `chore/*` `docs/*` を false にしている。`main` 以外は `ignoreCommand` でもビルドを止める。
+- 本番に出したいときに、`dev` から `main` へ PR を出す。`dev` へのマージは親エージェントが自動で行うが、`main` へのマージは自動にしない (デプロイを伴うため)。
 - 既定ブランチは `main`。そのため、`dev` 向けの PR の `Closes #N` では Issue が閉じない (マージ後に手で閉じる)。
 - 既存の README やワークフローには、`dev` を明示的にデプロイする記述はなかった (2026-11-16 確認)。`dev` のデプロイが必要になったら、このファイルと `vercel.json` を直す。
-- API (Workers) も同じ方針。`staging` と `main` を別の Worker / 環境として `wrangler.jsonc` で分ける。
+- API (Workers) も同じ方針。`main` だけを 1 つの Worker にデプロイする (Workers Builds の本番ブランチ = `main`、それ以外のブランチのビルドは止める)。
 
 ## 環境変数
 - `backend/.env`、`frontend/.env` に置く。ひな形は `*.env.example`。**`.env` はコミットしない。**
