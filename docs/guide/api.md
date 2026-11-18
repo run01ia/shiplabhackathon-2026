@@ -29,7 +29,7 @@ Authorization: Bearer <アクセストークン>
 | GET | `/shop/items` | 着せ替えアイテムの一覧 (所持・着用つき) | 必要 |
 | POST | `/shop/items/:key/buy` | アイテムを買う (コインを減らして所持に足す) | 必要 |
 | PATCH | `/shop/items/:key/equip` | アイテムを着る / 外す。body `{ "equipped": boolean }` | 必要 |
-| GET | `/history/points` | ポイントの増減の履歴 (新しい順、最大 50) | 必要 |
+| GET | `/history/points` | ポイントの増減とショップでの購入の履歴 (新しい順、最大 50) | 必要 |
 | POST | `/lists` | リストを作る。body `{ "budget"?: number }` (既定 0) | 必要 |
 | GET | `/lists/current` | 完了していないリスト (品目つき) | 必要 |
 | PATCH | `/lists/:id` | 予算を変える。body `{ "budget": number }` | 必要 |
@@ -211,10 +211,12 @@ Authorization: Bearer <アクセストークン>
 
 ```json
 [
-  { "id": "2e32389c-...", "delta": 5, "reason": "不要買いをやめた", "createdAt": "2026-11-16T12:26:12.385Z" },
-  { "id": "6f842712-...", "delta": 20, "reason": "ログインボーナス", "createdAt": "2026-11-16T12:26:12.383Z" }
+  { "id": "be5d053c-...", "kind": "coin", "delta": -30, "reason": "ぼうしを買った", "createdAt": "2026-11-16T12:30:00.000Z" },
+  { "id": "2e32389c-...", "kind": "point", "delta": 5, "reason": "不要買いをやめた", "createdAt": "2026-11-16T12:26:12.385Z" }
 ]
 ```
+
+`kind`: `point` = ポイントの増減 (`point_logs`)、`coin` = ショップでの購入 (`user_items` のうち `items.rarity` が null。コインだけ減り、スコアは変わらない)。
 
 ### `GET /history/lists`
 

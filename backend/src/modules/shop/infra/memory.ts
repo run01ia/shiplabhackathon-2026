@@ -1,5 +1,5 @@
 import type { WalletRepo } from '../../wallet/repository'
-import type { DropPolicy, Rarity, ShopRepo } from '../repository'
+import type { DropPolicy, Purchase, Rarity, ShopRepo } from '../repository'
 
 /** 着せ替えマスタ (supabase の初期データと同じ) */
 const ITEMS: { key: string; name: string; price: number; rarity: Rarity | null }[] = [
@@ -20,6 +20,8 @@ export const createMemoryShopRepo = (
 ): ShopRepo => {
   /** userId -> (itemKey -> equipped) */
   const userItems = new Map<string, Map<string, boolean>>()
+  /** userId -> 購入の履歴 (古い順) */
+  const purchases = new Map<string, Purchase[]>()
   const owned = (id: string) => {
     const existing = userItems.get(id)
     if (existing) return existing
@@ -50,6 +52,14 @@ export const createMemoryShopRepo = (
       const next = { ...wallet, coins: wallet.coins - item.price }
       await wallets.save(id, next)
       mine.set(key, false)
+      const log = purchases.get(id) ?? []
+      log.push({
+        id: `${id}-${key}`,
+        name: item.name,
+        price: item.price,
+        createdAt: new Date().toISOString(),
+      })
+      purchases.set(id, log)
       return { ok: true, wallet: next }
     },
     rollDrop: async (id) => {
@@ -62,6 +72,7 @@ export const createMemoryShopRepo = (
       if (wallet) await wallets.save(id, { ...wallet, coins: wallet.coins + drops.coins })
       return { coins: drops.coins }
     },
+    listPurchases: async (id, limit) => [...(purchases.get(id) ?? [])].reverse().slice(0, limit),
     setEquipped: async (id, key, equipped) => {
       if (!ITEMS.some((i) => i.key === key)) return 'item_not_found'
       const mine = owned(id)

@@ -67,4 +67,24 @@ export const createSupabaseShopRepo = (db: Db, drops: DropPolicy): ShopRepo => (
     if (error) throw error
     return data.length > 0 ? 'ok' : 'not_owned'
   },
+  async listPurchases(userId, limit) {
+    // rarity が null のアイテムだけがショップで買える (おみやげは無料なので除く)
+    const { data, error } = await db
+      .from('user_items')
+      .select('id, created_at, items!inner(name, price, rarity)')
+      .eq('user_id', userId)
+      .is('items.rarity', null)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    if (error) throw error
+    return data.map((r) => {
+      const item = r.items as unknown as { name: string; price: number }
+      return {
+        id: r.id as string,
+        name: item.name,
+        price: item.price,
+        createdAt: r.created_at as string,
+      }
+    })
+  },
 })

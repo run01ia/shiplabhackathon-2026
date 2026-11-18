@@ -32,6 +32,9 @@ export type DropPolicy = {
   coins: number
 }
 
+/** ショップでの購入 (コインの支出)。おみやげ (無料) は含まない */
+export type Purchase = { id: string; name: string; price: number; createdAt: string }
+
 export interface ShopRepo {
   /** マスタ + 所持 + 着用 */
   listItems(userId: string): Promise<ShopItem[]>
@@ -40,4 +43,6 @@ export interface ShopRepo {
   /** おみやげを決め (DropPolicy)、帽子の所持追加かコイン加算を 1 トランザクションで行う */
   rollDrop(userId: string): Promise<Drop>
   setEquipped(userId: string, itemKey: string, equipped: boolean): Promise<EquipResult>
+  /** 購入の履歴 (新しい順) */
+  listPurchases(userId: string, limit: number): Promise<Purchase[]>
 }
