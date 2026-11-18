@@ -37,6 +37,11 @@ export type ShoppingInput = {
   budget: number
   spent: number
   items: JudgeItem[]
+  /**
+   * レシートを読んで判定するとき。不要買いは「レシートのリスト外の品目数」で数え、
+   * 手で足したリスト外の品目 (isExtra / isUnnecessary) は数えない (二重に数えない)
+   */
+  receipt?: { offListCount: number; bonus: ScoreLine | null }
 }
 
 export type ScoreLine = { label: string; points: number }
@@ -76,9 +81,11 @@ export const limitToDaily = (j: ShoppingJudgement, firstToday: boolean): Shoppin
 
 export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
   const withinBudget = isWithinBudget(r.budget, r.spent)
-  const unnecessaryCount = r.items.filter((i) => i.isUnnecessary).length
+  const unnecessaryCount = r.receipt
+    ? r.receipt.offListCount
+    : r.items.filter((i) => i.isUnnecessary).length
   const rate = completionRate(r.items)
-  const hasExtra = r.items.some((i) => i.isExtra)
+  const hasExtra = r.receipt ? r.receipt.offListCount > 0 : r.items.some((i) => i.isExtra)
   const asPlanned = rate === 1 && !hasExtra
   const base = {
     withinBudget,
@@ -107,6 +114,8 @@ export const judgeShopping = (r: ShoppingInput): ShoppingJudgement => {
       points: POINTS.unnecessary * unnecessaryCount,
     })
   }
+  // レシートのボーナス (お菓子なし・ひかえめ)。プラスなので limitToDaily の 1 日 1 回に従う
+  if (r.receipt?.bonus) breakdown.push(r.receipt.bonus)
 
   return {
     ...base,

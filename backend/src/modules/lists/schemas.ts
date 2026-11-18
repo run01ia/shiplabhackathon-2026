@@ -13,7 +13,8 @@ export const addExtraItemSchema = z.object({
   price: yen,
   isUnnecessary: z.boolean().default(false),
 })
-export const finishSchema = z.object({ spentAmount: yen.optional() })
+// scanId = 判定に使うレシートの読み取り (POST /receipts/scan の応答)
+export const finishSchema = z.object({ spentAmount: yen.optional(), scanId: z.uuid().optional() })
 export const historyItemPatchSchema = z
   .object({ price: yen, isUnnecessary: z.boolean() })
   .partial()

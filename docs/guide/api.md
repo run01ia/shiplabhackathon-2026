@@ -37,9 +37,9 @@ Authorization: Bearer <アクセストークン>
 | PATCH | `/lists/:id/items/:itemId` | 品目の名前を変える。body `{ "name": string }` | 必要 |
 | DELETE | `/lists/:id/items/:itemId` | 品目を消す。`204` (本文なし) | 必要 |
 | POST | `/lists/:id/start` | 買い物を始める (`planning` → `shopping`) | 必要 |
-| PATCH | `/lists/:id/items/:itemId/purchase` | 品目を買った (購入済みにし、金額を入れる)。body `{ "price": number }` | 必要 |
-| POST | `/lists/:id/extra-items` | リスト外の品目を、購入済みで足す。body `{ "name", "price", "isUnnecessary"?: boolean }` | 必要 |
-| POST | `/lists/:id/finish` | 買い物を終える。結果を判定し、ポイントを付ける。body `{ "spentAmount"?: number }` | 必要 |
+| PATCH | `/lists/:id/items/:itemId/purchase` | 品目を買った (購入済みにし、金額を入れる)。body `{ "price": number }` (画面はチェックだけなので `0` を送る) | 必要 |
+| POST | `/lists/:id/extra-items` | リスト外の品目を、購入済みで足す。body `{ "name", "price", "isUnnecessary"?: boolean }` (画面は品名だけなので `price: 0`) | 必要 |
+| POST | `/lists/:id/finish` | 買い物を終える。結果を判定し、ポイントを付ける。body `{ "spentAmount"?: number, "scanId"?: string }` (`scanId` = 読んだレシート) | 必要 |
 | GET | `/history/lists` | 完了したリストと品目 (新しい順、最大 50) | 必要 |
 | GET | `/receipts/status` | レシートの AI 判定が使えるか (`enabled`) と、今日の残り回数。backend に `ANTHROPIC_API_KEY` がなければ `enabled: false` (画面はボタンを出さない) | 必要 |
 | GET | `/pantry` | 家にあるもの (在庫、REQ-013)。入れた日時の新しい順 | 必要 |
@@ -47,7 +47,7 @@ Authorization: Bearer <アクセストークン>
 | POST | `/pantry/matches` | 品目名のうち、家にあるものを返す。body `{ "names": string[] }` | 必要 |
 | PATCH | `/pantry/items/:id` | 「ある / 少ない」を変える。body `{ "status": "have" \| "low" }` | 必要 |
 | DELETE | `/pantry/items/:id` | 在庫から消す (なくなった)。`204` (本文なし) | 必要 |
-| POST | `/receipts/scan` | レシートの写真を読み、品目を分類して、ペットのひとことと小さなボーナスを返す。`multipart/form-data` (`image`, `listId`)。画像は保存しない | 必要 |
+| POST | `/receipts/scan` | 買い物中のリストのレシートの写真を読み、品目の分類・リストにあるか (`onList`)・合計・ペットのひとことを返す。ポイントは付けない (判定で付く)。`multipart/form-data` (`image`, `listId`)。画像は保存しない | 必要 |
 | PATCH | `/history/items/:itemId` | 完了したリストの品目の金額・不要の印を直す。body `{ "price"?, "isUnnecessary"? }` (どちらか必須)。ポイントは計算し直さない | 必要 |
 
 入力のルール (`schemas.ts`):
@@ -157,7 +157,15 @@ Authorization: Bearer <アクセストークン>
 
 ### `POST /lists/:id/finish`
 
-リクエスト: `{}` (`spentAmount` を省くと、購入済みの合計を支出にする)
+リクエスト: `{ "spentAmount": 800, "scanId": "<POST /receipts/scan の scanId>" }`。どちらも任意です。
+
+- `spentAmount` を省くと、レシートがあればその合計、なければ購入済みの品目の金額の合計を支出にします。
+- `scanId` を付けると、レシートで判定します (D42)。
+  - 使えるのは、**本人の・このリストの・完了した読み取り**だけです。それ以外 (他人の読み取り、別のリストの読み取り、失敗した読み取り、存在しない id) は `400` で、買い物は終わりません (`scanId` なしでやり直せます)。
+  - 不要買いの数 (`unnecessaryCount`) = レシートで `onList: false` の品目数。手で足したリスト外の品目は数えません (二重に数えないため)。`asPlanned` の「リスト外の購入なし」も、レシートで見ます。
+  - お菓子のボーナス (`レシート: お菓子なし` +5 / `レシート: お菓子ひかえめ` +3) が `breakdown` に入ります。プラスなので、ほかのプラスと同じく**今日はじめての買い物だけ**です (1 件も買っていない買い物にも付きません)。
+  - 応答の `receipt` は `{ "offList": ["ポテトチップス"] }` (リスト外だった品目名)。`scanId` なしなら `null`。
+- 買い物を終えられるのは 1 回だけです。同じリストへの 2 回目は `409` (読み取りはそのリスト専用なので、1 つの読み取りが 2 回の判定に使われることもありません)。
 
 ```json
 {
@@ -226,7 +234,7 @@ Authorization: Bearer <アクセストークン>
 
 ### `POST /receipts/scan` (レシートの AI 判定、REQ-012)
 
-`multipart/form-data` で送ります。`image` は JPEG / PNG / WebP で 5MB まで (frontend は送る前に長い辺 2000px の JPEG に縮めます)。`listId` は**今日 (JST) 終えた自分の買い物**の id です。
+`multipart/form-data` で送ります。`image` は JPEG / PNG / WebP で 5MB まで (frontend は送る前に長い辺 2000px の JPEG に縮めます)。`listId` は**買い物中 (`shopping`) の自分のリスト**の id です。判定 (`POST /lists/:id/finish`) の前に読み、応答の `scanId` を判定に渡します。**ここではポイントを付けません。**
 
 ```bash
 curl -H 'Authorization: Bearer test-u1' -F image=@receipt.jpg -F listId=<リストの id> http://localhost:3000/receipts/scan
@@ -234,28 +242,32 @@ curl -H 'Authorization: Bearer test-u1' -F image=@receipt.jpg -F listId=<リス�
 
 ```json
 {
+  "scanId": "0b7c2f5e-...",
   "items": [
-    { "name": "にんじん", "price": 98, "category": "food" },
-    { "name": "ポテトチップス", "price": 128, "category": "snack" }
+    { "name": "にんじん", "price": 98, "category": "food", "onList": true },
+    { "name": "ポテトチップス", "price": 128, "category": "snack", "onList": false }
   ],
   "total": 800,
+  "offListCount": 1,
   "snackCount": 1,
   "snackTotal": 128,
   "snackRatio": 0.16,
   "verdict": "few_snack",
   "comment": "お菓子はちょっとだけ。じょうずに買えたね",
   "bonus": { "label": "レシート: お菓子ひかえめ", "points": 3 },
-  "alreadyRewarded": false,
   "remaining": 4
 }
 ```
 
+- `onList`: リストにある品目なら `true`。AI にリストの品目名 (手で足したリスト外の品目は除く) を渡して判断させます。表記ゆれ (「牛乳」と「牛乳 1L」、ひらがなとカタカナ) は同じ品目とみなします。`offListCount` は `onList: false` の数で、判定で不要買いとして数えます。
+- `total`: レシートに書かれた合計。読めなければ品目の合計。画面は「レジでいくら使った？」の初期値にします (ユーザーが直せます)。
 - `category`: `food` (食材) / `daily` (日用品) / `drink` (飲み物) / `snack` (お菓子・嗜好品)。値引きの行は `price` がマイナス。
 - `verdict` とボーナス (配点は仮。`backend/src/modules/receipts/domain/judge.ts`): お菓子・嗜好品なし `no_snack` +5 / 金額の 20% 以下 `few_snack` +3 / それより多い `some_snack`・50% 以上 `many_snack` はコメントだけ (マイナスなし)。
-- ボーナスは **1 日 1 回** (JST)。2 回目以降は `bonus: null`、`alreadyRewarded: true`。1 件も買っていない買い物には付きません。
+- `bonus` は、判定で付く**見込み**です (ここでは付けません)。実際に付くのは、`scanId` を渡した判定が今日 (JST) はじめての買い物で、1 件以上買っているときだけです (上の `POST /lists/:id/finish`)。
 - 読めるのは **1 人 1 日 5 回**まで、**全ユーザーの合計で 1 日 200 回**まで (Claude API のコスト対策。合計の上限は環境変数 `RECEIPT_DAILY_GLOBAL_LIMIT` で変えられます)。`GET /receipts/status` は `{ "enabled": true, "limit": 5, "remaining": 4 }`。
-- 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物が終わっていない・今日の買い物でない / `413` 5MB 超 / `422` レシートが読めない / `429` 自分の今日の上限、または全体の上限 (「今日は混み合っています」) / `503` AI が混雑・停止・応答なし。
+- 失敗: `400` 画像でない / `404` 機能が無効・他人のリスト / `409` 買い物中のリストでない / `413` 5MB 超 / `422` レシートが読めない / `429` 自分の今日の上限、または全体の上限 (「今日は混み合っています」) / `503` AI が混雑・停止・応答なし。
 - 回数に数えない失敗は、**AI 側の都合 (429 と 5xx) だけ**です。AI が画像を受け付けなかった (400 系)、タイムアウト・接続エラー、読めなかった場合は数えます (壊れた画像を送り続けて API を呼び続けられないように)。
+- Claude API を呼ばない読み取りは、いつも同じ品目 (にんじん・とうふ・牛乳 1L・ティッシュ 5 箱・ポテトチップス、合計 800) を返し、`onList` はリストの品目名との一致 (空白を除く・全角半角をそろえる・カタカナをひらがなにして、どちらかがもう一方を含めば同じ。`domain/match.ts`) で決めます。応答の形は Claude API のときと同じです。
 - Claude API を呼ばず固定の読み取り結果を返すのは、DB なし (メモリ実装) のときと、`RECEIPT_READER=memory` **かつ `NODE_ENV=development`** を明示したとき (DB ありのローカル確認用) だけです。`NODE_ENV` が未設定・`production` なら `RECEIPT_READER` は無視します。
 
 ### `/pantry` (家の在庫、REQ-013)

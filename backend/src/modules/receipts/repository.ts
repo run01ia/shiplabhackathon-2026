@@ -1,11 +1,14 @@
 // receipts モジュールの port (REQ-012)。Claude API と DB は、この interface の裏に置く
 import { CATEGORIES, type Category, type ReceiptItem } from './domain/category'
 import type { ImageMediaType } from './domain/image'
+import { judgeReceipt } from './domain/judge'
 import { checkReserve, type ReadFailure, type ReserveRefusal } from './domain/limit'
+import { isOnList } from './domain/match'
 
 export type { Category, ImageMediaType, ReadFailure, ReceiptItem, ReserveRefusal }
-// infra は domain を import できないので、ここから渡す
-export { CATEGORIES, checkReserve }
+// infra は domain を import できないので、ここから渡す。
+// judgeReceipt は lists の finish が使う (他モジュールが import できるのは repository.ts だけ)
+export { CATEGORIES, checkReserve, isOnList, judgeReceipt }
 
 /** レシートの設定 (環境変数)。全ユーザー合計の 1 日上限。未設定なら既定値 */
 export type ReceiptEnv = { RECEIPT_DAILY_GLOBAL_LIMIT?: string }
@@ -31,13 +34,13 @@ export type ReserveResult = { ok: true; scanId: string } | { ok: false; reason: 
 
 /** レシートの画像を読む AI。画像は保存しない */
 export interface ReceiptReader {
-  read(image: ReceiptImage): Promise<ReadResult>
+  /** listNames = 買い物リストの品目名。品目ごとの onList (リストにあるか) の判断に使う */
+  read(image: ReceiptImage, listNames: readonly string[]): Promise<ReadResult>
 }
 
 export type ScanRecord = {
   items: ReceiptItem[]
   total: number | null
-  bonus: number
 }
 
 /** 読み取りの回数と結果の記録 */
@@ -53,6 +56,14 @@ export interface ReceiptRepo {
   release(scanId: string): Promise<void>
   /** 読み取り結果を記録する (画像は保存しない) */
   complete(scanId: string, record: ScanRecord): Promise<void>
-  /** 今日のボーナスの権利を取る。今日はじめてなら true (同時に呼ばれても 1 回だけ true) */
-  claimReward(scanId: string): Promise<boolean>
+  /**
+   * 判定 (POST /lists/:id/finish) に使える読み取り: 本人の・このリストの・完了した (品目を記録した) もの。
+   * それ以外 (他人、別のリスト、失敗した読み取り、存在しない) は null
+   */
+  getCompleted(userId: string, listId: string, scanId: string): Promise<ScanRecord | null>
+  /**
+   * 読んだ日のボーナスの権利を取り、付けるポイントを記録する。
+   * その日はじめてなら true (同時に呼ばれても 1 回だけ true)
+   */
+  claimReward(scanId: string, points: number): Promise<boolean>
 }

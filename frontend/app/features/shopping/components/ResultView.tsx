@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { Card } from '~/components/Card'
 import { ScreenTitle } from '~/components/Screen'
-import { ReceiptCard } from '~/features/receipt'
 import { formatYen } from '../logic/yen'
 import type { FinishResult } from '../types'
 import { ShoppingPet } from './ShoppingPet'
@@ -44,6 +43,11 @@ export function ResultView({ result }: { result: FinishResult }) {
             <b className={tone(r.points)}>{signed(r.points)}</b>
           </div>
         ))}
+        {result.receipt && result.receipt.offList.length > 0 ? (
+          <p className="m-0 py-1.5 text-xs font-normal text-muted">
+            レシートのリスト外: {result.receipt.offList.join('、')}
+          </p>
+        ) : null}
         {result.rewardedToday ? null : (
           <p className="py-1.5 text-xs text-muted">
             ごほうびは 1 日 1 回。今日の分はもうもらったよ、また明日！
@@ -67,8 +71,6 @@ export function ResultView({ result }: { result: FinishResult }) {
         </motion.div>
       ) : null}
       {drop ? <Souvenir drop={drop} onOpen={() => setOpened(true)} /> : null}
-      {/* レシートの AI 判定 (REQ-012)。機能が無効なら何も出ない */}
-      <ReceiptCard listId={result.list.id} />
       {/* Link をボタンの見た目にする (Button は <button> なので使えない) */}
       <Link
         to="/home"

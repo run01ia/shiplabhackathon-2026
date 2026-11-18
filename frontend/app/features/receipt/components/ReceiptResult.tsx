@@ -1,5 +1,4 @@
 import { motion, useReducedMotion } from 'motion/react'
-import { useEffect, useRef } from 'react'
 import { Pet } from '~/features/pet'
 import { CATEGORY_VIEW, formatYen, summarize } from '../logic/category'
 import type { ScanResult } from '../types'
@@ -11,35 +10,11 @@ const MOOD = {
   many_snack: 'sad',
 } as const satisfies Record<ScanResult['verdict'], 'joy' | 'happy' | 'sad'>
 
-// 紙吹雪は使うときにだけ読み込む。バッジの位置から出す
-const celebrate = async (el: HTMLElement | null) => {
-  const { default: fire } = await import('canvas-confetti')
-  const r = el?.getBoundingClientRect()
-  fire({
-    particleCount: 60,
-    spread: 70,
-    startVelocity: 28,
-    origin: r
-      ? {
-          x: (r.left + r.width / 2) / window.innerWidth,
-          y: (r.top + r.height / 2) / window.innerHeight,
-        }
-      : { x: 0.5, y: 0.6 },
-    colors: ['#3dbe8b', '#ffc93c', '#f2542d', '#ffffff'],
-    disableForReducedMotion: true,
-  })
-}
-
-/** 読み取り結果: ペットのひとこと、ボーナス、分類の帯グラフ、品目 */
+/** 読み取り結果 (判定の前): ペットのひとこと、もらえるボーナス、分類の帯グラフ、品目 (リスト外に印) */
 export function ReceiptResult({ result }: { result: ScanResult }) {
   const reduced = useReducedMotion()
-  const badgeRef = useRef<HTMLSpanElement>(null)
   const shares = summarize(result.items)
   const bonus = result.bonus
-
-  useEffect(() => {
-    if (bonus) void celebrate(badgeRef.current)
-  }, [bonus])
 
   return (
     <div aria-live="polite">
@@ -60,9 +35,11 @@ export function ReceiptResult({ result }: { result: ScanResult }) {
 
       {bonus ? (
         <div className="mt-2 flex items-center justify-between">
-          <span>{bonus.label.replace('レシート: ', '')} ボーナス</span>
+          <span>
+            {bonus.label.replace('レシート: ', '')} ボーナス
+            <small className="block text-xs font-normal text-muted">判定で もらえるよ</small>
+          </span>
           <motion.span
-            ref={badgeRef}
             className="rounded-pill border-3 border-ink bg-sun px-3 text-xl"
             initial={{ scale: reduced ? 1 : 0, rotate: reduced ? 0 : -20 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -71,10 +48,6 @@ export function ReceiptResult({ result }: { result: ScanResult }) {
             +{bonus.points}
           </motion.span>
         </div>
-      ) : result.alreadyRewarded ? (
-        <p className="mt-2 mb-0 text-xs font-normal text-muted">
-          今日のレシートのボーナスは受け取り済みだよ
-        </p>
       ) : null}
 
       {/* 分類の帯グラフ (金額の割合)。幅ではなく scaleX を伸ばす */}
@@ -117,6 +90,11 @@ export function ReceiptResult({ result }: { result: ScanResult }) {
               aria-label={CATEGORY_VIEW[it.category].label}
             />
             <span className="min-w-0 flex-1 truncate font-normal">{it.name}</span>
+            {it.onList ? null : (
+              <span className="shrink-0 rounded-pill border-2 border-ink bg-red px-2 text-xs text-white">
+                リスト外
+              </span>
+            )}
             <b className={it.price < 0 ? 'text-mint' : ''}>{formatYen(it.price)}</b>
           </motion.li>
         ))}
@@ -125,6 +103,11 @@ export function ReceiptResult({ result }: { result: ScanResult }) {
         <span>レシートの合計</span>
         <b>{formatYen(result.total)}</b>
       </div>
+      <p className={`m-0 pt-1 text-sm ${result.offListCount > 0 ? 'text-red' : 'text-mint'}`}>
+        {result.offListCount > 0
+          ? `リスト外の買い物 ${result.offListCount} 件 (不要買いとして数えるよ)`
+          : 'ぜんぶ リストにあるもの だったよ'}
+      </p>
     </div>
   )
 }

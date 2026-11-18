@@ -28,6 +28,7 @@ const readingSchema = z.object({
           .transform((s) => s.slice(0, 60)),
         price: z.number().int().min(-1_000_000).max(1_000_000),
         category: z.enum(CATEGORIES),
+        onList: z.boolean(),
       }),
     )
     .max(100),

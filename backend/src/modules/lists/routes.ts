@@ -70,11 +70,10 @@ export const lists = (d: Deps) => {
       .post('/lists/:id/extra-items', zValidator('json', addExtraItemSchema), async (c) =>
         c.json(await u.addExtraItem(c.var.user.id, c.req.param('id'), c.req.valid('json')), 201),
       )
-      .post('/lists/:id/finish', zValidator('json', finishSchema), async (c) =>
-        c.json(
-          await u.finishShopping(c.var.user.id, c.req.param('id'), c.req.valid('json').spentAmount),
-        ),
-      )
+      .post('/lists/:id/finish', zValidator('json', finishSchema), async (c) => {
+        const { spentAmount, scanId } = c.req.valid('json')
+        return c.json(await u.finishShopping(c.var.user.id, c.req.param('id'), spentAmount, scanId))
+      })
       .get('/history/lists', async (c) => c.json({ lists: await u.listHistory(c.var.user.id) }))
       .patch('/history/items/:itemId', zValidator('json', historyItemPatchSchema), async (c) =>
         c.json(await u.fixHistoryItem(c.var.user.id, c.req.param('itemId'), c.req.valid('json'))),

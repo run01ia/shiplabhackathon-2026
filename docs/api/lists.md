@@ -18,9 +18,9 @@ REQ-002/003/004/005/014。全て `Authorization: Bearer <Supabase JWT>` が必�
 | `PATCH /lists/:id/items/:itemId` | `{ name }` | `item` |
 | `DELETE /lists/:id/items/:itemId` | - | 204 |
 | `POST /lists/:id/start` | - | `detail` (planning → shopping。それ以外は 409) |
-| `PATCH /lists/:id/items/:itemId/purchase` | `{ price }` | `detail` (購入済みにして金額を入れる。shopping のみ) |
-| `POST /lists/:id/extra-items` | `{ name, price, isUnnecessary?: boolean }` | 201 `detail` (リスト外。購入済みで追加。shopping のみ) |
-| `POST /lists/:id/finish` | `{ spentAmount?: number }` (省略時は購入済みの合計) | 下記。shopping のみ |
+| `PATCH /lists/:id/items/:itemId/purchase` | `{ price }` | `detail` (購入済みにして金額を入れる。shopping のみ。画面はチェックだけなので `price: 0`) |
+| `POST /lists/:id/extra-items` | `{ name, price, isUnnecessary?: boolean }` | 201 `detail` (リスト外。購入済みで追加。shopping のみ。画面は品名だけなので `price: 0`) |
+| `POST /lists/:id/finish` | `{ spentAmount?: number, scanId?: string }` (`spentAmount` 省略時はレシートの合計、なければ購入済みの合計) | 下記。shopping のみ |
 | `GET /history/lists` | - | `{ lists: { list, items }[] }` 完了済み、新しい順、最大 50 |
 | `PATCH /history/items/:itemId` | `{ price?, isUnnecessary? }` (どちらか必須) | `item`。完了したリストの品目のみ。**ポイントは再計算しない** |
 
@@ -38,9 +38,15 @@ REQ-002/003/004/005/014。全て `Authorization: Bearer <Supabase JWT>` が必�
   "completionRate": 1,
   "asPlanned": true,
   "breakdown": [{ "label": "予算内", "points": 30 }, { "label": "リスト通り", "points": 10 }, { "label": "不要買いをやめた", "points": 5 }],
-  "total": 45
+  "total": 45,
+  "receipt": null
 }
 ```
+
+- `scanId` (`POST /receipts/scan` の応答) を付けると、レシートで判定する (D42)。本人の・このリストの・完了した読み取りだけ使える。違えば 400 で、買い物は終わらない。
+  - `unnecessaryCount` = レシートのリスト外 (`onList: false`) の品目数。手で足したリスト外の品目は数えない。`asPlanned` のリスト外の有無もレシートで見る。
+  - `breakdown` にお菓子のボーナス (`レシート: お菓子なし` +5 / `レシート: お菓子ひかえめ` +3) が入る。プラスなので 1 日 1 回の規則に従う。
+  - `receipt` = `{ offList: string[] }` (リスト外だった品目名)。`scanId` なしは `null`。
 
 - 予算ちょうどは予算内。`completionRate` はリスト外を除く品目の購入済み割合。`asPlanned` = 全て購入済みかつリスト外の購入なし。
 - `breakdown` の各行ごとに `WalletRepo.addPoints(userId, points, label)` を呼ぶ (ポイント履歴に 1 行ずつ残る)。

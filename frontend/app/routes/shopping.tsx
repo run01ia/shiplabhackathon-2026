@@ -31,23 +31,24 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
   const token = await requireAccessToken()
   const form = await request.formData()
   const listId = String(form.get('listId'))
-  const price = parseYen(String(form.get('price') ?? '')) ?? 0
   switch (form.get('intent')) {
     case 'start':
       await startShopping(token, listId)
       return { ok: true as const }
     case 'purchase':
-      await purchaseItem(token, listId, String(form.get('itemId')), price)
+      await purchaseItem(token, listId, String(form.get('itemId')))
       return { ok: true as const }
     case 'extra':
-      await addExtraItem(token, listId, {
-        name: String(form.get('name')),
-        price,
-        isUnnecessary: true,
-      })
+      await addExtraItem(token, listId, String(form.get('name')))
       return { ok: true as const }
-    case 'finish':
-      return { result: await finishShopping(token, listId, price) }
+    case 'finish': {
+      const spent = parseYen(String(form.get('price') ?? '')) ?? 0
+      // scanId = 終了画面で読んだレシート (なければ手入力だけの判定)
+      const scanId = form.get('scanId')
+      return {
+        result: await finishShopping(token, listId, spent, scanId ? String(scanId) : undefined),
+      }
+    }
     default:
       throw new Error('unknown intent')
   }
@@ -84,7 +85,7 @@ export default function Shopping() {
     )
   }
 
-  const { list, items, spent, remaining } = detail
+  const { list, items } = detail
   const listId = list.id
   const busy = fetcher.state !== 'idle'
 
@@ -103,31 +104,31 @@ export default function Shopping() {
     )
   }
 
-  // チェックはワンタップ。金額は行の中で後から入れられる
-  const purchase = (item: ListItem, price: number) => {
-    if (!item.isChecked) tap()
-    fetcher.submit(
-      { intent: 'purchase', listId, itemId: item.id, price: String(price) },
-      { method: 'post' },
-    )
+  // チェックはワンタップ (金額は入れない。合計は終了画面でレシートか手入力で入れる)
+  const purchase = (item: ListItem) => {
+    tap()
+    fetcher.submit({ intent: 'purchase', listId, itemId: item.id }, { method: 'post' })
   }
 
-  const buyExtra = (name: string, price: number) => {
+  const buyExtra = (name: string) => {
     tap()
-    fetcher.submit({ intent: 'extra', listId, name, price: String(price) }, { method: 'post' })
+    fetcher.submit({ intent: 'extra', listId, name }, { method: 'post' })
     setAsking(false)
   }
 
-  const finish = (spentAmount: number) => {
+  const finish = (spentAmount: number, scanId?: string) => {
     tap()
-    finisher.submit({ intent: 'finish', listId, price: String(spentAmount) }, { method: 'post' })
+    finisher.submit(
+      { intent: 'finish', listId, price: String(spentAmount), ...(scanId ? { scanId } : {}) },
+      { method: 'post' },
+    )
   }
 
   if (step === 'fin') {
     return (
       <Screen tab={false}>
         <FinishView
-          spent={spent}
+          listId={listId}
           extras={items.filter((it) => it.isExtra)}
           pending={finisher.state !== 'idle'}
           onBack={() => setStep('shop')}
@@ -149,7 +150,7 @@ export default function Shopping() {
             もどる
           </Link>
         </div>
-        <BudgetCard budget={list.budget} remaining={remaining} />
+        <BudgetCard budget={list.budget} />
         <Card className="py-1">
           {items.map((it) => (
             <ItemRow key={it.id} item={it} onPurchase={purchase} />

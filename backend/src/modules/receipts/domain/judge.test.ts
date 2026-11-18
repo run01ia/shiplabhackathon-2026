@@ -6,6 +6,7 @@ const item = (category: ReceiptItem['category'], price: number): ReceiptItem => 
   name: category,
   price,
   category,
+  onList: true,
 })
 
 describe('judgeReceipt', () => {

@@ -81,3 +81,49 @@ describe('savingBonus', () => {
     expect(j.total).toBe(30 + 9 + 10 + 5)
   })
 })
+
+describe('judgeShopping (レシートで判定)', () => {
+  const bonus = { label: 'レシート: お菓子ひかえめ', points: 3 }
+
+  it('リスト外の品目数を不要買いとして数え、ボーナスを内訳に足す', () => {
+    const j = judgeShopping({
+      budget: 1000,
+      spent: 800,
+      items: [planned(true), planned(true)],
+      receipt: { offListCount: 1, bonus },
+    })
+    expect(j.unnecessaryCount).toBe(1)
+    expect(j.asPlanned).toBe(false)
+    expect(j.breakdown).toContainEqual({ label: '不要買い ×1', points: -15 })
+    expect(j.breakdown).toContainEqual(bonus)
+    // 予算内 +30、20% おさえた +6、不要買い -15、レシート +3
+    expect(j.total).toBe(30 + 6 - 15 + 3)
+  })
+
+  it('手で足したリスト外の品目は数えない (二重に数えない)', () => {
+    const extra = { isChecked: true, isExtra: true, isUnnecessary: true }
+    const j = judgeShopping({
+      budget: 1000,
+      spent: 1000,
+      items: [planned(true), extra],
+      receipt: { offListCount: 0, bonus: null },
+    })
+    expect(j.unnecessaryCount).toBe(0)
+    expect(j.asPlanned).toBe(true)
+    expect(j.total).toBe(30 + 10 + 5)
+  })
+
+  it('今日 2 回目の買い物では、レシートのボーナスは付かず、不要買いのマイナスは残る', () => {
+    const j = limitToDaily(
+      judgeShopping({
+        budget: 1000,
+        spent: 1000,
+        items: [planned(true)],
+        receipt: { offListCount: 2, bonus },
+      }),
+      false,
+    )
+    expect(j.breakdown).toEqual([{ label: '不要買い ×2', points: -30 }])
+    expect(j.total).toBe(-30)
+  })
+})
