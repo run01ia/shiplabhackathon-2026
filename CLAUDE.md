@@ -73,7 +73,7 @@
 
 - **すべての作業は GitHub Issue から始める。** なければ先に起票する (`.claude/skills/autopilot/new-issue.sh`)。Issue 化するのは現在のフェーズ分だけ。
 - Issue の本文には、関連パス (REQ-ID、discussion、`docs/impl-plan/`、使う skill)、触るファイル範囲、依存、完了の定義を書く。
-- ブランチは `feat/* → dev → main`。`origin/dev` から `feat/xxx` `fix/xxx` `chore/xxx` `docs/xxx` を切り、PR は `dev` 向け。`main` だけデプロイする (staging は作らない、D40) ([docs/architecture.md](docs/architecture.md))。
+- ブランチは `feat/* → dev → main`。`origin/dev` から `feat/xxx` `fix/xxx` `chore/xxx` `docs/xxx` を切り、PR は `dev` 向け。フロント (Vercel) は `dev` (プレビュー) と `main` (本番)、API (Workers) は `main` だけデプロイする (staging は作らない、D40・D41) ([docs/architecture.md](docs/architecture.md))。
 - コミットは `commit` skill、PR は `pr` skill。**`git add -A` と `git add .` は使わず、`git add <パス>` で指定する。**
 - 日本語でコミュニケーションする。
 

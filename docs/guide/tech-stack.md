@@ -43,7 +43,7 @@
 |---|---|---|---|
 | Supabase (Postgres + Auth + RLS) | DB とログイン | ログインが標準で付き、自分で作る手間を省ける (D04) | https://supabase.com/docs |
 | Supabase CLI | ローカルの DB 起動 (`supabase start`)、マイグレーション | 全員が自分の PC で DB を試せる | https://supabase.com/docs/guides/local-development |
-| Vercel | frontend の公開 (`main` だけ、D40) | 無料枠で手軽に公開できる | https://vercel.com/docs |
+| Vercel | frontend の公開 (`dev` はプレビュー、`main` は本番、D41) | 無料枠で手軽に公開できる | https://vercel.com/docs |
 
 ## 入れないと決めたもの (見送った技術)
 

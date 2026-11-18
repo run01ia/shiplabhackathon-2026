@@ -240,15 +240,14 @@ type Deps = {
 ```
 feat/* ─PR→ dev ─PR→ main
  (開発)   (統合)    (本番)
-  デプロイなし  デプロイなし   デプロイ
+  デプロイなし  front だけプレビュー   デプロイ
 ```
 
-- **`main` だけ自動でデプロイする。** `dev` と feature ブランチは、デプロイしない (Vercel Hobby の回数制限と、検証以外でのデプロイを避けるため)。staging は作らない (D40)。
-- `frontend/vercel.json` の `git.deploymentEnabled` で、`dev` `feat/*` `fix/*` `chore/*` `docs/*` を false にしている。`main` 以外は `ignoreCommand` でもビルドを止める。
+- **frontend (Vercel) は `dev` と `main` を自動でデプロイする** (`dev` はプレビュー、`main` は本番)。チームが最新の `dev` をスマホで触れるようにするため (D41)。feature ブランチはデプロイしない (Vercel Hobby の回数制限のため)。staging は作らない (D40)。
+- `frontend/vercel.json` の `git.deploymentEnabled` で、`feat/*` `fix/*` `chore/*` `docs/*` などを false にしている。`main` と `dev` 以外は `ignoreCommand` でもビルドを止める (ルートの `vercel.json` も同じ)。
 - 本番に出したいときに、`dev` から `main` へ PR を出す。`dev` へのマージは親エージェントが自動で行うが、`main` へのマージは自動にしない (デプロイを伴うため)。
 - 既定ブランチは `main`。そのため、`dev` 向けの PR の `Closes #N` では Issue が閉じない (マージ後に手で閉じる)。
-- 既存の README やワークフローには、`dev` を明示的にデプロイする記述はなかった (2026-11-16 確認)。`dev` のデプロイが必要になったら、このファイルと `vercel.json` を直す。
-- API (Workers) も同じ方針。`main` だけを 1 つの Worker にデプロイする (Workers Builds の本番ブランチ = `main`、それ以外のブランチのビルドは止める)。
+- API (Workers) は `main` だけを 1 つの Worker にデプロイする (Workers Builds の本番ブランチ = `main`、それ以外のブランチのビルドは止める)。
 
 ## 環境変数
 - `backend/.env`、`frontend/.env` に置く。ひな形は `*.env.example`。**`.env` はコミットしない。**

@@ -80,7 +80,7 @@ pnpm exec biome check backend biome.json                    # 禁止 import (noR
 ステータスの更新: `.claude/skills/autopilot/set-status.sh <Issue番号> "In progress"|"In review"|Done|Ready|Backlog`
 
 ### push と PR を増やしすぎない (ビルドの回数)
-- push のたびに、Cloudflare の Workers Builds (リポジトリ連携) が走る。Vercel は `vercel.json` で main 以外を止めている (`deploymentEnabled` と `ignoreCommand`)。
+- push のたびに、Cloudflare の Workers Builds (リポジトリ連携) が走る。Vercel は `vercel.json` で main と dev 以外を止めている (dev はプレビュー) (`deploymentEnabled` と `ignoreCommand`)。
 - 進捗ボードや docs だけの小さな更新は、単独の PR にしない。次の実装の PR に同乗させるか、区切りでまとめて 1 本にする。
 - ブランチ名は `feat/` `fix/` `chore/` `docs/` `refactor/` のどれか (vercel.json の除外に入っている)。
 
