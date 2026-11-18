@@ -34,6 +34,7 @@
 | `@hono/node-server` + tsx | ローカルで API を起動する (`pnpm --filter backend dev`) | Node.js で Hono をそのまま動かせる | https://hono.dev/docs/getting-started/nodejs |
 | zod + `@hono/zod-validator` | リクエストの入力検証 (`schemas.ts`) | 検証と型が 1 つの定義で済む | https://zod.dev/ / https://hono.dev/docs/guides/validation |
 | supabase-js | DB の読み書き (secret キー) と、トークンの検証 | Workers から HTTP で使える | https://supabase.com/docs/reference/javascript |
+| Anthropic SDK (`@anthropic-ai/sdk`) | レシートの AI 判定 (REQ-012)。Claude Haiku に画像を渡し、品目と分類を JSON で受け取る (`modules/receipts/infra/claude.ts`) | 読み取りと分類が 1 回で済み、構造化出力で JSON が壊れにくい (D24)。Workers でも動く | https://docs.claude.com/ |
 | Vitest | `modules/*/domain/` と `shared/domain/` の純粋関数のテスト | 設定なしで TypeScript を動かせる。テストは最低限だけ (D12) | https://vitest.dev/ |
 
 ## DB とホスティング
@@ -91,5 +92,5 @@
 
 | 名前 | どんなものか | 見送った理由 | 代わりに |
 |---|---|---|---|
-| OCR サービス | 画像から文字を読み取るサービス | レシートは、画像を読める AI なら読み取りと分類が 1 回で済む (D24。この機能自体は優先度 C で未着手) | Claude (Haiku) の画像入力 |
+| OCR サービス | 画像から文字を読み取るサービス | レシートは、画像を読める AI なら読み取りと分類が 1 回で済む (D24。実装済み、#96) | Claude (Haiku) の画像入力 |
 | 常時の位置検知 | アプリを閉じていても入店を検知する | Web アプリではバックグラウンドで位置を取れない (D05) | アプリ起動時に現在地を確認する |

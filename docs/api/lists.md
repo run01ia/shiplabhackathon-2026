@@ -44,4 +44,4 @@ REQ-002/003/004/005/014。全て `Authorization: Bearer <Supabase JWT>` が必�
 
 - 予算ちょうどは予算内。`completionRate` はリスト外を除く品目の購入済み割合。`asPlanned` = 全て購入済みかつリスト外の購入なし。
 - `breakdown` の各行ごとに `WalletRepo.addPoints(userId, points, label)` を呼ぶ (ポイント履歴に 1 行ずつ残る)。
-- 配点は `backend/src/domain/score.ts` の `POINTS` (仮置き。#8 で確定): 予算内 +30、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。
+- 配点は `backend/src/modules/lists/domain/score.ts` の `POINTS` (仮置き。#8 で確定): 予算内 +30、リスト通り +10、不要買いなし +5、予算超過 -20、不要買い 1 件ごとに -15。
