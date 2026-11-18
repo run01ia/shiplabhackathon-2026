@@ -1,9 +1,34 @@
 # ローカルの環境構築
 
 自分の PC で、frontend (画面) と backend (API) を動かし、ログインできるまでの手順です。
-DB はローカルの Supabase を使います。キーを人から受け取る必要はありません。
+やり方は 2 つあります。
+
+| やり方 | Docker | キー | 向いている人 |
+|---|---|---|---|
+| **A. 開発用のクラウド DB を使う** (下の「Docker なしで始める」) | 要らない | 管理者からもらう | まず動かしたい人 |
+| B. ローカルの Supabase を使う (1 章から) | 要る | 要らない (自分の PC で完結) | DB の変更 (マイグレーション) をする人 |
 
 > クラウドへのデプロイ (Cloudflare Workers、Vercel) の手順は準備中です (Issue #2)。
+
+## Docker なしで始める (開発用のクラウド DB)
+
+みんなで 1 つの開発用 Supabase を共有します。**本番とは別のプロジェクト**で、本物のユーザーのデータは入っていません。
+
+1. Node.js と pnpm を入れる (下の 1 章。Docker と Supabase CLI は要りません)。
+2. ソースを取得して `pnpm install` (2 章)。
+3. `cp frontend/.env.example frontend/.env` と `cp backend/.env.example backend/.env`。
+4. 管理者から **DM で** 値をもらい、貼る。
+   - `frontend/.env`: `VITE_SUPABASE_URL`、`VITE_SUPABASE_PUBLISHABLE_KEY` (公開してよい値)
+   - `backend/.env`: `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEY`、`SUPABASE_SECRET_KEY`
+5. `pnpm dev` で起動し、http://localhost:5173 で「新規登録」する。
+
+**secret key の扱い** (DB を何でも読み書きできる鍵です):
+
+- `backend/.env` 以外に書かない。Discord のチャンネル、Issue、PR、コミット、スクリーンショットに出さない。
+- frontend (`VITE_` で始まる変数) に入れない。画面から誰でも読めてしまいます。
+- 漏れたかもと思ったら、すぐ管理者に伝える (Supabase の画面で鍵を作り直します)。
+
+注意: DB は全員で共有なので、自分のアカウント以外のデータは消さないでください。`supabase db reset` は使いません (ローカル用)。
 
 ## 1. 前提ツール
 
