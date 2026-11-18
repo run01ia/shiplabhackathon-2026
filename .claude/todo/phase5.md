@@ -4,8 +4,8 @@
 
 - [ ] **発表準備**
   - [x] デモシナリオの確定 (たたき台: docs/demo/scenario.md。チームで最終確認)
-  - [ ] デモ動画の撮影・編集
-  - [ ] 発表資料の作成・発表者の決定
+  - [ ] デモ動画の撮影・編集 (構成: docs/demo/presentation.md。Playwright で録画 + Remotion で字幕と演出)
+  - [ ] 発表資料の作成・発表者の決定 (3 分、動画中心: docs/demo/presentation.md)
 - [ ] **追加機能** `C` (時間があれば)
   - [x] レシート AI 判定 `C` (REQ-012。撮影 → Claude API で読み取りと分類 → スコアとペットのコメントに反映)
   - [x] 家の食材の在庫管理 `C`
